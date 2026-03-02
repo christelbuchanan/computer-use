@@ -19,7 +19,13 @@ export type CronSchedule =
 /**
  * Job status after execution
  */
-export type CronJobStatus = "ok" | "partial_success" | "error" | "skipped" | "timeout";
+export type CronJobStatus =
+  | "ok"
+  | "partial_success"
+  | "needs_user_action"
+  | "error"
+  | "skipped"
+  | "timeout";
 
 export type CronDeliveryMode = "direct" | "outbox";
 export type CronDeliverableStatus = "none" | "queued" | "sent" | "dead_letter";
@@ -221,8 +227,14 @@ export interface CronServiceDeps {
         status: string;
         error?: string | null;
         resultSummary?: string | null;
-        terminalStatus?: "ok" | "partial_success" | "failed" | null;
-        failureClass?: "budget_exhausted" | "tool_error" | "contract_error" | "unknown" | null;
+        terminalStatus?: "ok" | "partial_success" | "needs_user_action" | "failed" | null;
+        failureClass?:
+          | "budget_exhausted"
+          | "tool_error"
+          | "contract_error"
+          | "contract_unmet_write_required"
+          | "unknown"
+          | null;
         budgetUsage?: {
           turns: number;
           toolCalls: number;
