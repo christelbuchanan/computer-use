@@ -4,7 +4,7 @@
   "version": "1.0.0",
   "description": "Skills for CSV analysis, data visualization, reporting, and statistical insights",
   "type": "pack",
-  "author": "CoWork-OSS",
+  "author": "CoWork OS",
   "keywords": ["data", "analysis", "csv", "visualization", "reporting"],
   "icon": "📊",
   "category": "Data",
