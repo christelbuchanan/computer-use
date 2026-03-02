@@ -156,6 +156,8 @@ Core gateway code:
 Channel commands (chat):
 - `/inbox [triage|autopilot|followups] [limit]` runs DM-only inbox triage workflow with confirmation gates for external actions.
 - `/brief [morning|today|tomorrow|week]` generates a DM-only chief-of-staff style brief.
+- `/simplify [objective] [--domain ...] [--scope ...]` runs deterministic simplify skill expansion for quality tuning in any domain.
+- `/batch <objective> [--parallel ...] [--domain ...] [--external ...]` runs deterministic batch skill expansion for parallelizable migration/transform workflows in any domain.
 - `/schedule ...` creates scheduled agent tasks that deliver results back to the originating chat (works in DM + group contexts).
 - `/digest [lookback]` generates an on-demand digest of recent chat messages (group-safe; uses the local channel message store).
 - `/followups [lookback]` extracts follow-ups/commitments from recent chat messages (group-safe; uses the local channel message store).
@@ -168,6 +170,20 @@ Channel commands (chat):
 - `/numbers` lists allowed phone numbers for the channel.
 - `/allow <number>` adds a phone number to the channel allowlist.
 - `/disallow <number>` removes a phone number from the channel allowlist.
+
+Command parsing for `/simplify` and `/batch` (including inline chaining and normalization) is centralized in:
+
+- `src/shared/skill-slash-commands.ts`
+
+Behavior notes:
+
+- Direct slash commands invoke `use_skill` deterministically in executor before normal planning/execution.
+- Inline `then run /simplify` and `then run /batch` chaining is normalized into same-task follow-up workflow execution.
+- `/batch` external policy is enforced at runtime:
+  - `confirm` requests explicit non-auto approval before first side-effect external action.
+  - `none` blocks known external side-effect external actions for the run.
+
+For end-user syntax and policy examples, see [Universal `/simplify` and `/batch`](simplify-batch.md).
 
 Attachment handling:
 - If an inbound channel message includes `attachments`, the gateway persists them under `<workspace>/.cowork/inbox/attachments/...`
