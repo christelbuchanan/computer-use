@@ -50,6 +50,45 @@ describe("ToolCallDeduplicator read-history invalidation", () => {
     });
     expect(duplicate.isDuplicate).toBe(false);
   });
+
+  it("allows higher per-minute throughput for read-only cloud action pagination", () => {
+    const dedupe = new ToolCallDeduplicator(2, 60_000, 2, 20);
+
+    for (let i = 0; i < 20; i++) {
+      dedupe.recordCall("box_action", {
+        action: "list_folder_items",
+        folder_id: "0",
+        offset: i * 100,
+      });
+    }
+
+    const nextPageCall = dedupe.checkDuplicate("box_action", {
+      action: "list_folder_items",
+      folder_id: "0",
+      offset: 2000,
+    });
+    expect(nextPageCall.isDuplicate).toBe(false);
+  });
+
+  it("keeps strict rate limit for mutating cloud actions", () => {
+    const dedupe = new ToolCallDeduplicator(2, 60_000, 2, 20);
+
+    for (let i = 0; i < 20; i++) {
+      dedupe.recordCall("box_action", {
+        action: "create_folder",
+        parent_id: "0",
+        name: `temp-${i}`,
+      });
+    }
+
+    const createCall = dedupe.checkDuplicate("box_action", {
+      action: "create_folder",
+      parent_id: "0",
+      name: "temp-over-limit",
+    });
+    expect(createCall.isDuplicate).toBe(true);
+    expect(createCall.reason || "").toContain("Rate limit exceeded");
+  });
 });
 
 describe("FileOperationTracker cache invalidation", () => {
@@ -77,6 +116,18 @@ describe("FileOperationTracker cache invalidation", () => {
     tracker.invalidateDirectoryListing("research");
 
     expect(tracker.checkDirectoryListing("research").blocked).toBe(false);
+  });
+
+  it("tracks created files per full path without collapsing different extensions", () => {
+    const tracker = new FileOperationTracker();
+
+    tracker.recordFileCreation("deliverables/report.csv");
+    tracker.recordFileCreation("deliverables/report.json");
+
+    expect(tracker.getCreatedFiles()).toEqual(
+      expect.arrayContaining(["deliverables/report.csv", "deliverables/report.json"]),
+    );
+    expect(tracker.getCreatedFiles()).toHaveLength(2);
   });
 });
 
