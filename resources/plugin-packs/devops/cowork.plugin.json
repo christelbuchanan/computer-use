@@ -4,7 +4,7 @@
   "version": "1.1.0",
   "description": "Skills for deployment automation, monitoring, incident response, infrastructure-as-code, container orchestration, and cloud migration",
   "type": "pack",
-  "author": "CoWork-OSS",
+  "author": "CoWork OS",
   "keywords": ["devops", "deployment", "monitoring", "incident-response", "infrastructure", "terraform", "kubernetes", "k8s", "docker", "migration", "iac"],
   "icon": "⚙️",
   "category": "Engineering",
