@@ -43,7 +43,12 @@ function sanitizeCorpusText(raw: string): string {
 
 function normalizeTerminalStatus(task: { status?: string; terminal_status?: string | null }): Task["terminalStatus"] {
   const terminal = (task.terminal_status || "").trim();
-  if (terminal === "ok" || terminal === "partial_success" || terminal === "failed") {
+  if (
+    terminal === "ok" ||
+    terminal === "partial_success" ||
+    terminal === "needs_user_action" ||
+    terminal === "failed"
+  ) {
     return terminal;
   }
   if (task.status === "completed") return "ok";
@@ -467,6 +472,7 @@ export class EvalService {
         id: row.id,
         taskId: row.task_id,
         timestamp: row.timestamp,
+        schemaVersion: 2,
         type: row.type,
         payload: safeJsonParse(row.payload, {}),
       }));
