@@ -122,6 +122,8 @@ const TOOL_CATEGORIES: Record<string, keyof BuiltinToolsSettings["categories"]> 
   glob: "code",
   grep: "code",
   edit_file: "code",
+  count_text: "code",
+  text_metrics: "code",
   monty_run: "code",
   monty_list_transforms: "code",
   monty_run_transform: "code",
@@ -186,9 +188,12 @@ const TOOL_CATEGORIES: Record<string, keyof BuiltinToolsSettings["categories"]> 
   search_files: "file",
   // Skill tools
   create_spreadsheet: "skill",
+  generate_spreadsheet: "skill",
   create_document: "skill",
+  generate_document: "skill",
   edit_document: "skill",
   create_presentation: "skill",
+  generate_presentation: "skill",
   organize_folder: "skill",
   // Shell tools
   run_command: "shell",
