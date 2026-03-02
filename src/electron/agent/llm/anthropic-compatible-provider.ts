@@ -16,6 +16,21 @@ function joinUrl(baseUrl: string, path: string): string {
   return `${trimmedBase}${trimmedPath}`;
 }
 
+function resolveMessagesUrl(baseUrl: string): string {
+  const trimmedBase = baseUrl.replace(/\/+$/, "");
+  const lowerBase = trimmedBase.toLowerCase();
+  if (lowerBase.endsWith("/messages")) {
+    return trimmedBase;
+  }
+  // Anthropic-compatible providers vary:
+  // - Some expose base URLs that already include /v1
+  // - Others expose a root (e.g. .../anthropic) and expect /v1/messages
+  if (/\/v\d+(?:[a-z]+\d*)?$/i.test(trimmedBase)) {
+    return joinUrl(trimmedBase, "/messages");
+  }
+  return joinUrl(trimmedBase, "/v1/messages");
+}
+
 export interface AnthropicCompatibleProviderOptions {
   type: LLMProviderType;
   providerName: string;
@@ -27,14 +42,14 @@ export interface AnthropicCompatibleProviderOptions {
 export class AnthropicCompatibleProvider implements LLMProvider {
   readonly type: LLMProviderType;
   private apiKey: string;
-  private baseUrl: string;
+  private messagesUrl: string;
   private defaultModel: string;
   private providerName: string;
 
   constructor(options: AnthropicCompatibleProviderOptions) {
     this.type = options.type;
     this.apiKey = options.apiKey;
-    this.baseUrl = options.baseUrl;
+    this.messagesUrl = resolveMessagesUrl(options.baseUrl);
     this.defaultModel = options.defaultModel;
     this.providerName = options.providerName;
   }
@@ -46,7 +61,7 @@ export class AnthropicCompatibleProvider implements LLMProvider {
 
     try {
       console.log(`[${this.providerName}] Calling API with model: ${model}`);
-      const response = await fetch(joinUrl(this.baseUrl, "/messages"), {
+      const response = await fetch(this.messagesUrl, {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
@@ -91,7 +106,7 @@ export class AnthropicCompatibleProvider implements LLMProvider {
 
   async testConnection(): Promise<{ success: boolean; error?: string }> {
     try {
-      const response = await fetch(joinUrl(this.baseUrl, "/messages"), {
+      const response = await fetch(this.messagesUrl, {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
