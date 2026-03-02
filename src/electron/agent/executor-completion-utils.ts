@@ -1,15 +1,50 @@
 import { isVerificationStepDescription } from "../../shared/plan-utils";
 import type { CompletionContract } from "./executor-helpers";
+import { extractArtifactExtensionsFromText } from "./step-contract";
+
+const STRATEGY_CONTEXT_BLOCK_REGEX =
+  /\[AGENT_STRATEGY_CONTEXT_V1\][\s\S]*?\[\/AGENT_STRATEGY_CONTEXT_V1\]/g;
+const ADDITIONAL_CONTEXT_HEADER = "ADDITIONAL CONTEXT:";
+const WORKFLOW_DECOMPOSITION_HEADER =
+  "WORKFLOW DECOMPOSITION (execute these phases sequentially, passing output from each phase to the next):";
+const USER_UPDATE_HEADER = "USER UPDATE:";
+const SYNTHETIC_SECTION_LOOKAHEAD = `(?:${ADDITIONAL_CONTEXT_HEADER}|${WORKFLOW_DECOMPOSITION_HEADER}|${USER_UPDATE_HEADER})`;
+
+export function normalizePromptForContracts(taskPrompt: string): string {
+  const raw = String(taskPrompt || "");
+  if (!raw.trim()) return "";
+
+  const withoutStrategy = raw.replace(STRATEGY_CONTEXT_BLOCK_REGEX, "");
+  const withoutAdditionalContext = withoutStrategy.replace(
+    new RegExp(
+      `\\n{2}${ADDITIONAL_CONTEXT_HEADER}\\n[\\s\\S]*?(?=\\n{2}${SYNTHETIC_SECTION_LOOKAHEAD}|$)`,
+      "g",
+    ),
+    "",
+  );
+  const withoutWorkflow = withoutAdditionalContext.replace(
+    new RegExp(
+      `\\n{2}${WORKFLOW_DECOMPOSITION_HEADER.replace(/[()]/g, "\\$&")}\\n[\\s\\S]*?(?=\\n{2}${USER_UPDATE_HEADER}|$)`,
+      "g",
+    ),
+    "",
+  );
+
+  return withoutWorkflow
+    .replace(/[ \t]+\n/g, "\n")
+    .replace(/\n{3,}/g, "\n\n")
+    .trim();
+}
 
 export function shouldRequireExecutionEvidence(taskTitle: string, taskPrompt: string): boolean {
-  const prompt = `${taskTitle}\n${taskPrompt}`.toLowerCase();
+  const prompt = `${taskTitle}\n${normalizePromptForContracts(taskPrompt)}`.toLowerCase();
   return /\b(create|build|write|generate|transcribe|summarize|analyze|review|fix|implement|run|execute)\b/.test(
     prompt,
   );
 }
 
 export function promptRequestsArtifactOutput(taskTitle: string, taskPrompt: string): boolean {
-  const prompt = `${taskTitle}\n${taskPrompt}`.toLowerCase();
+  const prompt = `${taskTitle}\n${normalizePromptForContracts(taskPrompt)}`.toLowerCase();
   const createVerb = /\b(create|build|write|generate|produce|draft|prepare|save|export)\b/.test(
     prompt,
   );
@@ -20,23 +55,30 @@ export function promptRequestsArtifactOutput(taskTitle: string, taskPrompt: stri
   return createVerb && artifactNoun;
 }
 
+export function promptRequestsCanvasArtifactOutput(taskTitle: string, taskPrompt: string): boolean {
+  const prompt = `${taskTitle}\n${normalizePromptForContracts(taskPrompt)}`.toLowerCase();
+  const hasCanvasCue = /\b(canvas|in-app canvas)\b/.test(prompt);
+  if (!hasCanvasCue) return false;
+
+  const hasBuildIntent =
+    /\b(build|create|develop|implement|make|craft|design|generate|produce|prototype)\b/.test(
+      prompt,
+    ) || /\b(interactive|web app|html app|single-page app|ui)\b/.test(prompt);
+  if (!hasBuildIntent) return false;
+
+  const hasShowIntent =
+    /\b(show|render|display|open|preview|present)\b/.test(prompt) ||
+    /\bin(?:to)?\s+(?:the\s+)?(?:in-app\s+)?canvas\b/.test(prompt);
+  return hasShowIntent;
+}
+
 export function inferRequiredArtifactExtensions(taskTitle: string, taskPrompt: string): string[] {
-  const prompt = `${taskTitle}\n${taskPrompt}`.toLowerCase();
+  const prompt = `${taskTitle}\n${normalizePromptForContracts(taskPrompt)}`.toLowerCase();
   const hasCreateIntent =
     /\b(create|build|write|generate|produce|draft|prepare|save|export|compile)\b/.test(prompt);
   if (!hasCreateIntent) return [];
 
-  const stripped = prompt.replace(/\/\S+/g, " ").replace(/\w+\.\w{2,5}\b/g, " ");
-  const extensions = new Set<string>();
-
-  if (/\bpdf\b|\.pdf\b/.test(stripped)) extensions.add(".pdf");
-  if (/\bdocx\b|\.docx\b|\bword document\b/.test(stripped)) extensions.add(".docx");
-  if (/\bmarkdown\b|\.md\b|\bmd file\b/.test(stripped)) extensions.add(".md");
-  if (/\bcsv\b|\.csv\b/.test(stripped)) extensions.add(".csv");
-  if (/\bxlsx\b|\.xlsx\b|\bexcel\b|\bspreadsheet\b/.test(stripped)) extensions.add(".xlsx");
-  if (/\bjson\b|\.json\b/.test(stripped)) extensions.add(".json");
-  if (/\btxt\b|\.txt\b|\btext file\b/.test(stripped)) extensions.add(".txt");
-  if (/\bpptx\b|\.pptx\b|\bpowerpoint\b|\bslides?\b/.test(stripped)) extensions.add(".pptx");
+  const extensions = new Set<string>(extractArtifactExtensionsFromText(prompt));
 
   return Array.from(extensions);
 }
@@ -49,16 +91,28 @@ export function buildCompletionContract(opts: {
   isWatchSkipRecommendationTask: boolean;
 }): CompletionContract {
   const requiresExecutionEvidence = shouldRequireExecutionEvidence(opts.taskTitle, opts.taskPrompt);
+  const requiresCanvasArtifact = promptRequestsCanvasArtifactOutput(opts.taskTitle, opts.taskPrompt);
   const requiredArtifactExtensions = inferRequiredArtifactExtensions(
     opts.taskTitle,
     opts.taskPrompt,
   );
   const requiresArtifactEvidence =
     (promptRequestsArtifactOutput(opts.taskTitle, opts.taskPrompt) ||
+      requiresCanvasArtifact ||
       requiredArtifactExtensions.length > 0) &&
     !opts.isWatchSkipRecommendationTask;
+  const artifactKind: CompletionContract["artifactKind"] =
+    requiresCanvasArtifact && !opts.isWatchSkipRecommendationTask
+      ? "canvas"
+      : requiresArtifactEvidence
+        ? "file"
+        : "none";
+  const requiredSuccessfulTools =
+    requiresCanvasArtifact && !opts.isWatchSkipRecommendationTask
+      ? ["write_file", "canvas_push"]
+      : [];
 
-  const prompt = `${opts.taskTitle}\n${opts.taskPrompt}`.toLowerCase();
+  const prompt = `${opts.taskTitle}\n${normalizePromptForContracts(opts.taskPrompt)}`.toLowerCase();
   const hasReviewCue = /\b(review|evaluate|assess|verify|check|read|audit)\b/.test(prompt);
   const hasJudgmentCue =
     /\b(let me know|tell me|advise|recommend|whether|should i|worth|waste of)\b/.test(prompt);
@@ -76,6 +130,8 @@ export function buildCompletionContract(opts: {
     requiresArtifactEvidence,
     requiredArtifactExtensions,
     requiresVerificationEvidence,
+    artifactKind,
+    requiredSuccessfulTools,
   };
 }
 
