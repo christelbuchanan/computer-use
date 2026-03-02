@@ -20,6 +20,7 @@ Cowork OS supports these via:
 - Channels: Slack, iMessage, WhatsApp, Telegram, Email, etc.
 - Scheduling: `/schedule ...` and `schedule_task`
 - Inbox + briefing commands: `/inbox`, `/brief [morning|today|tomorrow|week]`
+- Slash skill workflows: `/simplify [objective] ...` for quality passes and `/batch <objective> ...` for parallelizable migration/transform workflows
 - Integrations: Notion, Gmail/Google Calendar (if configured), Apple Calendar/Reminders (macOS)
 - Web automation: browser tools (plus MCP puppeteer fallback for some sites)
 
@@ -201,7 +202,29 @@ Never claim success without evidence.
 STOP before irreversible external actions and ask for confirmation.
 ```
 
-### 12) Legal Deal Defense (Contract + Demand Letter + Counterpositions)
+### 12) Deterministic Slash Workflows (`/simplify` and `/batch`)
+
+Prompt:
+```
+Run /simplify this migration summary for readability and concision while preserving intent.
+Simplify to a concise format suitable for handoff.
+```
+
+Batch transform pattern:
+```
+Run /batch update docs and code references that refer to the old "execution pipeline" term:
+- Keep behavior unchanged.
+- Group edits by domain.
+- Produce a per-file checklist and diff summary.
+```
+
+Command variants:
+```
+/simplify review this plan for clarity and edge-case coverage.
+/batch migrate markdown architecture docs to the new naming standard --parallel 4 --domain writing --external confirm
+```
+
+### 13) Legal Deal Defense (Contract + Demand Letter + Counterpositions)
 
 Prompt:
 ```
