@@ -1351,12 +1351,6 @@ export function CanvasPreview({
                   allowpopups="true"
                   webpreferences="contextIsolation=yes, nodeIntegration=no"
                 />
-                <div className="canvas-interactive-indicator">
-                  <span>Interactive Mode</span>
-                  <span className="canvas-interactive-hint">
-                    Press I to switch to snapshot mode • Drag bottom edge to resize
-                  </span>
-                </div>
               </div>
             )}
             {/* Snapshot mode: show image */}
@@ -1374,6 +1368,14 @@ export function CanvasPreview({
               />
             )}
           </div>
+          {isInteractiveMode && (
+            <div className="canvas-interactive-indicator">
+              <span>Interactive Mode</span>
+              <span className="canvas-interactive-hint">
+                Press I to switch to snapshot mode • Drag bottom edge to resize
+              </span>
+            </div>
+          )}
 
           {/* History timeline */}
           {showHistory && snapshotHistory.length > 0 && (
