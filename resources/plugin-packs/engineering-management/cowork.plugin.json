@@ -4,7 +4,7 @@
   "version": "1.0.0",
   "description": "Sprint health tracking, 1-on-1 preparation, cross-team dependency scanning, and team velocity reporting for engineering managers.",
   "type": "pack",
-  "author": "CoWork-OSS",
+  "author": "CoWork OS",
   "keywords": ["management", "sprint", "team-lead", "1on1", "velocity"],
   "icon": "👥",
   "category": "Management",
