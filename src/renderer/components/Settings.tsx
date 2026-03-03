@@ -187,6 +187,8 @@ interface SettingsProps {
   onAccentChange: (accent: AccentColor) => void;
   uiDensity: UiDensity;
   onUiDensityChange: (density: UiDensity) => void;
+  devRunLoggingEnabled: boolean;
+  onDevRunLoggingEnabledChange: (enabled: boolean) => void;
   initialTab?: SettingsTab;
   onShowOnboarding?: () => void;
   onboardingCompletedAt?: string;
@@ -542,6 +544,8 @@ export function Settings({
   onAccentChange,
   uiDensity,
   onUiDensityChange,
+  devRunLoggingEnabled,
+  onDevRunLoggingEnabledChange,
   initialTab = "appearance",
   onShowOnboarding,
   onboardingCompletedAt,
@@ -2125,6 +2129,8 @@ export function Settings({
                 onAccentChange={onAccentChange}
                 uiDensity={uiDensity}
                 onUiDensityChange={onUiDensityChange}
+                devRunLoggingEnabled={devRunLoggingEnabled}
+                onDevRunLoggingEnabledChange={onDevRunLoggingEnabledChange}
                 onShowOnboarding={onShowOnboarding}
                 onboardingCompletedAt={onboardingCompletedAt}
               />
