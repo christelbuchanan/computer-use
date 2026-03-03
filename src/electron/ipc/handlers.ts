@@ -109,6 +109,8 @@ import {
   ChatGPTImportSchema,
   TextMemoryImportSchema,
   FindImportedSchema,
+  DeleteImportedEntrySchema,
+  SetImportedRecallIgnoredSchema,
   StepFeedbackSchema,
 } from "../utils/validation";
 import { GuardrailManager } from "../guardrails/guardrail-manager";
@@ -493,8 +495,14 @@ rateLimiter.configure(IPC_CHANNELS.KIT_PROJECT_CREATE, RATE_LIMIT_CONFIGS.limite
 rateLimiter.configure(IPC_CHANNELS.MEMORY_ADD_USER_FACT, RATE_LIMIT_CONFIGS.limited);
 rateLimiter.configure(IPC_CHANNELS.MEMORY_UPDATE_USER_FACT, RATE_LIMIT_CONFIGS.limited);
 rateLimiter.configure(IPC_CHANNELS.MEMORY_DELETE_USER_FACT, RATE_LIMIT_CONFIGS.limited);
+rateLimiter.configure(IPC_CHANNELS.MEMORY_DELETE_IMPORTED_ENTRY, RATE_LIMIT_CONFIGS.limited);
+rateLimiter.configure(IPC_CHANNELS.MEMORY_SET_IMPORTED_RECALL_IGNORED, RATE_LIMIT_CONFIGS.limited);
 rateLimiter.configure(IPC_CHANNELS.MEMORY_RELATIONSHIP_UPDATE, RATE_LIMIT_CONFIGS.limited);
 rateLimiter.configure(IPC_CHANNELS.MEMORY_RELATIONSHIP_DELETE, RATE_LIMIT_CONFIGS.limited);
+rateLimiter.configure(
+  IPC_CHANNELS.MEMORY_RELATIONSHIP_CLEANUP_RECURRING,
+  RATE_LIMIT_CONFIGS.limited,
+);
 
 // Helper function to get the main window
 function getMainWindow(): BrowserWindow | null {
@@ -6207,6 +6215,38 @@ function setupMemoryHandlers(): void {
     }
   });
 
+  ipcMain.handle(IPC_CHANNELS.MEMORY_DELETE_IMPORTED_ENTRY, async (_, data: unknown) => {
+    checkRateLimit(IPC_CHANNELS.MEMORY_DELETE_IMPORTED_ENTRY, RATE_LIMIT_CONFIGS.limited);
+    const validated = validateInput(DeleteImportedEntrySchema, data, "delete imported memory entry");
+    try {
+      const success = MemoryService.deleteImportedEntry(validated.workspaceId, validated.memoryId);
+      return { success };
+    } catch (error) {
+      console.error("[Memory] Failed to delete imported entry:", error);
+      throw error;
+    }
+  });
+
+  ipcMain.handle(IPC_CHANNELS.MEMORY_SET_IMPORTED_RECALL_IGNORED, async (_, data: unknown) => {
+    checkRateLimit(IPC_CHANNELS.MEMORY_SET_IMPORTED_RECALL_IGNORED, RATE_LIMIT_CONFIGS.limited);
+    const validated = validateInput(
+      SetImportedRecallIgnoredSchema,
+      data,
+      "set imported memory prompt-recall ignored state",
+    );
+    try {
+      const memory = MemoryService.setImportedPromptRecallIgnored(
+        validated.workspaceId,
+        validated.memoryId,
+        validated.ignored,
+      );
+      return { success: Boolean(memory), memory };
+    } catch (error) {
+      console.error("[Memory] Failed to update imported memory prompt-recall state:", error);
+      throw error;
+    }
+  });
+
   ipcMain.handle(IPC_CHANNELS.MEMORY_GET_USER_PROFILE, async () => {
     try {
       return UserProfileService.getProfile();
@@ -6311,6 +6351,17 @@ function setupMemoryHandlers(): void {
       return { success: RelationshipMemoryService.deleteItem(id) };
     } catch (error) {
       console.error("[Memory] Failed to delete relationship memory item:", error);
+      throw error;
+    }
+  });
+
+  ipcMain.handle(IPC_CHANNELS.MEMORY_RELATIONSHIP_CLEANUP_RECURRING, async () => {
+    checkRateLimit(IPC_CHANNELS.MEMORY_RELATIONSHIP_CLEANUP_RECURRING, RATE_LIMIT_CONFIGS.limited);
+    try {
+      const result = RelationshipMemoryService.cleanupRecurringTaskHistory();
+      return { success: true, ...result };
+    } catch (error) {
+      console.error("[Memory] Failed to cleanup recurring relationship history:", error);
       throw error;
     }
   });
