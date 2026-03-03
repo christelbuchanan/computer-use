@@ -119,6 +119,8 @@ export const INPUT_DEPENDENT_ERROR_PATTERNS = [
   /unexpected.*parameter/i, // "Unexpected parameter" from strict schemas
   /not a valid/i, // "X is not a valid value for Y"
   /timed out/i, // Command/operation timed out (often due to slow query)
+  /module not found/i, // Missing runtime module import (e.g., sandboxed monty imports)
+  /no module named/i, // Python-style missing module error
   // Network/navigation failures are often domain- or environment-specific
   /net::ERR_/i, // Playwright/Chromium navigation errors
   /ERR_HTTP2_PROTOCOL_ERROR/i, // Common site-specific failure
