@@ -34,4 +34,23 @@ describe("TaskExecutor tool allow-list semantics", () => {
     expect(availableTools).toEqual([{ name: "read_file" }, { name: "write_file" }]);
     expect((executor as Any).isToolRestrictedByPolicy("read_file")).toBe(false);
   });
+
+  it("does not recurse through getAvailableTools when resolving via tool hints", () => {
+    const executor = Object.create(TaskExecutor.prototype) as Any;
+    executor.getEffectiveExecutionMode = vi.fn().mockReturnValue("propose");
+    executor.normalizeToolName = vi.fn((name: string) => ({ name }));
+    executor.toolRegistry = {
+      getTools: vi.fn().mockReturnValue([{ name: "custom_picker" }]),
+    };
+    executor.getAvailableTools = vi.fn(() => {
+      throw new Error("getAvailableTools should not be called");
+    });
+
+    const requiredTools = (executor as Any).extractRequiredToolsFromStepDescription(
+      "Ask clarifying questions via custom_picker before drafting.",
+    ) as Set<string>;
+
+    expect(requiredTools.has("custom_picker")).toBe(true);
+    expect(executor.getAvailableTools).not.toHaveBeenCalled();
+  });
 });
