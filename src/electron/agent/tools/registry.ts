@@ -11,6 +11,7 @@ import {
   TaskEvent,
   TOOL_GROUPS,
   ToolGroupName,
+  WorkspacePathAliasPolicy,
 } from "../../../shared/types";
 import { AgentDaemon } from "../daemon";
 import { FileTools } from "./file-tools";
@@ -505,6 +506,10 @@ export class ToolRegistry {
     this.searchTools.setDomainPolicy(policy);
   }
 
+  setWorkspacePathAliasPolicy(policy: WorkspacePathAliasPolicy | undefined): void {
+    this.fileTools.setWorkspacePathAliasPolicy(policy);
+  }
+
   /** Get scratchpad data for report generation and progress journaling */
   getScratchpadData(): Map<string, { content: string; timestamp: number }> {
     return this.scratchpadTools.getAll();
@@ -809,6 +814,7 @@ export class ToolRegistry {
       if (
         [
           "revise_plan",
+          "request_user_input",
           "task_history",
           "set_personality",
           "set_persona",
@@ -1104,6 +1110,155 @@ export class ToolRegistry {
     });
   }
 
+  private async requestUserInput(input: {
+    questions: Array<{
+      header: string;
+      id: string;
+      question: string;
+      options: Array<{ label: string; description: string }>;
+    }>;
+  }): Promise<{
+    requestId: string;
+    status: "submitted";
+    answers?: Record<string, { optionLabel?: string; otherText?: string }>;
+  }> {
+    const currentTask = await this.daemon.getTaskById(this.taskId);
+    const mode = currentTask?.agentConfig?.executionMode ?? "execute";
+    if (mode !== "propose") {
+      throw new Error(
+        'Tool "request_user_input" is only available in propose mode. Switch mode to propose and retry.',
+      );
+    }
+
+    const rawQuestions = Array.isArray(input?.questions) ? input.questions : [];
+    if (rawQuestions.length < 1) {
+      throw new Error("request_user_input expects at least 1 question.");
+    }
+
+    const toText = (value: unknown): string =>
+      typeof value === "string" ? value.trim() : String(value ?? "").trim();
+
+    const truncateHeader = (value: string): string => {
+      const cleaned = toText(value);
+      if (!cleaned) return "Question";
+      return cleaned.slice(0, 12);
+    };
+
+    const toSnakeCaseId = (value: string, fallback: string): string => {
+      const normalized = toText(value)
+        .toLowerCase()
+        .replace(/[^a-z0-9]+/g, "_")
+        .replace(/^_+|_+$/g, "")
+        .replace(/_+/g, "_");
+      const base = normalized || fallback;
+      if (/^[a-z]/.test(base)) return base;
+      return `q_${base.replace(/^[^a-z]+/g, "") || "choice"}`;
+    };
+
+    const ensureUniqueId = (candidate: string, usedIds: Set<string>): string => {
+      let id = candidate;
+      let suffix = 2;
+      while (usedIds.has(id)) {
+        id = `${candidate}_${suffix}`;
+        suffix += 1;
+      }
+      usedIds.add(id);
+      return id;
+    };
+
+    const normalizeOptions = (
+      optionsInput: unknown,
+    ): Array<{ label: string; description: string }> => {
+      const rawOptions = Array.isArray(optionsInput) ? optionsInput : [];
+      const normalized: Array<{ label: string; description: string }> = [];
+      const seenLabels = new Set<string>();
+
+      for (const option of rawOptions) {
+        if (normalized.length >= 3) break;
+        const label =
+          typeof option === "string"
+            ? toText(option)
+            : toText((option as Any)?.label ?? (option as Any)?.value ?? (option as Any)?.name);
+        const description =
+          typeof option === "string"
+            ? ""
+            : toText((option as Any)?.description ?? (option as Any)?.details);
+        if (!label) continue;
+        const dedupeKey = label.toLowerCase();
+        if (seenLabels.has(dedupeKey)) continue;
+        seenLabels.add(dedupeKey);
+        normalized.push({
+          label,
+          description: description || `Choose ${label.toLowerCase()} for this preference.`,
+        });
+      }
+
+      if (normalized.length >= 1) {
+        const hasRecommended = normalized.some((opt) => /\(recommended\)/i.test(opt.label));
+        if (!hasRecommended) {
+          normalized[0] = {
+            ...normalized[0],
+            label: `${normalized[0].label} (Recommended)`,
+          };
+        }
+      }
+
+      return normalized.slice(0, 3);
+    };
+
+    const usedIds = new Set<string>();
+    const questions: Array<{
+      header: string;
+      id: string;
+      question: string;
+      options: Array<{ label: string; description: string }>;
+    }> = [];
+
+    for (let index = 0; index < rawQuestions.length; index += 1) {
+      if (questions.length >= 3) break;
+      const rawQuestion = rawQuestions[index] as Any;
+      const questionText =
+        toText(rawQuestion?.question) ||
+        toText(rawQuestion?.prompt) ||
+        toText(rawQuestion?.title) ||
+        "Choose one option.";
+      const header = truncateHeader(
+        toText(rawQuestion?.header) || toText(rawQuestion?.id) || `Q${index + 1}`,
+      );
+      const idBase = toSnakeCaseId(
+        toText(rawQuestion?.id),
+        toSnakeCaseId(header || `q_${index + 1}`, `q_${index + 1}`),
+      );
+      const id = ensureUniqueId(idBase, usedIds);
+      const options = normalizeOptions(rawQuestion?.options);
+      if (options.length < 2) {
+        continue;
+      }
+      questions.push({
+        header,
+        id,
+        question: questionText,
+        options,
+      });
+    }
+
+    if (questions.length < 1) {
+      throw new Error(
+        "request_user_input could not normalize a valid payload. Provide at least one question with 2-3 options.",
+      );
+    }
+
+    const response = await this.daemon.requestUserInput(this.taskId, { questions });
+    if (response.status !== "submitted") {
+      throw new Error("Structured input request dismissed by user; waiting for user guidance.");
+    }
+    return {
+      requestId: response.requestId,
+      status: response.status,
+      answers: response.answers,
+    };
+  }
+
   /**
    * Get human-readable tool descriptions
    */
@@ -1370,6 +1525,7 @@ Channel Message Log (Local Gateway):
 
 		Plan Control:
 		- revise_plan: Modify remaining plan steps when obstacles are encountered or new information discovered
+		- request_user_input: Ask the user a structured multiple-choice question set (propose mode only) and wait for selection.
 		- task_history: Query recent task history/messages (use for "what did we talk about yesterday?")
 		- switch_workspace: Switch to a different workspace/working directory. Use when you need to work in a different folder.
 		- integration_setup: List/inspect/configure Tier-1 integrations from chat (resend/slack/gmail/google-calendar/google-drive/jira/linear/hubspot), including plan_hash stale-plan safety and optional OAuth setup.
@@ -1739,6 +1895,9 @@ ${skillDescriptions}`;
     }
     if (name === "task_events") {
       return this.taskEvents(input);
+    }
+    if (name === "request_user_input") {
+      return await this.requestUserInput(input);
     }
 
     if (name === "revise_plan") {
@@ -7068,6 +7227,53 @@ ${skillDescriptions}`;
               description: "ID of an existing workspace to switch to",
             },
           },
+        },
+      },
+      {
+        name: "request_user_input",
+        description:
+          "Ask the user a structured multiple-choice question set and block until they respond. " +
+          "Use only in propose mode when a decision materially changes the implementation plan.",
+        input_schema: {
+          type: "object",
+          properties: {
+            questions: {
+              type: "array",
+              description: "1 to 3 short multiple-choice questions.",
+              items: {
+                type: "object",
+                properties: {
+                  header: {
+                    type: "string",
+                    description: "Short header label, 12 characters or fewer.",
+                  },
+                  id: {
+                    type: "string",
+                    description: "Stable snake_case identifier used for the answer map.",
+                  },
+                  question: {
+                    type: "string",
+                    description: "Single-sentence prompt shown above options.",
+                  },
+                  options: {
+                    type: "array",
+                    description:
+                      "2 to 3 mutually exclusive options. Put the recommended option first and suffix label with '(Recommended)'.",
+                    items: {
+                      type: "object",
+                      properties: {
+                        label: { type: "string" },
+                        description: { type: "string" },
+                      },
+                      required: ["label", "description"],
+                    },
+                  },
+                },
+                required: ["header", "id", "question", "options"],
+              },
+            },
+          },
+          required: ["questions"],
         },
       },
       {
