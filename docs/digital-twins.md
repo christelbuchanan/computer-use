@@ -49,6 +49,13 @@ Tasks that run automatically on the twin's heartbeat interval. Each proactive ta
 - **Priority**: Execution order when multiple tasks are due
 - **Enabled flag**: Toggled during activation or at runtime via the agent's soul config
 
+Execution contract:
+
+- Proactive tasks run only when due (`frequencyMinutes`), not on every heartbeat wake
+- If `frequencyMinutes` is missing/invalid, runtime defaults to 15 minutes
+- Minimum effective frequency is 1 minute
+- Due-task tracking is keyed by `agentId + proactiveTaskId` and reset when heartbeat is stopped/canceled for that agent
+
 ---
 
 ## Available Templates
