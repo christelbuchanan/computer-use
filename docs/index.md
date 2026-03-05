@@ -9,8 +9,8 @@ hero:
       text: Get Started
       link: /getting-started
     - theme: alt
-      text: OpenClaw Alternative
-      link: /openclaw-comparison
+      text: Platform Updates
+      link: /integration-skill-bootstrap-lifecycle
     - theme: alt
       text: Features
       link: /features
@@ -23,7 +23,7 @@ hero:
 
 features:
   - title: Production Runtime
-    details: A respectful OpenClaw alternative for teams that need approvals, guardrails, and local-first governance.
+    details: Local-first runtime with approvals, guardrails, and governance controls for production agent workflows.
   - title: 30+ LLM Providers
     details: Connect to Claude, GPT, Gemini, Ollama, and more. Bring your own keys, switch models per task.
   - title: 14 Messaging Channels
