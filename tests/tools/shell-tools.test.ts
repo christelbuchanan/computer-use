@@ -110,7 +110,9 @@ describe('ShellTools auto-approval', () => {
 
     await expect(shellTools.runCommand('sudo -n true')).rejects.toThrow('User denied command execution');
     expect(mockDaemon.requestApproval).toHaveBeenCalledTimes(2);
-    expect((mockDaemon.requestApproval as any).mock.calls[1][2]).toBe('Run command: sudo -n true');
+    expect((mockDaemon.requestApproval as any).mock.calls[1][2]).toBe(
+      'Running command: sudo -n true'
+    );
   });
 
   it('keeps per-command approvals when bundle mode is disabled', async () => {
@@ -123,5 +125,48 @@ describe('ShellTools auto-approval', () => {
     expect(first.success).toBe(true);
     expect(second.success).toBe(true);
     expect(mockDaemon.requestApproval).toHaveBeenCalledTimes(2);
+  });
+
+  it('rejects apply_patch invocation through run_command with remediation', async () => {
+    await expect(
+      shellTools.runCommand('apply_patch "*** Begin Patch\\n*** End Patch\\n"')
+    ).rejects.toThrow(/use the apply_patch tool directly/i);
+
+    expect(mockDaemon.logEvent).toHaveBeenCalledWith(
+      'task-1',
+      'tool_protocol_violation',
+      expect.objectContaining({
+        tool: 'run_command',
+        reason: 'apply_patch_via_shell',
+        remediation: 'use_apply_patch_tool_directly',
+      })
+    );
+    expect(mockDaemon.requestApproval).not.toHaveBeenCalled();
+  });
+
+  it('rejects wrapped apply_patch invocation through shell -c commands', async () => {
+    await expect(
+      shellTools.runCommand('bash -lc "echo before && apply_patch \'*** Begin Patch\\n*** End Patch\\n\'"')
+    ).rejects.toThrow(/use the apply_patch tool directly/i);
+
+    expect(mockDaemon.logEvent).toHaveBeenCalledWith(
+      'task-1',
+      'tool_protocol_violation',
+      expect.objectContaining({
+        tool: 'run_command',
+        reason: 'apply_patch_via_shell',
+        remediation: 'use_apply_patch_tool_directly',
+      })
+    );
+    expect(mockDaemon.requestApproval).not.toHaveBeenCalled();
+  });
+
+  it('does not treat apply_patch text in command arguments as a protocol violation', async () => {
+    const result = await shellTools.runCommand('echo apply_patch mention', { cwd: process.cwd() });
+    expect(result.success).toBe(true);
+    const violations = (mockDaemon.logEvent as any).mock.calls.filter(
+      (call: any[]) => call[1] === 'tool_protocol_violation'
+    );
+    expect(violations).toHaveLength(0);
   });
 });
