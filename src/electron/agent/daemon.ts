@@ -9,6 +9,7 @@ import {
   TaskEventRepository,
   WorkspaceRepository,
   ApprovalRepository,
+  InputRequestRepository,
   ArtifactRepository,
   MemoryType,
 } from "../database/repositories";
@@ -51,6 +52,9 @@ import {
   VerificationOutcome,
   VerificationScope,
   VerificationEvidenceMode,
+  InputRequest,
+  InputRequestResponse,
+  RequestUserInputArgs,
 } from "../../shared/types";
 import {
   extractTimelineEvidenceRefs,
@@ -115,6 +119,7 @@ const THROTTLED_ACTIVITY_TYPES = new Set([
   "file_modified",
   "file_deleted",
 ]);
+const inputRequestIdempotency = new IdempotencyManager();
 
 function parseBooleanEnv(envName: string, fallback = false): boolean {
   const raw = process.env[envName];
@@ -165,6 +170,7 @@ export class AgentDaemon extends EventEmitter {
   private eventRepo: TaskEventRepository;
   private workspaceRepo: WorkspaceRepository;
   private approvalRepo: ApprovalRepository;
+  private inputRequestRepo: InputRequestRepository;
   private artifactRepo: ArtifactRepository;
   private activityRepo: ActivityRepository;
   private agentRoleRepo: AgentRoleRepository;
@@ -179,6 +185,15 @@ export class AgentDaemon extends EventEmitter {
       reject: (reason?: unknown) => void;
       resolved: boolean;
       timeoutHandle: ReturnType<typeof setTimeout>;
+    }
+  > = new Map();
+  private pendingInputRequests: Map<
+    string,
+    {
+      taskId: string;
+      resolve: (value: InputRequestResponse) => void;
+      reject: (reason?: unknown) => void;
+      resolved: boolean;
     }
   > = new Map();
   private cleanupIntervalHandle?: ReturnType<typeof setInterval>;
@@ -231,6 +246,7 @@ export class AgentDaemon extends EventEmitter {
     this.eventRepo = new TaskEventRepository(db);
     this.workspaceRepo = new WorkspaceRepository(db);
     this.approvalRepo = new ApprovalRepository(db);
+    this.inputRequestRepo = new InputRequestRepository(db);
     this.artifactRepo = new ArtifactRepository(db);
     this.activityRepo = new ActivityRepository(db);
     this.agentRoleRepo = new AgentRoleRepository(db);
@@ -2043,6 +2059,57 @@ export class AgentDaemon extends EventEmitter {
     return this.sessionAutoApproveAll;
   }
 
+  listInputRequests(params?: {
+    limit?: number;
+    offset?: number;
+    taskId?: string;
+    status?: InputRequest["status"];
+  }): InputRequest[] {
+    const limit = Math.min(Math.max(params?.limit ?? 200, 1), 500);
+    const offset = Math.max(params?.offset ?? 0, 0);
+    const taskId = typeof params?.taskId === "string" ? params.taskId.trim() : "";
+    const status = params?.status;
+    return this.inputRequestRepo.list({
+      limit,
+      offset,
+      ...(taskId ? { taskId } : {}),
+      ...(status ? { status } : {}),
+    });
+  }
+
+  async requestUserInput(taskId: string, args: RequestUserInputArgs): Promise<InputRequestResponse> {
+    const existingPending = this.inputRequestRepo.findPendingByTaskId(taskId);
+    if (existingPending.length > 0) {
+      throw new Error(
+        `Task ${taskId} already has a pending structured input request. Resolve it before requesting another.`,
+      );
+    }
+
+    const request = this.inputRequestRepo.create({
+      taskId,
+      questions: args.questions,
+      requestedAt: Date.now(),
+      status: "pending",
+    });
+
+    this.updateTaskStatus(taskId, "paused");
+    this.logEvent(taskId, "input_request_created", { request });
+    this.logEvent(taskId, "task_paused", {
+      message: "Waiting for structured user input.",
+      reason: "input_request",
+      requestId: request.id,
+    });
+
+    return new Promise((resolve, reject) => {
+      this.pendingInputRequests.set(request.id, {
+        taskId,
+        resolve,
+        reject,
+        resolved: false,
+      });
+    });
+  }
+
   async requestApproval(
     taskId: string,
     type: string,
@@ -2198,6 +2265,110 @@ export class AgentDaemon extends EventEmitter {
       return "not_found";
     } catch (error) {
       approvalIdempotency.fail(idempotencyKey, error);
+      throw error;
+    }
+  }
+
+  async respondToInputRequest(
+    response: InputRequestResponse,
+  ): Promise<{ status: "handled" | "duplicate" | "not_found" | "in_progress"; requestId: string }> {
+    const idempotencyKey = IdempotencyManager.generateKey(
+      "input_request:respond",
+      response.requestId,
+      response.status,
+    );
+    const existing = inputRequestIdempotency.check(idempotencyKey);
+    if (existing.exists) {
+      return { status: "duplicate", requestId: response.requestId };
+    }
+    if (!inputRequestIdempotency.start(idempotencyKey)) {
+      return { status: "in_progress", requestId: response.requestId };
+    }
+
+    try {
+      const request = this.inputRequestRepo.findById(response.requestId);
+      if (!request) {
+        inputRequestIdempotency.complete(idempotencyKey, { status: "not_found" });
+        return { status: "not_found", requestId: response.requestId };
+      }
+      if (request.status !== "pending") {
+        inputRequestIdempotency.complete(idempotencyKey, { status: "duplicate" });
+        return { status: "duplicate", requestId: response.requestId };
+      }
+
+      this.inputRequestRepo.resolve(response.requestId, response.status, response.answers);
+
+      const latencyMs =
+        typeof request.requestedAt === "number" && Number.isFinite(request.requestedAt)
+          ? Math.max(0, Date.now() - request.requestedAt)
+          : undefined;
+      this.logEvent(request.taskId, "log", {
+        metric: "input_request_response",
+        status: response.status,
+        latencyMs,
+      });
+
+      const currentTask = this.taskRepo.findById(request.taskId);
+      const currentTaskStatus = currentTask?.status;
+      const isTerminalTask =
+        currentTaskStatus === "completed" ||
+        currentTaskStatus === "failed" ||
+        currentTaskStatus === "cancelled";
+
+      if (!isTerminalTask) {
+        if (response.status === "submitted") {
+          this.updateTaskStatus(request.taskId, "executing");
+        } else {
+          this.updateTaskStatus(request.taskId, "paused");
+        }
+      }
+
+      this.logEvent(
+        request.taskId,
+        response.status === "submitted" ? "input_request_resolved" : "input_request_dismissed",
+        {
+          requestId: response.requestId,
+          status: response.status,
+          answers: response.answers,
+          terminalTask: isTerminalTask,
+        },
+      );
+
+      const pending = this.pendingInputRequests.get(response.requestId);
+      if (pending && !pending.resolved) {
+        pending.resolved = true;
+        this.pendingInputRequests.delete(response.requestId);
+        if (isTerminalTask) {
+          pending.reject(
+            new Error(
+              `Structured input response ignored because task is already terminal (${currentTaskStatus || "unknown"}).`,
+            ),
+          );
+        } else if (response.status === "submitted") {
+          pending.resolve(response);
+        } else {
+          pending.reject(new Error("Structured input request dismissed by user"));
+        }
+      } else if (response.status === "submitted" && !isTerminalTask) {
+        // Restart recovery path: executor waiter may not exist after app restart.
+        try {
+          const compactAnswers = JSON.stringify(response.answers || {}, null, 2);
+          await this.sendMessage(
+            request.taskId,
+            `Structured input response for request ${response.requestId}:\n${compactAnswers}`,
+          );
+        } catch (error) {
+          console.warn(
+            `[AgentDaemon] Failed to replay structured input response for task ${request.taskId}:`,
+            error,
+          );
+        }
+      }
+
+      inputRequestIdempotency.complete(idempotencyKey, { status: "handled" });
+      return { status: "handled", requestId: response.requestId };
+    } catch (error) {
+      inputRequestIdempotency.fail(idempotencyKey, error);
       throw error;
     }
   }
@@ -5396,6 +5567,13 @@ export class AgentDaemon extends EventEmitter {
       }
     });
     this.pendingApprovals.clear();
+    this.pendingInputRequests.forEach((pending, _requestId) => {
+      if (!pending.resolved) {
+        pending.resolved = true;
+        pending.reject(new Error("Daemon shutting down"));
+      }
+    });
+    this.pendingInputRequests.clear();
 
     // Save conversation snapshots and mark active tasks as "interrupted" so they
     // can be automatically resumed on next startup. Snapshots must be saved BEFORE
