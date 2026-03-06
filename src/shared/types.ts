@@ -979,6 +979,14 @@ export interface Task {
   lastCompactionTokensAfter?: number;
   noProgressStreak?: number;
   lastLoopFingerprint?: string;
+  // Control plane linkage
+  issueId?: string; // Issue this task is executing for
+  heartbeatRunId?: string; // Heartbeat run this task belongs to
+  companyId?: string; // Company context
+  goalId?: string; // Goal context
+  projectId?: string; // Project context
+  requestDepth?: number; // Nesting depth of the originating request
+  billingCode?: string; // Billing/cost attribution code
 }
 
 export type StepFailureClass =
@@ -1553,6 +1561,8 @@ export interface AgentRole {
   heartbeatStaggerOffset?: number; // Offset in minutes to stagger wakeups
   lastHeartbeatAt?: number; // Timestamp of last heartbeat
   heartbeatStatus?: HeartbeatStatus; // Current heartbeat state
+  monthlyBudgetCost?: number; // Monthly cost budget in USD; null = unlimited
+  autoPausedAt?: number | null; // Timestamp when agent was auto-paused by budget enforcement
 }
 
 /**
@@ -1576,6 +1586,7 @@ export interface CreateAgentRoleRequest {
   heartbeatEnabled?: boolean;
   heartbeatIntervalMinutes?: number;
   heartbeatStaggerOffset?: number;
+  monthlyBudgetCost?: number;
 }
 
 /**
@@ -1601,6 +1612,7 @@ export interface UpdateAgentRoleRequest {
   heartbeatEnabled?: boolean;
   heartbeatIntervalMinutes?: number;
   heartbeatStaggerOffset?: number;
+  autoPausedAt?: number | null;
 }
 
 // ============ Agent Teams (Mission Control) ============
@@ -5768,3 +5780,220 @@ export const VOICE_LANGUAGES = [
   { code: "zh-CN", name: "Chinese (Mandarin)" },
   { code: "tr-TR", name: "Turkish" },
 ] as const;
+
+// ============ Control Plane Entity Types ============
+
+export interface Company {
+  id: string;
+  name: string;
+  slug: string;
+  description?: string;
+  status: "active" | "inactive" | "suspended";
+  isDefault: boolean;
+  monthlyBudgetCost?: number;
+  budgetPausedAt?: number;
+  createdAt: number;
+  updatedAt: number;
+}
+
+export interface CompanyUpdate {
+  name?: string;
+  slug?: string;
+  description?: string;
+  status?: Company["status"];
+  isDefault?: boolean;
+  monthlyBudgetCost?: number | null;
+  budgetPausedAt?: number | null;
+}
+
+export interface Goal {
+  id: string;
+  companyId: string;
+  title: string;
+  description?: string;
+  status: "active" | "completed" | "cancelled" | "archived";
+  targetDate?: number;
+  createdAt: number;
+  updatedAt: number;
+}
+
+export interface GoalUpdate {
+  companyId?: string;
+  title?: string;
+  description?: string;
+  status?: Goal["status"];
+  targetDate?: number | null;
+}
+
+export interface Project {
+  id: string;
+  companyId: string;
+  goalId?: string;
+  name: string;
+  description?: string;
+  status: "active" | "paused" | "completed" | "archived";
+  monthlyBudgetCost?: number;
+  archivedAt?: number;
+  createdAt: number;
+  updatedAt: number;
+}
+
+export interface ProjectCreateInput {
+  companyId?: string;
+  goalId?: string;
+  name: string;
+  description?: string;
+  status?: Project["status"];
+  monthlyBudgetCost?: number | null;
+  archivedAt?: number | null;
+}
+
+export interface ProjectUpdate {
+  companyId?: string;
+  goalId?: string;
+  name?: string;
+  description?: string;
+  status?: Project["status"];
+  monthlyBudgetCost?: number | null;
+  archivedAt?: number | null;
+}
+
+export interface ProjectWorkspaceLink {
+  id: string;
+  projectId: string;
+  workspaceId: string;
+  isPrimary: boolean;
+  createdAt: number;
+  updatedAt: number;
+}
+
+export interface Issue {
+  id: string;
+  companyId: string;
+  goalId?: string;
+  projectId?: string;
+  parentIssueId?: string;
+  workspaceId?: string;
+  taskId?: string;
+  activeRunId?: string;
+  title: string;
+  description?: string;
+  status: "backlog" | "todo" | "in_progress" | "review" | "done" | "blocked" | "cancelled";
+  priority: number;
+  assigneeAgentRoleId?: string;
+  reporterAgentRoleId?: string;
+  requestDepth?: number;
+  billingCode?: string;
+  metadata?: Record<string, unknown>;
+  createdAt: number;
+  updatedAt: number;
+  completedAt?: number;
+}
+
+export interface IssueFilters {
+  companyId?: string;
+  goalId?: string;
+  projectId?: string;
+  workspaceId?: string;
+  assigneeAgentRoleId?: string;
+  status?: Issue["status"] | Issue["status"][];
+  limit?: number;
+  offset?: number;
+}
+
+export interface IssueUpdate {
+  goalId?: string;
+  projectId?: string;
+  parentIssueId?: string;
+  workspaceId?: string;
+  taskId?: string;
+  activeRunId?: string;
+  title?: string;
+  description?: string;
+  status?: Issue["status"];
+  priority?: number;
+  assigneeAgentRoleId?: string;
+  reporterAgentRoleId?: string;
+  requestDepth?: number | null;
+  billingCode?: string;
+  metadata?: Record<string, unknown> | null;
+  completedAt?: number | null;
+}
+
+export interface IssueComment {
+  id: string;
+  issueId: string;
+  authorType: "user" | "agent" | "system";
+  authorAgentRoleId?: string;
+  body: string;
+  createdAt: number;
+  updatedAt: number;
+}
+
+export interface HeartbeatRun {
+  id: string;
+  issueId: string;
+  taskId?: string;
+  agentRoleId?: string;
+  workspaceId?: string;
+  status: "queued" | "running" | "completed" | "failed" | "cancelled" | "interrupted";
+  summary?: string;
+  error?: string;
+  resumedFromRunId?: string;
+  createdAt: number;
+  updatedAt: number;
+  startedAt?: number;
+  completedAt?: number;
+}
+
+export interface HeartbeatRunEvent {
+  id: string;
+  runId: string;
+  timestamp: number;
+  type: string;
+  payload: Record<string, unknown>;
+}
+
+export interface RunFilters {
+  companyId?: string;
+  projectId?: string;
+  issueId?: string;
+  agentRoleId?: string;
+  status?: HeartbeatRun["status"] | HeartbeatRun["status"][];
+  limit?: number;
+  offset?: number;
+}
+
+export interface CostSummary {
+  scopeType: "company" | "project" | "issue" | "agent";
+  scopeId: string;
+  windowStart: number;
+  windowEnd: number;
+  totalCost: number;
+  totalInputTokens: number;
+  totalOutputTokens: number;
+  totalTokens: number;
+  taskCount: number;
+  lastTaskAt?: number;
+}
+
+export interface CompanyTemplateExport {
+  schemaVersion: number;
+  exportedAt: number;
+  company: Company;
+  goals: Goal[];
+  projects: Project[];
+  projectWorkspaceLinks: ProjectWorkspaceLink[];
+  issues: Issue[];
+  issueComments: IssueComment[];
+  agentRoles: AgentRole[];
+  teams: unknown[];
+  policies?: unknown;
+}
+
+export interface CompanyImportResult {
+  company: Company;
+  goalCount: number;
+  projectCount: number;
+  issueCount: number;
+}
