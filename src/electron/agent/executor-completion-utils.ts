@@ -130,17 +130,17 @@ export function buildCompletionContract(opts: {
       : requiresArtifactEvidence
         ? "file"
         : "none";
-  // For all canvas artifact tasks (explicit canvas prompts or detected web app creation),
-  // require write_file and canvas_push. The agent may also use canvas_open_url instead of
-  // canvas_push (e.g. via a dev server) — both satisfy the canvas requirement in practice
-  // since hasSuccessfulToolEvidence checks by tool name. The instruction in the system prompt
-  // guides the agent to choose the right approach; we don't hard-wire the specific canvas tool here.
-  const requiredSuccessfulTools =
-    requiresCanvasArtifact && !opts.isWatchSkipRecommendationTask
-      ? ["write_file", "canvas_push"]
-      : [];
 
   const prompt = `${opts.taskTitle}\n${normalizePromptForContracts(opts.taskPrompt)}`.toLowerCase();
+  // Only require canvas_push evidence when the prompt explicitly mentions "canvas".
+  // Tasks detected as canvas via promptIsMultiFileWebAppCreation (e.g. "Create a website")
+  // set artifactKind="canvas" to guide the agent but do NOT hard-require canvas_push —
+  // the agent may serve locally, open a URL, or otherwise satisfy the intent without canvas_push.
+  const hasExplicitCanvasCue = /\b(canvas|in-app canvas)\b/.test(prompt);
+  const requiredSuccessfulTools =
+    requiresCanvasArtifact && hasExplicitCanvasCue && !opts.isWatchSkipRecommendationTask
+      ? ["write_file", "canvas_push"]
+      : [];
   const hasReviewCue = /\b(review|evaluate|assess|verify|check|read|audit)\b/.test(prompt);
   const hasJudgmentCue =
     /\b(let me know|tell me|advise|recommend|whether|should i|worth|waste of)\b/.test(prompt);
