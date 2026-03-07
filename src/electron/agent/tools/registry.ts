@@ -1490,7 +1490,7 @@ Live Canvas (Visual Workspace):
   Do NOT use for status updates, summaries, planning, file operations, or checklist-style tasks.
   Example: canvas_push({ session_id: "abc-123", content: "<!DOCTYPE html><html><body><h1>Hello</h1></body></html>" })
   If session_id is not provided, the tool can attempt to continue the latest active canvas session for this task.
-- canvas_open_url: Open a remote web page inside the canvas window for full in-app browsing (use for sites that block embedding)
+- canvas_open_url: Open a running local dev server or remote web page inside the canvas window.
 - canvas_show: OPTIONAL - Only use if user needs full interactivity (clicking buttons, forms)
 - canvas_hide: Hide the canvas window
 - canvas_close: Close a canvas session
@@ -1499,6 +1499,13 @@ Live Canvas (Visual Workspace):
 - canvas_list: List all active canvas sessions
 IMPORTANT: When using canvas_push for visual output, provide content when available.
 If omitted, the runtime fills in a safe fallback so execution can continue.
+
+WEB APP BUILD + SHOW WORKFLOW:
+When you build any web app, do NOT stop at code generation. Always finish by running the app and showing it in canvas. Pick the approach that fits what you built:
+- Single HTML/CSS/JS file → canvas_create then canvas_push the HTML directly
+- Multi-file app with a dev script (React, Next.js, Vite, Vue, etc.) → install deps if needed, start the dev server on any free port, wait for it to be ready, then canvas_create + canvas_open_url("http://localhost:<port>")
+- App that builds to a static dist/ → run the build, then canvas_push the built HTML or serve it and use canvas_open_url
+Use whichever workspace makes sense (the project folder or a temp dir). What matters is that the running app is visible in canvas before the task ends. Code generation alone is not a complete result.
 `
     : ""
 }

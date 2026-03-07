@@ -58,19 +58,42 @@ export function promptRequestsArtifactOutput(taskTitle: string, taskPrompt: stri
 export function promptRequestsCanvasArtifactOutput(taskTitle: string, taskPrompt: string): boolean {
   const prompt = `${taskTitle}\n${normalizePromptForContracts(taskPrompt)}`.toLowerCase();
   const hasCanvasCue = /\b(canvas|in-app canvas)\b/.test(prompt);
-  if (!hasCanvasCue) return false;
 
-  const hasBuildIntent =
-    /\b(build|create|develop|implement|make|craft|design|generate|produce|prototype)\b/.test(
-      prompt,
-    ) || /\b(interactive|web app|html app|single-page app|ui)\b/.test(prompt);
-  if (!hasBuildIntent) return false;
+  if (hasCanvasCue) {
+    const hasBuildIntent =
+      /\b(build|create|develop|implement|make|craft|design|generate|produce|prototype)\b/.test(
+        prompt,
+      ) || /\b(interactive|web app|html app|single-page app|ui)\b/.test(prompt);
+    if (!hasBuildIntent) return false;
+    const hasShowIntent =
+      /\b(show|render|display|open|preview|present)\b/.test(prompt) ||
+      /\bin(?:to)?\s+(?:the\s+)?(?:in-app\s+)?canvas\b/.test(prompt);
+    return hasShowIntent;
+  }
 
-  const hasShowIntent =
-    /\b(show|render|display|open|preview|present)\b/.test(prompt) ||
-    /\bin(?:to)?\s+(?:the\s+)?(?:in-app\s+)?canvas\b/.test(prompt);
-  return hasShowIntent;
+  // Also trigger for multi-file web app creation prompts even without "canvas" keyword.
+  // e.g. "Create a React app that...", "Build a Next.js dashboard", etc.
+  return promptIsMultiFileWebAppCreation(prompt);
 }
+
+/**
+ * Returns true when the prompt is clearly asking to build a multi-file web app
+ * (React, Vue, Next.js, Vite, etc.) that should be run via a dev server and
+ * shown in the canvas via canvas_open_url.
+ */
+export function promptIsMultiFileWebAppCreation(prompt: string): boolean {
+  const normalized = typeof prompt === "string" ? prompt : String(prompt || "");
+  const hasBuildVerb =
+    /\b(create|build|make|develop|write|build out|scaffold|set up|implement)\b/.test(normalized);
+  if (!hasBuildVerb) return false;
+
+  const hasWebAppNoun =
+    /\b(app|application|web app|webapp|react app|next\.?js|nextjs|vue app|vite app|svelte app|angular app|dashboard|tool|site|website|ui|interface)\b/.test(
+      normalized,
+    );
+  return hasWebAppNoun;
+}
+
 
 export function inferRequiredArtifactExtensions(taskTitle: string, taskPrompt: string): string[] {
   const prompt = `${taskTitle}\n${normalizePromptForContracts(taskPrompt)}`.toLowerCase();
@@ -107,6 +130,11 @@ export function buildCompletionContract(opts: {
       : requiresArtifactEvidence
         ? "file"
         : "none";
+  // For all canvas artifact tasks (explicit canvas prompts or detected web app creation),
+  // require write_file and canvas_push. The agent may also use canvas_open_url instead of
+  // canvas_push (e.g. via a dev server) — both satisfy the canvas requirement in practice
+  // since hasSuccessfulToolEvidence checks by tool name. The instruction in the system prompt
+  // guides the agent to choose the right approach; we don't hard-wire the specific canvas tool here.
   const requiredSuccessfulTools =
     requiresCanvasArtifact && !opts.isWatchSkipRecommendationTask
       ? ["write_file", "canvas_push"]
