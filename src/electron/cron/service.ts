@@ -631,7 +631,11 @@ export class CronService {
           const taskStatus = typeof task.status === "string" ? task.status : "";
           if (taskStatus === "completed") {
             status =
-              task.terminalStatus === "needs_user_action"
+              task.terminalStatus === "awaiting_approval"
+                ? "needs_user_action"
+                : task.terminalStatus === "resume_available"
+                  ? "partial_success"
+                  : task.terminalStatus === "needs_user_action"
                 ? "needs_user_action"
                 : task.terminalStatus === "partial_success"
                   ? "partial_success"
@@ -647,8 +651,13 @@ export class CronService {
             break;
           }
           if (taskStatus === "paused" || taskStatus === "blocked") {
-            status = "error";
-            errorMsg = `Task ${taskStatus}`;
+            status = "needs_user_action";
+            errorMsg = task.error || `Task ${taskStatus}`;
+            break;
+          }
+          if (taskStatus === "interrupted") {
+            status = task.terminalStatus === "resume_available" ? "partial_success" : "error";
+            errorMsg = task.error || "Task interrupted";
             break;
           }
 
@@ -665,7 +674,11 @@ export class CronService {
           const finalStatus = typeof finalTask?.status === "string" ? finalTask.status : "";
           if (finalStatus === "completed") {
             status =
-              finalTask?.terminalStatus === "needs_user_action"
+              finalTask?.terminalStatus === "awaiting_approval"
+                ? "needs_user_action"
+                : finalTask?.terminalStatus === "resume_available"
+                  ? "partial_success"
+                  : finalTask?.terminalStatus === "needs_user_action"
                 ? "needs_user_action"
                 : finalTask?.terminalStatus === "partial_success"
                   ? "partial_success"
