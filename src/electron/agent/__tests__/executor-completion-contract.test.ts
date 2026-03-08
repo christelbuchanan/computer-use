@@ -642,6 +642,57 @@ DOCUMENT CREATION BEST PRACTICES:
     );
   });
 
+  it("downgrades output-backed mutation checkpoint failures to partial success for manual tasks", async () => {
+    const executor = createExecuteHarness({
+      title: "Build dashboard",
+      prompt: "Implement the dashboard, save the deliverables, and summarize the current state.",
+      lastOutput:
+        "Created the dashboard implementation and supporting notes. One mutation-required step still reported an artifact checkpoint failure, so the remaining blocker is limited to that unfinished write path rather than the rest of the completed deliverables.",
+      createdFiles: ["src/dashboard.tsx", "docs/dashboard-notes.md"],
+      planStepDescription: "Implement dashboard deliverables",
+      source: "manual",
+    });
+
+    executor.executePlan = vi.fn(async function executePlanStub(this: Any) {
+      this.plan = {
+        description: "Plan",
+        steps: [
+          {
+            id: "1",
+            description: "Create dashboard deliverables",
+            status: "completed",
+          },
+          {
+            id: "2",
+            description: "Write the remaining validation artifact",
+            status: "failed",
+            error:
+              "Step contract failure [contract_unmet_write_required][artifact_write_checkpoint_failed]: iteration 7 reached without successful file/canvas mutation.",
+          },
+        ],
+      };
+      throw new Error("Task failed: mutation-required contract unmet - Write the remaining validation artifact");
+    });
+
+    await (executor as Any).execute();
+
+    expect(executor.daemon.completeTask).toHaveBeenCalledWith(
+      "task-1",
+      expect.any(String),
+      expect.objectContaining({
+        terminalStatus: "partial_success",
+        failureClass: "contract_unmet_write_required",
+        outputSummary: expect.objectContaining({
+          outputCount: 2,
+        }),
+      }),
+    );
+    expect(executor.daemon.updateTask).not.toHaveBeenCalledWith(
+      "task-1",
+      expect.objectContaining({ status: "failed" }),
+    );
+  });
+
   it("completes only when the completion contract requirements are satisfied", async () => {
     const executor = createExecuteHarness({
       title: "Video review",
