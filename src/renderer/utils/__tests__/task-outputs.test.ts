@@ -6,6 +6,7 @@ import {
   formatOutputLocationLabel,
   getFileName,
   getPrimaryOutputFileName,
+  resolvePreferredTaskOutputSummary,
   resolveTaskOutputSummaryFromCompletionEvent,
   sanitizeTaskOutputSummary,
 } from "../task-outputs";
@@ -150,5 +151,26 @@ describe("task output summary utilities", () => {
       fallbackEvents,
     );
     expect(fromFallback?.primaryOutputPath).toBe("artifacts/fallback.md");
+  });
+
+  it("falls back to task bestKnownOutcome when completion event has no output summary", () => {
+    const completionWithoutOutputs = makeEvent("task_completed", {}, 90);
+
+    const summary = resolvePreferredTaskOutputSummary({
+      task: {
+        bestKnownOutcome: {
+          capturedAt: 95,
+          outputSummary: {
+            created: ["artifacts/preserved.md"],
+            outputCount: 1,
+            folders: ["artifacts"],
+          },
+        },
+      },
+      latestCompletionEvent: completionWithoutOutputs,
+      fallbackEvents: [completionWithoutOutputs],
+    });
+
+    expect(summary?.primaryOutputPath).toBe("artifacts/preserved.md");
   });
 });
