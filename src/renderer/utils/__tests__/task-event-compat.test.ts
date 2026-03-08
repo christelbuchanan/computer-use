@@ -1,5 +1,23 @@
 import { describe, expect, it } from "vitest";
 
+import { getEffectiveTaskEventType } from "../task-event-compat";
+
+describe("getEffectiveTaskEventType", () => {
+  it("keeps timeline_error distinct from terminal error events", () => {
+    expect(
+      getEffectiveTaskEventType({
+        type: "timeline_error",
+        status: "failed",
+        payload: {
+          message: "Completion blocked by unresolved failed step",
+          legacyType: "error",
+        },
+      }),
+    ).toBe("timeline_error");
+  });
+});
+import { describe, expect, it } from "vitest";
+
 import type { TaskEvent } from "../../../shared/types";
 import { getEffectiveTaskEventType } from "../task-event-compat";
 
