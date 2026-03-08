@@ -1,6 +1,7 @@
 import { describe, expect, it } from "vitest";
 import {
   descriptionHasChecklistReportCue,
+  descriptionHasStrongWriteIntent,
   descriptionHasWriteIntent,
   extractArtifactPathCandidates,
   isArtifactPathLikeToken,
@@ -56,11 +57,30 @@ describe("step-contract write intent", () => {
     ).toBe(true);
   });
 
+  it("treats passive saved-as artifact phrasing as write intent", () => {
+    expect(
+      descriptionHasWriteIntent(
+        "Synthesize the findings into a report saved as `/Users/mesut/Desktop/new/ai-agent-trends-2026-03-08.md`.",
+      ),
+    ).toBe(true);
+    expect(
+      descriptionHasStrongWriteIntent(
+        "Synthesize the findings into a report saved as `/Users/mesut/Desktop/new/ai-agent-trends-2026-03-08.md`.",
+      ),
+    ).toBe(true);
+  });
+
   it("does not treat output naming-only phrasing as write intent", () => {
     expect(
       descriptionHasWriteIntent(
         "Set research window and define output file name daily-ai-agent-trends-2026-03-03.md.",
       ),
+    ).toBe(false);
+  });
+
+  it("does not treat prepare-summary phrasing as strong write intent by itself", () => {
+    expect(
+      descriptionHasStrongWriteIntent("Prepare final summary document for KARU_Whitepaper.md"),
     ).toBe(false);
   });
 
