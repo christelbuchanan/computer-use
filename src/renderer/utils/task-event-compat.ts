@@ -52,7 +52,7 @@ export function getEffectiveTaskEventType(event: TaskEventLike): string {
     case "timeline_evidence_attached":
       return "citations_collected";
     case "timeline_error":
-      return "error";
+      return "timeline_error";
     case "timeline_step_updated":
     default:
       return "progress_update";
