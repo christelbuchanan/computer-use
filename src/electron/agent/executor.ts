@@ -10,6 +10,7 @@ import {
   ExecutionMode,
   ExecutionModeSource,
   LlmProfile,
+  ExternalStepVerification,
   SuccessCriteria as _SuccessCriteria,
   isTempWorkspaceId,
   ImageAttachment,
@@ -197,6 +198,7 @@ import {
   descriptionHasChecklistReportCue,
   descriptionHasDiscoveryIntent,
   descriptionHasReadOnlyIntent,
+  descriptionHasStrongWriteIntent,
   descriptionHasScaffoldIntent,
   descriptionHasSummaryCue,
   descriptionHasWriteIntent,
@@ -646,6 +648,22 @@ export class TaskExecutor {
    */
   private crossStepToolFailures: Map<string, number> = new Map();
   private readonly CROSS_STEP_FAILURE_THRESHOLD = 6;
+  /**
+   * Compact step outcome summaries for "verified" execution mode.
+   * Replaces raw previous-output carry-over with concise structured summaries.
+   */
+  private stepOutcomeSummaries: Array<{
+    stepId: string;
+    description: string;
+    status: "completed" | "failed";
+    mutatedFiles: string[];
+    outcomeSummary: string;
+  }> = [];
+  /**
+   * Cached workspace verification command inferred from tooling files (tsconfig.json, package.json, etc.).
+   * Computed once per task in verified mode and reused for all mutation steps.
+   */
+  private inferredVerificationCommand: ExternalStepVerification | null | undefined = undefined;
   private readonly shouldPauseForQuestions: boolean;
   private readonly shouldPauseForRequiredDecision: boolean;
   private lastAwaitingUserInputReasonCode: string | null = null;
@@ -5036,22 +5054,51 @@ ${transcript}
     return bulletCount >= 3 || categorySignals >= 3 || text.length >= 260;
   }
 
+  private hasSubstantivePartialSuccessEvidence(candidate: string): boolean {
+    const trimmed = String(candidate || "").trim();
+    const outputSummary = this.buildTaskOutputSummary();
+    if ((outputSummary?.outputCount || 0) > 0) return true;
+    if (trimmed.length < 160) return false;
+    const completedSteps = this.plan?.steps?.filter((step) => step.status === "completed").length || 0;
+    return completedSteps > 0 || this.hasExecutionEvidence();
+  }
+
   private shouldFinalizeAsPartialSuccess(error: unknown): boolean {
-    if (!this.partialSuccessForCronEnabled) return false;
-    if (this.task.source !== "cron") return false;
     const candidate = String(this.buildResultSummary() || this.getContentFallback() || "").trim();
     if (!candidate) return false;
+    const failureClass = this.classifyFailure(error);
+    if (failureClass === "required_verification" || failureClass === "user_blocker") {
+      return false;
+    }
+    const hasSubstantiveEvidence = this.hasSubstantivePartialSuccessEvidence(candidate);
     if (this.isBudgetExhaustionError(error)) {
-      return this.hasMinimumCategoryCoverage(candidate);
+      if (this.task.source === "cron") {
+        return this.partialSuccessForCronEnabled && this.hasMinimumCategoryCoverage(candidate);
+      }
+      return hasSubstantiveEvidence;
     }
     if (this.isSourceValidationGuardError(error)) {
-      // Cron runs using best-effort finalization should not fail hard when
-      // strict source-dating validation blocks finalization.
-      if (!this.shouldPreferBestEffortCompletion()) return false;
       if (!this.hasFetchedWebEvidence(1)) return false;
-      return this.hasMinimumCategoryCoverage(candidate);
+      if (this.task.source === "cron") {
+        // Cron runs using best-effort finalization should not fail hard when
+        // strict source-dating validation blocks finalization.
+        if (!this.partialSuccessForCronEnabled) return false;
+        if (!this.shouldPreferBestEffortCompletion()) return false;
+        return this.hasMinimumCategoryCoverage(candidate);
+      }
+      return hasSubstantiveEvidence;
     }
-    return false;
+    if (!hasSubstantiveEvidence) return false;
+    return (
+      failureClass === "budget_exhausted" ||
+      failureClass === "dependency_unavailable" ||
+      failureClass === "provider_quota" ||
+      failureClass === "tool_error" ||
+      failureClass === "contract_error" ||
+      failureClass === "contract_unmet_write_required" ||
+      failureClass === "optional_enrichment" ||
+      failureClass === "unknown"
+    );
   }
 
   private withSourceValidationDisclaimer(summary: string): string {
@@ -6094,7 +6141,8 @@ ${transcript}
     const fileCreationTools = new Set(["write_file", "copy_file"]);
     if (toolSucceeded && (fileCreationTools.has(toolName) || isArtifactGenerationToolNameUtil(toolName))) {
       const filename =
-        result?.path || result?.filename || input?.filename || input?.path || input?.destPath;
+        result?.path || result?.filename || input?.filename || input?.path || input?.destPath ||
+        input?.destination || input?.file_path;
       if (filename) {
         this.fileOperationTracker.recordFileCreation(filename);
       }
@@ -6168,7 +6216,8 @@ ${transcript}
       canonical === "system_info" ||
       canonical === "infra_status" ||
       canonical === "task_events" ||
-      canonical === "task_history"
+      canonical === "task_history" ||
+      canonical === "scratchpad_write"
     );
   }
 
@@ -6783,6 +6832,100 @@ ${transcript}
     }
 
     return "none";
+  }
+
+  private getFutureVerificationSteps(step: PlanStep): PlanStep[] {
+    if (!this.plan?.steps?.length) return [];
+    const currentIndex = this.plan.steps.findIndex((candidate) => candidate.id === step.id);
+    if (currentIndex === -1) return [];
+    return this.plan.steps.slice(currentIndex + 1).filter((candidate) => this.isVerificationStep(candidate));
+  }
+
+  private extractQuotedVerificationTokens(description: string): string[] {
+    const tokens = new Set<string>();
+    const regex = /['"`“”‘’]([^'"`“”‘’]{1,120})['"`“”‘’]/g;
+    let match = regex.exec(String(description || ""));
+    while (match) {
+      const value = String(match[1] || "").trim();
+      if (value) tokens.add(value);
+      match = regex.exec(String(description || ""));
+    }
+    return Array.from(tokens.values());
+  }
+
+  private buildUpcomingVerificationRequirements(step: PlanStep): string {
+    const currentContract = this.resolveStepExecutionContract(step);
+    const stepLikelyProducesDeliverable =
+      currentContract.requiresArtifactEvidence ||
+      currentContract.requiresMutation ||
+      this.isSummaryStep(step);
+    if (!stepLikelyProducesDeliverable) return "";
+
+    const futureVerificationSteps = this.getFutureVerificationSteps(step);
+    if (futureVerificationSteps.length === 0) return "";
+
+    const headingRequirements = new Set<string>();
+    const keywordRequirements = new Set<string>();
+    const relevantVerificationDescriptions: string[] = [];
+
+    for (const verificationStep of futureVerificationSteps.slice(0, 3)) {
+      const description = String(verificationStep.description || "").trim();
+      if (!description) continue;
+      const lower = description.toLowerCase();
+      const quotedTokens = this.extractQuotedVerificationTokens(description);
+
+      if (/section headings?|headings?\b/.test(lower)) {
+        for (const token of quotedTokens) {
+          headingRequirements.add(token);
+        }
+      }
+
+      if (/keyword presence|keywords?|contains?\b/.test(lower)) {
+        for (const token of quotedTokens) {
+          keywordRequirements.add(token);
+        }
+      }
+
+      if (quotedTokens.length > 0 || /section headings?|keyword presence|structural requirements|format validity/i.test(description)) {
+        relevantVerificationDescriptions.push(description);
+      }
+    }
+
+    if (
+      headingRequirements.size === 0 &&
+      keywordRequirements.size === 0 &&
+      relevantVerificationDescriptions.length === 0
+    ) {
+      return "";
+    }
+
+    const lines = [
+      "UPCOMING VERIFICATION REQUIREMENTS:",
+      "- A later verification step will check the deliverable against these exact machine-checkable requirements.",
+    ];
+
+    if (headingRequirements.size > 0) {
+      lines.push(
+        `- Ensure these exact section headings are present: ${Array.from(headingRequirements.values()).join(", ")}`,
+      );
+    }
+
+    if (keywordRequirements.size > 0) {
+      lines.push(
+        `- Ensure these exact required keywords/labels are present when applicable: ${Array.from(keywordRequirements.values()).join(", ")}`,
+      );
+    }
+
+    if (relevantVerificationDescriptions.length > 0) {
+      lines.push(
+        `- Upcoming verification step(s): ${relevantVerificationDescriptions
+          .slice(0, 2)
+          .map((description) => `"${description}"`)
+          .join(" | ")}`,
+      );
+    }
+
+    return `\n\n${lines.join("\n")}`;
   }
 
   private resolveStepExecutionContract(step: PlanStep): StepExecutionContract {
@@ -9315,6 +9458,172 @@ You are continuing a previous conversation. The context from the previous conver
     }
 
     return { success: true, message: "Unknown criteria type" };
+  }
+
+  // ---------------------------------------------------------------------------
+  // Verified execution mode helpers
+  // ---------------------------------------------------------------------------
+
+  /**
+   * Whether the task is running in "verified" execution mode (Ralph-pattern loop).
+   */
+  private isVerifiedMode(): boolean {
+    return this.getEffectiveExecutionMode() === "verified";
+  }
+
+  /**
+   * Run external verification for a step in verified mode.
+   * Supports shell_command (exit code), file_exists, and grep_absent checks.
+   */
+  private async runStepExternalVerification(
+    verification: ExternalStepVerification,
+  ): Promise<{ success: boolean; message: string }> {
+    this.emitEvent("log", {
+      message: `[verified-mode] Running external verification: ${verification.type}`,
+      taskId: this.task.id,
+    });
+
+    if (verification.type === "shell_command" && verification.command) {
+      try {
+        const result = (await this.toolRegistry.executeTool("run_command", {
+          command: verification.command,
+        })) as { success: boolean; exitCode: number | null; stdout: string; stderr: string };
+
+        return {
+          success: result.exitCode === 0,
+          message:
+            result.exitCode === 0
+              ? `Verification passed: ${verification.command}`
+              : `Verification failed (exit ${result.exitCode}): ${(result.stderr || result.stdout || "").slice(0, 500)}`,
+        };
+      } catch (error: Any) {
+        return {
+          success: false,
+          message: `Verification command error: ${error.message}`,
+        };
+      }
+    }
+
+    if (verification.type === "file_exists" && verification.filePaths) {
+      const missing = verification.filePaths.filter((p) => {
+        const fullPath = path.resolve(this.workspace.path, p);
+        return !fs.existsSync(fullPath);
+      });
+      return {
+        success: missing.length === 0,
+        message:
+          missing.length === 0
+            ? "All required files exist"
+            : `Missing files: ${missing.join(", ")}`,
+      };
+    }
+
+    if (verification.type === "grep_absent" && verification.grepPattern && verification.grepTarget) {
+      try {
+        const result = (await this.toolRegistry.executeTool("run_command", {
+          command: `grep -r "${verification.grepPattern}" ${verification.grepTarget}`,
+        })) as { success: boolean; exitCode: number | null; stdout: string; stderr: string };
+
+        // grep exit code 0 means pattern was FOUND → verification FAILS (pattern should be absent)
+        // grep exit code 1 means pattern NOT found → verification PASSES
+        return {
+          success: result.exitCode !== 0,
+          message:
+            result.exitCode !== 0
+              ? `Pattern "${verification.grepPattern}" not found (good)`
+              : `Pattern "${verification.grepPattern}" still present in ${verification.grepTarget}: ${(result.stdout || "").slice(0, 300)}`,
+        };
+      } catch (error: Any) {
+        return {
+          success: false,
+          message: `Grep verification error: ${error.message}`,
+        };
+      }
+    }
+
+    return { success: true, message: "No verification criteria matched" };
+  }
+
+  /**
+   * Infer a workspace verification command from project tooling files.
+   * Scans for tsconfig.json, package.json scripts, Cargo.toml, etc.
+   * Returns null if no suitable verification can be determined.
+   */
+  private inferWorkspaceVerificationCommand(): ExternalStepVerification | null {
+    const workspacePath = this.workspace?.path;
+    if (!workspacePath) return null;
+
+    // TypeScript type checking
+    const tsconfigPath = path.join(workspacePath, "tsconfig.json");
+    if (fs.existsSync(tsconfigPath)) {
+      return {
+        type: "shell_command",
+        command: "npx tsc --noEmit",
+        maxRetries: 2,
+      };
+    }
+
+    // Package.json scripts
+    const packageJsonPath = path.join(workspacePath, "package.json");
+    if (fs.existsSync(packageJsonPath)) {
+      try {
+        const pkg = JSON.parse(fs.readFileSync(packageJsonPath, "utf-8"));
+        const scripts = pkg.scripts || {};
+        // Prefer lint over test (faster, catches most issues)
+        if (scripts.lint) {
+          return { type: "shell_command", command: "npm run lint", maxRetries: 2 };
+        }
+        if (scripts.typecheck || scripts["type-check"]) {
+          const scriptName = scripts.typecheck ? "typecheck" : "type-check";
+          return { type: "shell_command", command: `npm run ${scriptName}`, maxRetries: 2 };
+        }
+      } catch {
+        // Malformed package.json — skip
+      }
+    }
+
+    // Rust
+    const cargoPath = path.join(workspacePath, "Cargo.toml");
+    if (fs.existsSync(cargoPath)) {
+      return { type: "shell_command", command: "cargo check", maxRetries: 2 };
+    }
+
+    return null;
+  }
+
+  /**
+   * Get or compute the inferred verification command for this workspace (cached).
+   */
+  private getInferredVerification(): ExternalStepVerification | null {
+    if (this.inferredVerificationCommand === undefined) {
+      this.inferredVerificationCommand = this.inferWorkspaceVerificationCommand();
+      if (this.inferredVerificationCommand) {
+        this.emitEvent("log", {
+          message: `[verified-mode] Auto-inferred verification: ${this.inferredVerificationCommand.command}`,
+          taskId: this.task.id,
+        });
+      }
+    }
+    return this.inferredVerificationCommand;
+  }
+
+  /**
+   * Build compact step outcome summaries for "verified" mode context injection.
+   * Replaces verbose raw output with structured one-liners per step.
+   */
+  private buildCompactStepSummaries(): string {
+    if (this.stepOutcomeSummaries.length === 0) return "";
+    const totalSteps = this.plan?.steps.length ?? this.stepOutcomeSummaries.length;
+    return this.stepOutcomeSummaries
+      .map((s, i) => {
+        const statusTag = s.status === "completed" ? "DONE" : "FAILED";
+        const filesStr =
+          s.mutatedFiles.length > 0
+            ? ` → ${s.mutatedFiles.slice(0, 3).join(", ")}${s.mutatedFiles.length > 3 ? ` (+${s.mutatedFiles.length - 3} more)` : ""}`
+            : "";
+        return `[${i + 1}/${totalSteps} ${statusTag}] ${s.description}${filesStr}`;
+      })
+      .join("\n");
   }
 
   /**
@@ -12465,12 +12774,21 @@ You are continuing a previous conversation. The context from the previous conver
 
   private isSummaryStep(step: PlanStep): boolean {
     const desc = step.description.toLowerCase();
-    return (
+    const hasSummaryCue =
       desc.includes("summary") ||
       desc.includes("summarize") ||
       desc.includes("compile") ||
-      desc.includes("report")
-    );
+      desc.includes("report");
+    if (!hasSummaryCue) return false;
+    // When a step has concrete write intent
+    // and a concrete file path target, it is primarily a write step that happens to
+    // involve summary/report content — not a pure summarization step. Classify it as
+    // non-summary so the artifact contract can properly enforce the file write requirement.
+    // This intentionally includes passive forms like "saved as /path/file.md".
+    const hasConcreteWriteIntent = descriptionHasStrongWriteIntent(desc);
+    const hasConcreteTargetPath = this.extractStepPathCandidates(step).length > 0;
+    if (hasConcreteWriteIntent && hasConcreteTargetPath) return false;
+    return true;
   }
 
   private stepRequiresArtifactEvidence(step: PlanStep): boolean {
@@ -12556,6 +12874,20 @@ You are continuing a previous conversation. The context from the previous conver
     const namingOnlyCue =
       /\b(output|artifact|file)\s+name\b/.test(desc) ||
       /\bname\s+(?:the\s+)?(?:output|artifact|file)\b/.test(desc);
+    // When a step has concrete write intent AND
+    // a concrete target path, it should always require an actual file write — even
+    // if the description also contains summary/compile/report wording.
+    // Steps like "Write a report to /path/file.md" or "report saved as /path/file.md"
+    // are clearly write-first.
+    if (
+      descriptionHasStrongWriteIntent(desc) &&
+      hasConcreteTargetPath &&
+      !verificationStep &&
+      !inlineDeliverable &&
+      !namingOnlyCue
+    ) {
+      return "artifact_write_required";
+    }
     if (
       verificationStep ||
       inlineDeliverable ||
@@ -15419,6 +15751,14 @@ You are continuing a previous conversation. The context from the previous conver
    * Create execution plan using LLM
    */
   private async createPlan(): Promise<void> {
+    // Verified mode: use strong model for planning phase
+    if (this.isVerifiedMode() && this.llmProfileUsed !== "strong") {
+      this.llmProfileUsed = "strong";
+      this.emitEvent("log", {
+        message: `[verified-mode] Using strong model profile for planning phase`,
+        taskId: this.task.id,
+      });
+    }
     console.log(`[Task ${this.task.id}] Creating plan with model: ${this.modelId}`);
     this.emitEvent("log", {
       message: `Creating execution plan (model: ${this.modelId})...`,
@@ -15983,7 +16323,78 @@ Return ONLY a JSON object:
         throw error;
       }
 
-      // If step was reset to pending (retry feedback), re-execute it
+      const stepStatusAfterExecution = step.status as PlanStep["status"];
+
+      // Verified mode: run external verification after step completion
+      if (
+        this.isVerifiedMode() &&
+        stepStatusAfterExecution === "completed" &&
+        step.kind !== "verification"
+      ) {
+        const verification = step.externalVerification || this.getInferredVerification();
+        if (verification) {
+          const verifyResult = await this.runStepExternalVerification(verification);
+          if (!verifyResult.success) {
+            const attempts = (step.verificationAttempts ?? 0) + 1;
+            step.verificationAttempts = attempts;
+            const maxRetries = verification.maxRetries ?? 2;
+
+            this.emitEvent("log", {
+              message: `[verified-mode] External verification failed for step "${step.description}" ` +
+                `(attempt ${attempts}/${maxRetries}): ${verifyResult.message}`,
+              taskId: this.task.id,
+            });
+
+            if (attempts < maxRetries) {
+              // Reset step to pending with failure context — will be re-executed
+              step.status = "pending";
+              step.error = `External verification failed (attempt ${attempts}/${maxRetries}): ${verifyResult.message}`;
+              this.emitEvent("external_verification_failed", {
+                step,
+                attempts,
+                maxRetries,
+                message: verifyResult.message,
+              });
+              // Fall through to the pending check below, which will `continue`
+            } else {
+              // Exhausted retries — mark step as failed
+              step.status = "failed";
+              step.error = `External verification failed after ${attempts} attempts: ${verifyResult.message}`;
+              this.emitEvent("step_failed", {
+                step,
+                reason: step.error,
+              });
+            }
+          } else {
+            this.emitEvent("log", {
+              message: `[verified-mode] External verification passed for step "${step.description}"`,
+              taskId: this.task.id,
+            });
+          }
+        }
+      }
+
+      // Verified mode: capture compact step outcome summary
+      if (
+        this.isVerifiedMode() &&
+        (stepStatusAfterExecution === "completed" || stepStatusAfterExecution === "failed")
+      ) {
+        const mutatedFiles: string[] = [];
+        for (const [filePath, entry] of this.filesReadTracker.entries()) {
+          if (entry.step === step.id) {
+            mutatedFiles.push(filePath);
+          }
+        }
+        this.stepOutcomeSummaries.push({
+          stepId: step.id,
+          description: step.description,
+          status: stepStatusAfterExecution as "completed" | "failed",
+          mutatedFiles,
+          outcomeSummary: (this.lastAssistantOutput || "").slice(0, 200),
+        });
+      }
+
+      // If step was reset to pending (retry feedback or verified-mode retry), re-execute it
       if (step.status === "pending") {
         continue;
       }
@@ -16385,6 +16796,11 @@ Return ONLY a JSON object:
   }
 
   private async executeStepLegacy(step: PlanStep): Promise<void> {
+    const verificationRewindAlreadyAttempted = (step as Any).__verificationRewindAttempted === true;
+    // Verified mode: use cheap model for primary execution steps, strong for verification
+    if (this.isVerifiedMode()) {
+      this.llmProfileUsed = step.kind === "verification" ? "strong" : "cheap";
+    }
     this.ensureVerificationOutcomeSets();
     const isPlanVerifyStep = isVerificationStepDescription(step.description);
     const stepContract = this.resolveStepExecutionContract(step);
@@ -16924,7 +17340,10 @@ TASK / CONVERSATION HISTORY:
       }
 
       const shouldIncludePreviousOutput = !isVerifyStep || !this.lastNonVerificationOutput;
-      if (this.lastAssistantOutput && shouldIncludePreviousOutput) {
+      // Verified mode: use compact step summaries instead of raw previous output
+      if (this.isVerifiedMode() && this.stepOutcomeSummaries.length > 0) {
+        stepContext += `\n\nPREVIOUS STEP OUTCOMES:\n${this.buildCompactStepSummaries()}`;
+      } else if (this.lastAssistantOutput && shouldIncludePreviousOutput) {
         stepContext += `\n\nPREVIOUS STEP OUTPUT:\n${this.lastAssistantOutput}`;
       }
 
@@ -17018,6 +17437,11 @@ TASK / CONVERSATION HISTORY:
       const deterministicWorkflowHint = this.buildDeterministicWorkflowHint(stepContract);
       if (deterministicWorkflowHint) {
         stepContext += deterministicWorkflowHint;
+      }
+
+      const upcomingVerificationRequirements = this.buildUpcomingVerificationRequirements(step);
+      if (upcomingVerificationRequirements) {
+        stepContext += upcomingVerificationRequirements;
       }
 
       // Start fresh messages for this step
@@ -17776,6 +18200,61 @@ TASK / CONVERSATION HISTORY:
         const assistantAskedQuestion = assistantProcessing.assistantAskedQuestion;
         const hasTextInThisResponse = assistantProcessing.hasMeaningfulText;
         const assistantText = assistantProcessing.assistantText;
+        const mutationSatisfiedAfterAssistantText =
+          stepSucceededWithFileMutation ||
+          stepSucceededWithCanvasMutation ||
+          bootstrapMutationSucceeded;
+        const mutationSatisfiedForAssistantText = hasRequiredMutationToolContractForIteration
+          ? !hasPendingRequiredMutationToolsForIteration
+          : mutationSatisfiedAfterAssistantText;
+        const priorMutationReuseAfterAssistantText = this.trySatisfyMutationContractByPriorMutation({
+          step,
+          stepContract,
+          currentStepTargetVerificationObserved,
+          currentStepBrowserVerificationObserved:
+            stepContract.verificationMode === "browser_session" &&
+            foundBrowserNavigationEvidence &&
+            foundBrowserInspectionEvidence,
+        });
+        if (
+          response.stopReason === "end_turn" &&
+          stepContract.requiresMutation &&
+          !responseHasToolUse &&
+          !mutationSatisfiedForAssistantText &&
+          !priorMutationReuseAfterAssistantText.satisfied &&
+          !assistantAskedQuestion
+        ) {
+          const preferredTarget = this.getPreferredMutationTargetPath(step, stepContract) || ".";
+          const pendingRequiredTools = this.getPendingRequiredMutationTools(
+            stepContract,
+            requiredToolsSucceeded,
+          );
+          this.emitEvent("step_contract_escalated", {
+            stepId: step.id,
+            reason: "end_turn_before_required_mutation",
+            iteration: iterationCount,
+            target: preferredTarget,
+            pendingRequiredTools,
+          });
+          messages.push({
+            role: "user",
+            content: [
+              {
+                type: "text",
+                text: this.sanitizeFallbackInstruction(
+                  "Do not finalize this step with text-only output. " +
+                    `A real workspace/canvas mutation is still required${preferredTarget ? ` for target \"${preferredTarget}\"` : ""}. ` +
+                    (pendingRequiredTools.length > 0
+                      ? `Use one of these required mutation tools now: ${pendingRequiredTools.join(", ")}. `
+                      : "Perform a write_file/edit_file/create_document/canvas mutation now. ") +
+                    "After the mutation succeeds, then provide the final confirmation.",
+                ),
+              },
+            ],
+          });
+          continueLoop = true;
+          continue;
+        }
         if (
           assistantText &&
           assistantText.trim().length > 0 &&
@@ -20034,6 +20513,7 @@ TASK / CONVERSATION HISTORY:
       });
       if (
         !stepFailed &&
+        !isVerifyStep &&
         !isPlanVerifyStep &&
         !isSummaryStep &&
         domainCompletion.failed
@@ -20135,9 +20615,11 @@ TASK / CONVERSATION HISTORY:
         stepFailed &&
         strictVerificationOutcome === "required_fail" &&
         enforceVerificationOk &&
-        !verificationRewindAttempted
+        !verificationRewindAttempted &&
+        !verificationRewindAlreadyAttempted
       ) {
         verificationRewindAttempted = true;
+        (step as Any).__verificationRewindAttempted = true;
         this.emitEvent("log", {
           metric: "checkpoint_id",
           checkpointId: `verify:${step.id}:rewind_attempt_1`,
@@ -20156,6 +20638,14 @@ TASK / CONVERSATION HISTORY:
             },
           ],
         });
+
+        // Persist the failed verification turn, then allow one immediate rewind
+        // iteration instead of falling through into terminal step failure.
+        this.recordAssistantOutput(messages, step);
+        this.updateConversationHistory(messages);
+        stepFailed = false;
+        lastFailureReason = "";
+        return await this.executeStepLegacy(step);
       }
 
       // Step completed or failed
@@ -20517,7 +21007,9 @@ TASK / CONVERSATION HISTORY:
         });
       } else {
         step.status = "completed";
+        step.error = undefined;
         step.completedAt = Date.now();
+        delete (step as Any).__verificationRewindAttempted;
         this.nonBlockingVerificationFailedStepIds.delete(step.id);
         this.blockingVerificationFailedStepIds.delete(step.id);
         this.lastRecoveryFailureSignature = "";
@@ -20531,6 +21023,7 @@ TASK / CONVERSATION HISTORY:
         this.emitEvent("step_completed", { step });
       }
     } catch (error: Any) {
+      delete (step as Any).__verificationRewindAttempted;
       if (error instanceof AwaitingUserInputError) {
         throw error;
       }
