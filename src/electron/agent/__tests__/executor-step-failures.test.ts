@@ -137,6 +137,15 @@ function applyExecutorFieldDefaults(executor: Any): void {
 
 function createExecutorWithStubs(responses: LLMResponse[], toolResults: Record<string, Any>) {
   const executor = Object.create(TaskExecutor.prototype) as Any;
+  const fallbackTextResponse =
+    [...responses]
+      .reverse()
+      .find(
+        (response) =>
+          response?.stopReason === "end_turn" &&
+          Array.isArray(response?.content) &&
+          response.content.some((block: Any) => block?.type === "text"),
+      ) || null;
 
   executor.task = {
     id: "task-1",
@@ -235,6 +244,9 @@ function createExecutorWithStubs(responses: LLMResponse[], toolResults: Record<s
   };
   executor.callLLMWithRetry = vi.fn().mockImplementation(async () => {
     const response = responses.shift();
+    if (!response && fallbackTextResponse) {
+      return fallbackTextResponse;
+    }
     if (!response) {
       throw new Error("No more LLM responses configured");
     }
@@ -802,7 +814,10 @@ relationship_memory:
   });
 
   it("enforces required-tool contract when create_document is required but never called", async () => {
-    executor = createExecutorWithStubs([textResponse("Draft ready, final text prepared.")], {});
+    executor = createExecutorWithStubs(
+      Array.from({ length: 6 }, () => textResponse("Draft ready, final text prepared.")),
+      {},
+    );
     const step: Any = {
       id: "doc-contract",
       description:
@@ -813,7 +828,9 @@ relationship_memory:
     await (executor as Any).executeStep(step);
 
     expect(step.status).toBe("failed");
-    expect(String(step.error || "")).toContain("Missing successful calls for: create_document");
+    expect(String(step.error || "")).toMatch(
+      /Missing successful calls for: create_document|artifact_write_checkpoint_failed|written artifact/i,
+    );
   });
 
   it("accepts generate_document when create_document is required by step wording", async () => {
@@ -1077,6 +1094,12 @@ relationship_memory:
         textResponse(
           "Please choose the required input file path:\n1) inputs/demand-letter.txt\n2) inputs/buyer-demand-letter.txt\nReply with 1 or 2.",
         ),
+        textResponse(
+          "Please choose the required input file path:\n1) inputs/demand-letter.txt\n2) inputs/buyer-demand-letter.txt\nReply with 1 or 2.",
+        ),
+        textResponse(
+          "Please choose the required input file path:\n1) inputs/demand-letter.txt\n2) inputs/buyer-demand-letter.txt\nReply with 1 or 2.",
+        ),
       ],
       {},
     );
@@ -1274,7 +1297,9 @@ relationship_memory:
 
   it("fails write/create deliverable steps when no file mutation evidence exists", async () => {
     executor = createExecutorWithStubs(
-      [textResponse("I wrote the complete whitepaper and it is ready.")],
+      Array.from({ length: 6 }, () =>
+        textResponse("I wrote the complete whitepaper and it is ready."),
+      ),
       {},
     );
 
@@ -1287,7 +1312,57 @@ relationship_memory:
     await (executor as Any).executeStep(step);
 
     expect(step.status).toBe("failed");
-    expect(String(step.error || "")).toContain("Missing successful calls for: write_file");
+    expect(String(step.error || "")).toMatch(
+      /Missing successful calls for: write_file|artifact_write_checkpoint_failed|written artifact/i,
+    );
+  });
+
+  it("re-prompts mutation-required steps that try to finish with text-only output before writing", async () => {
+    const responses: LLMResponse[] = [
+      textResponse("I wrote the complete whitepaper and it is ready."),
+      toolUseResponse("write_file", {
+        path: "KARU_Whitepaper.md",
+        content: "# KARU founding whitepaper\n",
+      }),
+      textResponse("Done."),
+    ];
+
+    executor = createExecutorWithStubs(responses, {
+      write_file: {
+        success: true,
+        path: "/tmp/KARU_Whitepaper.md",
+      },
+    });
+
+    const step: Any = {
+      id: "artifact-end-turn-1",
+      description: "Write the complete KARU founding whitepaper document",
+      status: "pending",
+    };
+
+    await (executor as Any).executeStep(step);
+
+    expect(step.status).toBe("completed");
+    expect((executor.toolRegistry.executeTool as Any).mock.calls).toEqual([
+      [
+        "write_file",
+        {
+          path: "KARU_Whitepaper.md",
+          content: "# KARU founding whitepaper\n",
+        },
+      ],
+    ]);
+    expect((executor.callLLMWithRetry as Any).mock.calls.length).toBeGreaterThanOrEqual(3);
+
+    const finalUserMessage = (executor.conversationHistory as Any[])
+      .filter((entry) => entry.role === "user")
+      .map((entry) => entry.content)
+      .flat()
+      .filter((block: Any) => block?.type === "text")
+      .map((block: Any) => String(block.text || ""))
+      .find((text: string) => text.includes("Do not finalize this step with text-only output."));
+
+    expect(finalUserMessage).toContain("workspace/canvas mutation is still required");
   });
 
   it("does not treat directory-only mutation evidence as satisfying write contract", () => {
@@ -1361,7 +1436,7 @@ relationship_memory:
           filename: "contract_negotiation_training.pptx",
           slides: [{ title: "Intro", bullets: ["A"] }],
         }),
-        textResponse("Saved contract_negotiation_training.pptx"),
+        ...Array.from({ length: 6 }, () => textResponse("Saved contract_negotiation_training.pptx")),
       ],
       {
         generate_presentation: {
@@ -1479,7 +1554,7 @@ relationship_memory:
     executor = createExecutorWithStubs(
       [
         toolUseResponse("read_file", { path: "styles.css" }),
-        textResponse("Reviewed styles file."),
+        ...Array.from({ length: 6 }, () => textResponse("Reviewed styles file.")),
       ],
       {
         read_file: { success: true, path: "styles.css", content: "/* styles */" },
@@ -2081,6 +2156,38 @@ relationship_memory:
     expect(step.error).toContain("Verification failed");
   });
 
+  it("retries final verification once via rewind and completes after returning OK", async () => {
+    executor = createExecutorWithStubs(
+      [textResponse("The whitepaper is missing required sections."), textResponse("OK")],
+      {},
+    );
+    (executor as Any).verificationOutcomeV2Enabled = true;
+
+    const step: Any = {
+      id: "verify-rewind-1",
+      description: "Final verification: Review the completed whitepaper for completeness",
+      status: "pending",
+    };
+    (executor as Any).plan = { description: "Plan", steps: [step] };
+
+    await (executor as Any).executeStep(step);
+
+    expect(step.status).toBe("completed");
+    expect(String(step.error || "")).toBe("");
+    expect((executor as Any).callLLMWithRetry).toHaveBeenCalledTimes(2);
+    expect((executor as Any).daemon.logEvent).toHaveBeenCalledWith(
+      "task-1",
+      "log",
+      expect.objectContaining({
+        checkpointId: "verify:verify-rewind-1:rewind_attempt_1",
+        checkpointType: "rewind",
+      }),
+    );
+    expect((executor as Any).blockingVerificationFailedStepIds.has("verify-rewind-1")).toBe(
+      false,
+    );
+  });
+
   it("rethrows abort-like errors without marking step as failed inside executeStep", async () => {
     executor = createExecutorWithStubs([], {});
     (executor as Any).callLLMWithRetry = vi.fn(async () => {
@@ -2508,5 +2615,131 @@ relationship_memory:
     ).toBe(false);
     expect(failedStep.status).toBe("completed");
     expect(executor.planRevisionCount).toBe(0);
+  });
+
+  it("requires artifact_write_required for summary/report steps with a concrete target path and write intent", () => {
+    executor = createExecutorWithStubs([textResponse("OK")], {});
+
+    // This mirrors the exact step that failed: "Write a comprehensive markdown
+    // report ... to /Users/mesut/Desktop/new/ai-agent-trends-2026-03-08.md"
+    const step: Any = {
+      id: "write-report-concrete-path",
+      description:
+        "Write a comprehensive markdown report with sources and summaries to /Users/mesut/Desktop/new/ai-agent-trends-2026-03-08.md.",
+      status: "pending",
+    };
+
+    const contractMode = (executor as Any).resolveStepArtifactContractMode(step);
+    expect(contractMode).toBe("artifact_write_required");
+  });
+
+  it("requires artifact_write_required for report steps phrased as saved-as targets", () => {
+    executor = createExecutorWithStubs([textResponse("OK")], {});
+
+    const step: Any = {
+      id: "write-report-saved-as-path",
+      description:
+        "Synthesize the findings into a report saved as `/Users/mesut/Desktop/new/ai-agent-trends-2026-03-08.md`.",
+      status: "pending",
+    };
+
+    expect((executor as Any).isSummaryStep(step)).toBe(false);
+    expect((executor as Any).resolveStepArtifactContractMode(step)).toBe("artifact_write_required");
+  });
+
+  it("returns artifact_presence_required for summary steps without a concrete target path", () => {
+    executor = createExecutorWithStubs([textResponse("OK")], {});
+
+    const step: Any = {
+      id: "compile-summary-no-path",
+      description: "Compile and summarize the key findings into a comprehensive report.",
+      status: "pending",
+    };
+
+    const contractMode = (executor as Any).resolveStepArtifactContractMode(step);
+    expect(contractMode).toBe("artifact_presence_required");
+  });
+
+  it("does not classify write-to-file report steps as summary steps", () => {
+    executor = createExecutorWithStubs([textResponse("OK")], {});
+
+    const writeReportStep: Any = {
+      id: "write-report-file",
+      description:
+        "Write a comprehensive markdown report to /tmp/output/trends-report.md.",
+      status: "pending",
+    };
+
+    // Step with write intent + concrete path should NOT be a summary step
+    expect((executor as Any).isSummaryStep(writeReportStep)).toBe(false);
+
+    // Step without a path SHOULD be a summary step
+    const pureSummaryStep: Any = {
+      id: "pure-summary",
+      description: "Compile and summarize the research findings.",
+      status: "pending",
+    };
+    expect((executor as Any).isSummaryStep(pureSummaryStep)).toBe(true);
+  });
+
+  it("requires artifact_write_required for save/create steps with explicit file targets", () => {
+    executor = createExecutorWithStubs([textResponse("OK")], {});
+
+    // "save" is an explicit write verb, so write intent + concrete path → artifact_write_required
+    const saveStep: Any = {
+      id: "save-to-file",
+      description: "Save the compiled analysis to /workspace/output/final-analysis.json.",
+      status: "pending",
+    };
+
+    const contractMode = (executor as Any).resolveStepArtifactContractMode(saveStep);
+    expect(contractMode).toBe("artifact_write_required");
+  });
+
+  it("returns artifact_presence_required for compile-only steps even with a file target", () => {
+    executor = createExecutorWithStubs([textResponse("OK")], {});
+
+    // "compile" is not a write verb, so even with a concrete path it stays presence_required
+    const compileStep: Any = {
+      id: "compile-to-file",
+      description: "Compile the analysis into /workspace/output/final-analysis.json.",
+      status: "pending",
+    };
+
+    const contractMode = (executor as Any).resolveStepArtifactContractMode(compileStep);
+    expect(contractMode).toBe("artifact_presence_required");
+  });
+
+  it("extracts file_path from input when recording file creation", () => {
+    executor = createExecutorWithStubs([textResponse("OK")], {});
+    const mockTracker = {
+      getKnowledgeSummary: vi.fn().mockReturnValue(""),
+      getCreatedFiles: vi.fn().mockReturnValue([]),
+      recordFileCreation: vi.fn(),
+      invalidateFileRead: vi.fn(),
+      invalidateDirectoryListing: vi.fn(),
+      recordDirectoryListing: vi.fn(),
+    };
+    (executor as Any).fileOperationTracker = mockTracker;
+    (executor as Any).toolCallDeduplicator = {
+      checkDuplicate: vi.fn().mockReturnValue({ isDuplicate: false }),
+      recordCall: vi.fn(),
+      resetMutationHistoryForNewStep: vi.fn(),
+      clearReadOnlyHistory: vi.fn(),
+    };
+
+    // Call the real recordFileOperation (restore it from prototype)
+    const realRecordFileOperation =
+      TaskExecutor.prototype["recordFileOperation" as keyof TaskExecutor];
+    (executor as Any).recordFileOperation = realRecordFileOperation;
+
+    // Simulate recordFileOperation with file_path in input (no path/filename)
+    (executor as Any).recordFileOperation(
+      "write_file",
+      { file_path: "/tmp/test-output.md" },
+      { success: true },
+    );
+
+    expect(mockTracker.recordFileCreation).toHaveBeenCalledWith("/tmp/test-output.md");
   });
 });
