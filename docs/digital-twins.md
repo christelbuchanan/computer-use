@@ -4,7 +4,7 @@ Digital Twin Personas are pre-built AI agent templates that create role-specific
 
 A persona template bundles everything needed: agent role configuration, proactive heartbeat-driven tasks, recommended skills, a deep system prompt, and cognitive offload categories. Activating a template creates a fully configured agent in one click.
 
-Access from **Mission Control** > **Add Digital Twin**. Digital twins can also be activated through [Plugin Packs](plugin-packs.md) — 7 of the 10 bundled packs link directly to a persona template.
+Access from **Settings** > **Digital Twins** or **Mission Control** > **Add Digital Twin**. For company-ops workflows, you can also open Digital Twins from **Settings** > **Companies** to create operators in company context. Digital twins can also be activated through [Plugin Packs](plugin-packs.md) — 7 of the 10 bundled packs link directly to a persona template.
 
 ---
 
@@ -94,6 +94,10 @@ Execution contract:
 | Template | Autonomy | Key Offload Areas |
 |----------|----------|-------------------|
 | **Technical Writer** | Specialist | Documentation, knowledge curation, review prep |
+| **Founder Office Operator** | Lead | Cross-functional routing, operational triage, founder proxy work |
+| **Company Planner** | Lead | Goal-to-issue translation, planning loops, stalled-work review |
+| **Growth Operator** | Specialist | Funnel review, growth experiments, outbound and acquisition ops |
+| **Customer Ops Lead** | Lead | Service quality, unresolved commitments, support and retention follow-up |
 
 ---
 
@@ -101,8 +105,7 @@ Execution contract:
 
 ### Activating a Template
 
-1. Open **Mission Control** from Settings
-2. Click **Add Digital Twin** in the agents panel (next to Add Agent)
+1. Open **Settings** > **Digital Twins** or open **Mission Control** and click **Add Digital Twin**
 3. Browse templates — filter by category or search by name/tags
 4. Click a template card to open the activation dialog
 5. Customize:
@@ -113,9 +116,36 @@ Execution contract:
 
 The twin appears as a new agent in Mission Control, ready to work.
 
+### Company-Aware Activation
+
+When Digital Twins is opened from **Settings** > **Companies**, or when a company context is already selected:
+
+- the panel shows a company context strip
+- the template gallery defaults to venture/operator recommendations
+- recommended templates such as `Company Planner` and `Founder Office Operator` are promoted first
+- created twins get a persisted company assignment
+- the resulting twin name can be prefixed with the company name for clarity
+
+This turns Digital Twins into the company-operator activation surface instead of a generic template browser.
+
+### Activating Venture Operators
+
+For founder-directed autonomous company setups, the recommended starter set is:
+
+- `Company Planner`
+- `Founder Office Operator`
+
+Expanded operating team:
+
+- `Growth Operator`
+- `Customer Ops Lead`
+
+These templates are intended to pair with the `Venture operator kit` workspace preset and the Mission Control strategic planner.
+
 ### What Activation Creates
 
 - A new **AgentRole** record with the template's capabilities, personality, and system prompt
+- Optional persisted **company assignment** when activation happens in company context
 - **Heartbeat** configured at your chosen interval
 - **Cognitive offload config** embedded in the agent's soul JSON, including enabled proactive tasks
 - Warnings if any recommended skills are not installed (non-blocking — the twin works without them)
@@ -129,6 +159,14 @@ Once activated, a twin operates in two modes.
 ### Proactive Mode (Heartbeat-Driven)
 
 The twin wakes up on its configured interval and automatically runs enabled proactive tasks. Results appear as completed tasks in Mission Control.
+
+For venture/operator twins, lead roles can also use `.cowork/HEARTBEAT.md` as a recurring company-ops checklist when heartbeat maintenance is enabled in `Memory Hub`.
+
+When a twin is linked to a company, the product can also surface it as part of that company's operator set in:
+
+- `Settings > Companies`
+- `Settings > Digital Twins`
+- `Mission Control`
 
 **Software Engineer Twin (30-minute heartbeat):**
 
@@ -349,14 +387,18 @@ See [Plugin Packs](plugin-packs.md) and [Admin Policies](admin-policies.md) for 
 
 For detailed persona descriptions, day-in-the-life scenarios, and expanded coverage of other job areas (design, security, sales, HR, finance, legal, marketing, R&D, executive leadership, and more), see the [Digital Twin Personas Comprehensive Guide](digital-twin-personas-guide.md).
 
+For the full founder-operated autonomous-company workflow, see [Zero-Human Company Operations](zero-human-company.md).
+
 ---
 
 ## Quick Reference
 
 | Action | How |
 |--------|-----|
-| Open Digital Twin gallery | Mission Control > Add Digital Twin |
+| Open Digital Twin gallery | Settings > Digital Twins or Mission Control > Add Digital Twin |
+| Open company-aware twin creation | Settings > Companies > Open Digital Twins |
 | Activate a template | Click template card > customize > Create Digital Twin |
+| Create company-linked operator | Open Digital Twins from a company context, then activate a venture/operator template |
 | Check twin's proactive results | View completed tasks in Mission Control |
 | Assign work to a twin | Drag task to twin's column, or @mention the twin |
 | Edit twin after activation | Double-click the twin in Mission Control agents panel |
