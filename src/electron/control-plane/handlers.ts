@@ -57,6 +57,9 @@ import {
 import { getUserDataDir } from "../utils/user-data-dir";
 import { CanvasManager } from "../canvas/canvas-manager";
 import { TASK_EVENT_BRIDGE_ALLOWLIST } from "./task-event-bridge-contract";
+import { registerControlPlaneCoreMethods } from "./registerControlPlaneCoreMethods";
+import { registerStrategicPlannerMethods } from "./registerStrategicPlannerMethods";
+import { getStrategicPlannerService } from "./StrategicPlannerService";
 
 // Server instance
 let controlPlaneServer: ControlPlaneServer | null = null;
@@ -595,6 +598,7 @@ export async function startControlPlaneFromSettings(
     try {
       if (controlPlaneDeps) {
         registerTaskAndWorkspaceMethods(server, controlPlaneDeps);
+        registerCompanyOpsMethods(server, controlPlaneDeps);
         registerACPMethodsOnServer(server, controlPlaneDeps);
         detachAgentDaemonBridge = attachAgentDaemonTaskBridge(server, controlPlaneDeps.agentDaemon);
       } else {
@@ -680,6 +684,20 @@ function registerACPMethodsOnServer(
   };
 
   registerACPMethods(server, acpDeps);
+}
+
+function registerCompanyOpsMethods(server: ControlPlaneServer, deps: ControlPlaneMethodDeps): void {
+  const db = deps.dbManager.getDatabase();
+  registerControlPlaneCoreMethods({
+    server,
+    db,
+    requireScope,
+  });
+  registerStrategicPlannerMethods({
+    server,
+    plannerService: getStrategicPlannerService(),
+    requireScope,
+  });
 }
 
 /**
@@ -1645,6 +1663,7 @@ export function setupControlPlaneHandlers(
           // Register task/workspace methods + event bridge (enables multi-Mac orchestration).
           if (controlPlaneDeps) {
             registerTaskAndWorkspaceMethods(server, controlPlaneDeps);
+            registerCompanyOpsMethods(server, controlPlaneDeps);
             detachAgentDaemonBridge = attachAgentDaemonTaskBridge(
               server,
               controlPlaneDeps.agentDaemon,
@@ -1794,6 +1813,7 @@ export function setupControlPlaneHandlers(
 
           if (controlPlaneDeps) {
             registerTaskAndWorkspaceMethods(controlPlaneServer, controlPlaneDeps);
+            registerCompanyOpsMethods(controlPlaneServer, controlPlaneDeps);
             registerACPMethodsOnServer(controlPlaneServer, controlPlaneDeps);
             detachAgentDaemonBridge = attachAgentDaemonTaskBridge(
               controlPlaneServer,
@@ -1868,6 +1888,7 @@ export function setupControlPlaneHandlers(
 
           if (controlPlaneDeps) {
             registerTaskAndWorkspaceMethods(controlPlaneServer, controlPlaneDeps);
+            registerCompanyOpsMethods(controlPlaneServer, controlPlaneDeps);
             detachAgentDaemonBridge = attachAgentDaemonTaskBridge(
               controlPlaneServer,
               controlPlaneDeps.agentDaemon,
