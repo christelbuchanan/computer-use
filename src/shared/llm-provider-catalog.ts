@@ -8,6 +8,7 @@ export interface ProviderCatalogEntry {
   compatibility: ProviderCompatibility;
   baseUrl?: string;
   defaultModel: string;
+  knownModels?: string[];
   apiKeyLabel: string;
   apiKeyPlaceholder?: string;
   apiKeyUrl?: string;
@@ -139,6 +140,13 @@ export const CUSTOM_PROVIDER_CATALOG: ProviderCatalogEntry[] = [
     compatibility: "openai",
     baseUrl: "https://api.minimax.io/v1",
     defaultModel: "MiniMax-M2.1",
+    knownModels: [
+      "MiniMax-M2.5",
+      "MiniMax-M2.5-highspeed",
+      "MiniMax-M2.1",
+      "MiniMax-M2.1-highspeed",
+      "MiniMax-M2",
+    ],
     apiKeyLabel: "API Key",
     apiKeyPlaceholder: "minimax-...",
   },
@@ -148,6 +156,13 @@ export const CUSTOM_PROVIDER_CATALOG: ProviderCatalogEntry[] = [
     compatibility: "anthropic",
     baseUrl: "https://api.minimax.io/anthropic",
     defaultModel: "MiniMax-M2.1",
+    knownModels: [
+      "MiniMax-M2.5",
+      "MiniMax-M2.5-highspeed",
+      "MiniMax-M2.1",
+      "MiniMax-M2.1-highspeed",
+      "MiniMax-M2",
+    ],
     apiKeyLabel: "API Key / Token",
     apiKeyPlaceholder: "minimax-...",
   },
