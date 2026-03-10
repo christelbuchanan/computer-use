@@ -10,7 +10,12 @@ import { IPC_CHANNELS } from "../../shared/types";
 import { DailyBriefingService } from "../briefing/DailyBriefingService";
 import { Briefing, BriefingConfig } from "../briefing/types";
 
-export function setupBriefingHandlers(briefingService: DailyBriefingService): void {
+export function setupBriefingHandlers(
+  briefingService: DailyBriefingService,
+  opts?: {
+    onConfigSaved?: (workspaceId: string, config: BriefingConfig) => Promise<void> | void;
+  },
+): void {
   ipcMain.handle(
     IPC_CHANNELS.BRIEFING_GET_LATEST,
     async (_, workspaceId: string): Promise<Briefing | null> => {
@@ -28,10 +33,12 @@ export function setupBriefingHandlers(briefingService: DailyBriefingService): vo
   ipcMain.handle(
     IPC_CHANNELS.BRIEFING_SAVE_CONFIG,
     async (_, data: { workspaceId: string; config: Partial<BriefingConfig> }): Promise<void> => {
-      briefingService.saveConfig(data.workspaceId, {
+      const nextConfig = {
         ...briefingService.getConfig(data.workspaceId),
         ...data.config,
-      } as BriefingConfig);
+      } as BriefingConfig;
+      briefingService.saveConfig(data.workspaceId, nextConfig);
+      await opts?.onConfigSaved?.(data.workspaceId, nextConfig);
     },
   );
 }
