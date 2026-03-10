@@ -9,7 +9,19 @@ import {
   MentionData,
   TaskBoardEvent,
 } from "../../electron/preload";
-import type { Task, Workspace } from "../../shared/types";
+import type {
+  Company,
+  Goal,
+  HeartbeatRun,
+  HeartbeatRunEvent,
+  Issue,
+  IssueComment,
+  Project,
+  StrategicPlannerConfig,
+  StrategicPlannerRun,
+  Task,
+  Workspace,
+} from "../../shared/types";
 import { TASK_EVENT_STATUS_MAP } from "../../shared/task-event-status-map";
 import { AgentRoleEditor } from "./AgentRoleEditor";
 import { ActivityFeed } from "./ActivityFeed";
@@ -55,13 +67,29 @@ const AUTONOMY_BADGES: Record<string, { label: string; color: string }> = {
 
 interface MissionControlPanelProps {
   onClose?: () => void;
+  initialCompanyId?: string | null;
 }
 
-export function MissionControlPanel({ onClose: _onClose }: MissionControlPanelProps) {
+export function MissionControlPanel({
+  onClose: _onClose,
+  initialCompanyId = null,
+}: MissionControlPanelProps) {
   const [workspaces, setWorkspaces] = useState<Workspace[]>([]);
   const [selectedWorkspaceId, setSelectedWorkspaceId] = useState<string | null>(null);
+  const [companies, setCompanies] = useState<Company[]>([]);
+  const [selectedCompanyId, setSelectedCompanyId] = useState<string | null>(null);
   const [agents, setAgents] = useState<AgentRole[]>([]);
   const [tasks, setTasks] = useState<Task[]>([]);
+  const [goals, setGoals] = useState<Goal[]>([]);
+  const [projects, setProjects] = useState<Project[]>([]);
+  const [issues, setIssues] = useState<Issue[]>([]);
+  const [selectedGoalFilter, setSelectedGoalFilter] = useState<string>("all");
+  const [selectedProjectFilter, setSelectedProjectFilter] = useState<string>("all");
+  const [selectedIssueId, setSelectedIssueId] = useState<string | null>(null);
+  const [selectedIssueRunId, setSelectedIssueRunId] = useState<string | null>(null);
+  const [issueComments, setIssueComments] = useState<IssueComment[]>([]);
+  const [issueRuns, setIssueRuns] = useState<HeartbeatRun[]>([]);
+  const [runEvents, setRunEvents] = useState<HeartbeatRunEvent[]>([]);
   const [activities, setActivities] = useState<ActivityData[]>([]);
   const [mentions, setMentions] = useState<MentionData[]>([]);
   const [heartbeatStatuses, setHeartbeatStatuses] = useState<HeartbeatStatusInfo[]>([]);
@@ -73,7 +101,7 @@ export function MissionControlPanel({ onClose: _onClose }: MissionControlPanelPr
   const [agentError, setAgentError] = useState<string | null>(null);
   const [selectedAgent, setSelectedAgent] = useState<string | null>(null);
   const [selectedTaskId, setSelectedTaskId] = useState<string | null>(null);
-  const [rightTab, setRightTab] = useState<"feed" | "task">("feed");
+  const [rightTab, setRightTab] = useState<"feed" | "task" | "ops">("feed");
   const [feedFilter, setFeedFilter] = useState<"all" | "tasks" | "comments" | "status">("all");
   const [currentTime, setCurrentTime] = useState(new Date());
   const [commentText, setCommentText] = useState("");
@@ -82,6 +110,12 @@ export function MissionControlPanel({ onClose: _onClose }: MissionControlPanelPr
   const [teamsOpen, setTeamsOpen] = useState(false);
   const [reviewsOpen, setReviewsOpen] = useState(false);
   const [dragOverColumn, setDragOverColumn] = useState<string | null>(null);
+  const [plannerConfig, setPlannerConfig] = useState<StrategicPlannerConfig | null>(null);
+  const [plannerRuns, setPlannerRuns] = useState<StrategicPlannerRun[]>([]);
+  const [plannerLoading, setPlannerLoading] = useState(false);
+  const [plannerSaving, setPlannerSaving] = useState(false);
+  const [plannerRunning, setPlannerRunning] = useState(false);
+  const [selectedPlannerRunId, setSelectedPlannerRunId] = useState<string | null>(null);
   const tasksRef = useRef<Task[]>([]);
   const workspaceIdRef = useRef<string | null>(null);
   const agentContext = useAgentContext();
@@ -141,6 +175,86 @@ export function MissionControlPanel({ onClose: _onClose }: MissionControlPanelPr
     }
   }, [selectedWorkspaceId]);
 
+  const loadCompanies = useCallback(async () => {
+    try {
+      const loaded = await window.electronAPI.listCompanies();
+      setCompanies(loaded);
+      setSelectedCompanyId((prev) => {
+        if (prev && loaded.some((company) => company.id === prev)) return prev;
+        if (initialCompanyId && loaded.some((company) => company.id === initialCompanyId)) {
+          return initialCompanyId;
+        }
+        return loaded[0]?.id || null;
+      });
+    } catch (err) {
+      console.error("Failed to load companies:", err);
+    }
+  }, [initialCompanyId]);
+
+  const loadPlannerData = useCallback(async (companyId: string) => {
+    try {
+      setPlannerLoading(true);
+      const [config, runs] = await Promise.all([
+        window.electronAPI.getPlannerConfig(companyId),
+        window.electronAPI.listPlannerRuns(companyId, 6),
+      ]);
+      setPlannerConfig(config);
+      setPlannerRuns(runs);
+      setSelectedPlannerRunId((prev) =>
+        prev && runs.some((run) => run.id === prev) ? prev : runs[0]?.id || null,
+      );
+    } catch (err) {
+      console.error("Failed to load planner data:", err);
+      setPlannerConfig(null);
+      setPlannerRuns([]);
+      setSelectedPlannerRunId(null);
+    } finally {
+      setPlannerLoading(false);
+    }
+  }, []);
+
+  const loadCompanyOps = useCallback(async (companyId: string) => {
+    try {
+      const [loadedGoals, loadedProjects, loadedIssues] = await Promise.all([
+        window.electronAPI.listCompanyGoals(companyId),
+        window.electronAPI.listCompanyProjects(companyId),
+        window.electronAPI.listCompanyIssues(companyId, 100),
+      ]);
+      setGoals(loadedGoals);
+      setProjects(loadedProjects);
+      setIssues(loadedIssues);
+      setSelectedIssueId((prev) =>
+        prev && loadedIssues.some((issue) => issue.id === prev) ? prev : loadedIssues[0]?.id || null,
+      );
+    } catch (err) {
+      console.error("Failed to load company ops data:", err);
+      setGoals([]);
+      setProjects([]);
+      setIssues([]);
+      setSelectedIssueId(null);
+    }
+  }, []);
+
+  const loadIssueContext = useCallback(async (companyId: string, issueId: string) => {
+    try {
+      const [comments, runs] = await Promise.all([
+        window.electronAPI.listIssueComments(issueId),
+        window.electronAPI.listCompanyRuns(companyId, issueId, 20),
+      ]);
+      setIssueComments(comments);
+      setIssueRuns(runs);
+      setSelectedIssueRunId((prev) =>
+        prev && runs.some((run) => run.id === prev) ? prev : runs[0]?.id || null,
+      );
+    } catch (err) {
+      console.error("Failed to load issue context:", err);
+      setIssueComments([]);
+      setIssueRuns([]);
+      setSelectedIssueRunId(null);
+      setRunEvents([]);
+    }
+  }, []);
+
   const loadData = useCallback(async (workspaceId: string) => {
     try {
       setLoading(true);
@@ -169,42 +283,104 @@ export function MissionControlPanel({ onClose: _onClose }: MissionControlPanelPr
   }, []);
 
   const handleManualRefresh = useCallback(async () => {
-    if (!selectedWorkspaceId) return;
+    if (!selectedWorkspaceId && !selectedCompanyId) return;
     try {
       setIsRefreshing(true);
-      const [statuses, loadedTasks, loadedActivities, loadedMentions] = await Promise.all([
-        window.electronAPI.getAllHeartbeatStatus().catch(() => []),
-        window.electronAPI.listTasks().catch(() => []),
-        window.electronAPI
-          .listActivities({ workspaceId: selectedWorkspaceId, limit: 200 })
-          .catch(() => []),
-        window.electronAPI
-          .listMentions({ workspaceId: selectedWorkspaceId, limit: 200 })
-          .catch(() => []),
-      ]);
-      setHeartbeatStatuses(statuses);
-      const workspaceTasks = loadedTasks.filter(
-        (task: Task) => task.workspaceId === selectedWorkspaceId,
-      );
-      setTasks(workspaceTasks);
-      setActivities(loadedActivities);
-      setMentions(loadedMentions);
+      if (selectedWorkspaceId) {
+        const [statuses, loadedTasks, loadedActivities, loadedMentions] = await Promise.all([
+          window.electronAPI.getAllHeartbeatStatus().catch(() => []),
+          window.electronAPI.listTasks().catch(() => []),
+          window.electronAPI
+            .listActivities({ workspaceId: selectedWorkspaceId, limit: 200 })
+            .catch(() => []),
+          window.electronAPI
+            .listMentions({ workspaceId: selectedWorkspaceId, limit: 200 })
+            .catch(() => []),
+        ]);
+        setHeartbeatStatuses(statuses);
+        const workspaceTasks = loadedTasks.filter(
+          (task: Task) => task.workspaceId === selectedWorkspaceId,
+        );
+        setTasks(workspaceTasks);
+        setActivities(loadedActivities);
+        setMentions(loadedMentions);
+      }
+      if (selectedCompanyId) {
+        await loadPlannerData(selectedCompanyId);
+        await loadCompanyOps(selectedCompanyId);
+      }
     } catch (err) {
       console.error("Failed to refresh mission control data:", err);
     } finally {
       setIsRefreshing(false);
     }
-  }, [selectedWorkspaceId]);
+  }, [loadCompanyOps, loadPlannerData, selectedCompanyId, selectedWorkspaceId]);
 
   useEffect(() => {
     loadWorkspaces();
   }, [loadWorkspaces]);
 
   useEffect(() => {
+    loadCompanies();
+  }, [loadCompanies]);
+
+  useEffect(() => {
     if (selectedWorkspaceId) {
       loadData(selectedWorkspaceId);
     }
   }, [selectedWorkspaceId, loadData]);
+
+  useEffect(() => {
+    if (selectedCompanyId) {
+      void loadPlannerData(selectedCompanyId);
+      void loadCompanyOps(selectedCompanyId);
+    } else {
+      setPlannerConfig(null);
+      setPlannerRuns([]);
+      setGoals([]);
+      setProjects([]);
+      setIssues([]);
+      setSelectedPlannerRunId(null);
+      setSelectedIssueId(null);
+      setSelectedIssueRunId(null);
+      setIssueComments([]);
+      setIssueRuns([]);
+      setRunEvents([]);
+    }
+    setSelectedGoalFilter("all");
+    setSelectedProjectFilter("all");
+  }, [selectedCompanyId, loadCompanyOps, loadPlannerData]);
+
+  useEffect(() => {
+    if (!initialCompanyId) return;
+    if (companies.some((company) => company.id === initialCompanyId)) {
+      setSelectedCompanyId(initialCompanyId);
+    }
+  }, [companies, initialCompanyId]);
+
+  useEffect(() => {
+    if (selectedCompanyId && selectedIssueId) {
+      void loadIssueContext(selectedCompanyId, selectedIssueId);
+    } else {
+      setIssueComments([]);
+      setIssueRuns([]);
+      setRunEvents([]);
+    }
+  }, [loadIssueContext, selectedCompanyId, selectedIssueId]);
+
+  useEffect(() => {
+    if (selectedIssueRunId) {
+      void window.electronAPI
+        .listRunEvents(selectedIssueRunId)
+        .then((events) => setRunEvents(events))
+        .catch((err) => {
+          console.error("Failed to load run events:", err);
+          setRunEvents([]);
+        });
+    } else {
+      setRunEvents([]);
+    }
+  }, [selectedIssueRunId]);
 
   // Set up event subscriptions - these use refs to avoid stale closures
   // and minimize re-subscription when workspace changes
@@ -526,6 +702,53 @@ export function MissionControlPanel({ onClose: _onClose }: MissionControlPanelPr
     () => workspaces.find((workspace) => workspace.id === selectedWorkspaceId) || null,
     [workspaces, selectedWorkspaceId],
   );
+  const selectedCompany = useMemo(
+    () => companies.find((company) => company.id === selectedCompanyId) || null,
+    [companies, selectedCompanyId],
+  );
+  const selectedPlannerRun = useMemo(
+    () => plannerRuns.find((run) => run.id === selectedPlannerRunId) || null,
+    [plannerRuns, selectedPlannerRunId],
+  );
+  const plannerManagedIssues = useMemo(
+    () => issues.filter((issue) => issue.metadata?.plannerManaged === true),
+    [issues],
+  );
+  const selectedIssue = useMemo(
+    () => issues.find((issue) => issue.id === selectedIssueId) || null,
+    [issues, selectedIssueId],
+  );
+  const selectedIssueRun = useMemo(
+    () => issueRuns.find((run) => run.id === selectedIssueRunId) || null,
+    [issueRuns, selectedIssueRunId],
+  );
+  const filteredIssues = useMemo(
+    () =>
+      plannerManagedIssues.filter((issue) => {
+        if (selectedGoalFilter !== "all" && issue.goalId !== selectedGoalFilter) return false;
+        if (selectedProjectFilter !== "all" && issue.projectId !== selectedProjectFilter) return false;
+        return true;
+      }),
+    [plannerManagedIssues, selectedGoalFilter, selectedProjectFilter],
+  );
+  useEffect(() => {
+    setSelectedIssueId((prev) =>
+      prev && filteredIssues.some((issue) => issue.id === prev) ? prev : filteredIssues[0]?.id || null,
+    );
+  }, [filteredIssues]);
+  const plannerRunIssueIds = useMemo(() => {
+    const metadata = selectedPlannerRun?.metadata as
+      | {
+          createdIssueIds?: string[];
+          updatedIssueIds?: string[];
+        }
+      | undefined;
+    return new Set([...(metadata?.createdIssueIds || []), ...(metadata?.updatedIssueIds || [])]);
+  }, [selectedPlannerRun]);
+  const plannerRunIssues = useMemo(
+    () => issues.filter((issue) => plannerRunIssueIds.has(issue.id)),
+    [issues, plannerRunIssueIds],
+  );
   const tasksByAgent = useMemo(() => {
     const map = new Map<string, Task[]>();
     tasks.forEach((task) => {
@@ -597,6 +820,55 @@ export function MissionControlPanel({ onClose: _onClose }: MissionControlPanelPr
     }
   }, []);
 
+  const handlePlannerConfigChange = useCallback(
+    async (
+      updates: Partial<{
+        enabled: boolean;
+        intervalMinutes: number;
+        planningWorkspaceId: string | null;
+        plannerAgentRoleId: string | null;
+        autoDispatch: boolean;
+        approvalPreset: "manual" | "safe_autonomy" | "founder_edge";
+        maxIssuesPerRun: number;
+        staleIssueDays: number;
+      }>,
+    ) => {
+      if (!selectedCompanyId) return;
+      try {
+        setPlannerSaving(true);
+        const next = await window.electronAPI.updatePlannerConfig({
+          companyId: selectedCompanyId,
+          ...updates,
+        });
+        setPlannerConfig(next);
+      } catch (err) {
+        console.error("Failed to update planner config:", err);
+      } finally {
+        setPlannerSaving(false);
+      }
+    },
+    [selectedCompanyId],
+  );
+
+  const handleRunPlanner = useCallback(async () => {
+    if (!selectedCompanyId) return;
+    try {
+      setPlannerRunning(true);
+      const run = await window.electronAPI.runPlanner(selectedCompanyId);
+      setPlannerRuns((prev) => [run, ...prev].slice(0, 6));
+      setSelectedPlannerRunId(run.id);
+      await loadPlannerData(selectedCompanyId);
+      await loadCompanyOps(selectedCompanyId);
+      if (selectedWorkspaceId) {
+        await handleManualRefresh();
+      }
+    } catch (err) {
+      console.error("Failed to run planner:", err);
+    } finally {
+      setPlannerRunning(false);
+    }
+  }, [handleManualRefresh, loadCompanyOps, loadPlannerData, selectedCompanyId, selectedWorkspaceId]);
+
   const handlePostComment = useCallback(async () => {
     if (!selectedWorkspaceId || !selectedTask) return;
     const text = commentText.trim();
@@ -647,21 +919,27 @@ export function MissionControlPanel({ onClose: _onClose }: MissionControlPanelPr
       };
     });
 
-    const heartbeatItems = events.map((event) => ({
-      id: `event-${event.timestamp}`,
-      type: "status" as const,
-      agentId: event.agentRoleId,
-      agentName: event.agentName,
-      content:
-        event.type === "work_found"
-          ? agentContext.getUiCopy("mcHeartbeatFound", {
-              mentions: event.result?.pendingMentions || 0,
-              tasks: event.result?.assignedTasks || 0,
-            })
-          : event.type,
-      timestamp: event.timestamp,
-      taskId: undefined as string | undefined,
-    }));
+    const heartbeatItems = events
+      .filter((event) => {
+        if (event.type === "completed") return false;
+        if (event.type === "no_work" && event.result?.silent) return false;
+        return true;
+      })
+      .map((event) => ({
+        id: `event-${event.timestamp}`,
+        type: "status" as const,
+        agentId: event.agentRoleId,
+        agentName: event.agentName,
+        content:
+          event.type === "work_found"
+            ? agentContext.getUiCopy("mcHeartbeatFound", {
+                mentions: event.result?.pendingMentions || 0,
+                tasks: event.result?.assignedTasks || 0,
+              })
+            : event.type,
+        timestamp: event.timestamp,
+        taskId: undefined as string | undefined,
+      }));
 
     return [...heartbeatItems, ...activityItems]
       .filter((item) => {
@@ -747,7 +1025,7 @@ export function MissionControlPanel({ onClose: _onClose }: MissionControlPanelPr
           <button
             className="mc-refresh-btn"
             onClick={handleManualRefresh}
-            disabled={!selectedWorkspaceId || isRefreshing}
+            disabled={(!selectedWorkspaceId && !selectedCompanyId) || isRefreshing}
             title="Refresh mission control data"
           >
             {isRefreshing ? "Refreshing..." : "Refresh"}
@@ -783,6 +1061,198 @@ export function MissionControlPanel({ onClose: _onClose }: MissionControlPanelPr
           <span className="mc-status-badge online">{agentContext.getUiCopy("mcStatusOnline")}</span>
         </div>
       </header>
+
+      {selectedCompany && (
+        <section className="mc-planner-strip">
+          <div className="mc-planner-summary">
+            <div className="mc-planner-title-row">
+              <h2>Strategic Planner</h2>
+              <span className={`mc-planner-status ${plannerConfig?.enabled ? "enabled" : "disabled"}`}>
+                {plannerConfig?.enabled ? "Enabled" : "Disabled"}
+              </span>
+              {plannerSaving && <span className="mc-planner-muted">Saving...</span>}
+              {plannerLoading && <span className="mc-planner-muted">Loading...</span>}
+            </div>
+            <div className="mc-planner-company">
+              <span className="mc-workspace-label">Company</span>
+              <select
+                value={selectedCompanyId || ""}
+                onChange={(e) => setSelectedCompanyId(e.target.value)}
+              >
+                {companies.map((company) => (
+                  <option key={company.id} value={company.id}>
+                    {company.name}
+                  </option>
+                ))}
+              </select>
+            </div>
+          </div>
+          <div className="mc-planner-metrics">
+            <div className="mc-planner-metric">
+              <span className="mc-planner-metric-value">{goals.filter((goal) => goal.status === "active").length}</span>
+              <span className="mc-planner-metric-label">Active goals</span>
+            </div>
+            <div className="mc-planner-metric">
+              <span className="mc-planner-metric-value">
+                {projects.filter((project) => project.status !== "completed" && project.status !== "archived").length}
+              </span>
+              <span className="mc-planner-metric-label">Open projects</span>
+            </div>
+            <div className="mc-planner-metric">
+              <span className="mc-planner-metric-value">
+                {
+                  plannerManagedIssues.filter(
+                    (issue) => issue.status !== "done" && issue.status !== "cancelled",
+                  ).length
+                }
+              </span>
+              <span className="mc-planner-metric-label">Managed issues</span>
+            </div>
+            <div className="mc-planner-metric">
+              <span className="mc-planner-metric-value">{plannerRuns.length}</span>
+              <span className="mc-planner-metric-label">Recent runs</span>
+            </div>
+          </div>
+          {plannerConfig && (
+            <div className="mc-planner-controls">
+              <label className="mc-planner-field checkbox">
+                <input
+                  type="checkbox"
+                  checked={plannerConfig.enabled}
+                  onChange={(e) => void handlePlannerConfigChange({ enabled: e.target.checked })}
+                />
+                <span>Schedule planner runs</span>
+              </label>
+              <label className="mc-planner-field checkbox">
+                <input
+                  type="checkbox"
+                  checked={plannerConfig.autoDispatch}
+                  onChange={(e) => void handlePlannerConfigChange({ autoDispatch: e.target.checked })}
+                />
+                <span>Auto-dispatch new issues</span>
+              </label>
+              <label className="mc-planner-field">
+                <span>Interval</span>
+                <input
+                  type="number"
+                  min={5}
+                  step={5}
+                  value={plannerConfig.intervalMinutes}
+                  onChange={(e) =>
+                    void handlePlannerConfigChange({
+                      intervalMinutes: Math.max(5, Number(e.target.value) || 5),
+                    })
+                  }
+                />
+              </label>
+              <label className="mc-planner-field">
+                <span>Workspace</span>
+                <select
+                  value={plannerConfig.planningWorkspaceId || ""}
+                  onChange={(e) =>
+                    void handlePlannerConfigChange({
+                      planningWorkspaceId: e.target.value || null,
+                    })
+                  }
+                >
+                  <option value="">None</option>
+                  {workspaces.map((workspace) => (
+                    <option key={workspace.id} value={workspace.id}>
+                      {workspace.name}
+                    </option>
+                  ))}
+                </select>
+              </label>
+              <label className="mc-planner-field">
+                <span>Planner agent</span>
+                <select
+                  value={plannerConfig.plannerAgentRoleId || ""}
+                  onChange={(e) =>
+                    void handlePlannerConfigChange({
+                      plannerAgentRoleId: e.target.value || null,
+                    })
+                  }
+                >
+                  <option value="">Auto-pick</option>
+                  {agents
+                    .filter((agent) => agent.isActive)
+                    .map((agent) => (
+                      <option key={agent.id} value={agent.id}>
+                        {agent.displayName}
+                      </option>
+                    ))}
+                </select>
+              </label>
+              <label className="mc-planner-field">
+                <span>Approval preset</span>
+                <select
+                  value={plannerConfig.approvalPreset}
+                  onChange={(e) =>
+                    void handlePlannerConfigChange({
+                      approvalPreset: e.target.value as "manual" | "safe_autonomy" | "founder_edge",
+                    })
+                  }
+                >
+                  <option value="manual">Manual</option>
+                  <option value="safe_autonomy">Safe autonomy</option>
+                  <option value="founder_edge">Founder edge</option>
+                </select>
+              </label>
+              <button
+                className="mc-refresh-btn"
+                onClick={() => void handleRunPlanner()}
+                disabled={plannerRunning}
+                title="Run planner immediately"
+              >
+                {plannerRunning ? "Running..." : "Run Planner"}
+              </button>
+            </div>
+          )}
+          <div className="mc-planner-runs">
+            {plannerRuns.length === 0 ? (
+              <span className="mc-planner-muted">No planner runs yet.</span>
+            ) : (
+              plannerRuns.map((run) => (
+                <button
+                  key={run.id}
+                  className={`mc-planner-run ${selectedPlannerRunId === run.id ? "selected" : ""}`}
+                  onClick={() => {
+                    setSelectedPlannerRunId(run.id);
+                    const metadata = run.metadata as
+                      | {
+                          createdIssueIds?: string[];
+                          updatedIssueIds?: string[];
+                        }
+                      | undefined;
+                    const nextIssueId = metadata?.createdIssueIds?.[0] || metadata?.updatedIssueIds?.[0];
+                    if (nextIssueId) {
+                      setSelectedIssueId(nextIssueId);
+                    }
+                    setRightTab("ops");
+                  }}
+                  type="button"
+                >
+                  <div className="mc-planner-run-main">
+                    <span className={`mc-planner-run-status ${run.status}`}>{run.status}</span>
+                    <span className="mc-planner-run-trigger">{run.trigger}</span>
+                    <span className="mc-planner-run-summary">
+                      {run.summary || `${run.createdIssueCount} created, ${run.dispatchedTaskCount} dispatched`}
+                    </span>
+                  </div>
+                  <span className="mc-planner-run-time">
+                    {new Date(run.createdAt).toLocaleString([], {
+                      month: "short",
+                      day: "numeric",
+                      hour: "2-digit",
+                      minute: "2-digit",
+                    })}
+                  </span>
+                </button>
+              ))
+            )}
+          </div>
+        </section>
+      )}
 
       {/* Main Content */}
       <div className="mc-content">
@@ -969,6 +1439,12 @@ export function MissionControlPanel({ onClose: _onClose }: MissionControlPanelPr
               >
                 {agentContext.getUiCopy("mcTaskTab")}
               </button>
+              <button
+                className={`mc-tab-btn ${rightTab === "ops" ? "active" : ""}`}
+                onClick={() => setRightTab("ops")}
+              >
+                Ops
+              </button>
             </div>
             {rightTab === "task" && selectedTask && (
               <button className="mc-clear-task" onClick={() => setSelectedTaskId(null)}>
@@ -1037,6 +1513,341 @@ export function MissionControlPanel({ onClose: _onClose }: MissionControlPanelPr
                 )}
               </div>
             </>
+          ) : rightTab === "ops" ? (
+            <div className="mc-ops-panel">
+              <div className="mc-ops-section">
+                <h3>Company snapshot</h3>
+                {selectedCompany ? (
+                  <>
+                    <p className="mc-ops-company-name">{selectedCompany.name}</p>
+                    {selectedCompany.description && (
+                      <p className="mc-ops-company-description">{selectedCompany.description}</p>
+                    )}
+                    <div className="mc-ops-stats">
+                      <div className="mc-ops-stat-card">
+                        <span className="mc-ops-stat-value">{goals.length}</span>
+                        <span className="mc-ops-stat-label">Goals</span>
+                      </div>
+                      <div className="mc-ops-stat-card">
+                        <span className="mc-ops-stat-value">{projects.length}</span>
+                        <span className="mc-ops-stat-label">Projects</span>
+                      </div>
+                      <div className="mc-ops-stat-card">
+                        <span className="mc-ops-stat-value">{plannerManagedIssues.length}</span>
+                        <span className="mc-ops-stat-label">Planner issues</span>
+                      </div>
+                    </div>
+                  </>
+                ) : (
+                  <div className="mc-feed-empty">No company selected.</div>
+                )}
+              </div>
+
+              <div className="mc-ops-section">
+                <h3>Selected planner cycle</h3>
+                {selectedPlannerRun ? (
+                  <div className="mc-ops-run-card">
+                    <div className="mc-ops-row">
+                      <div>
+                        <div className="mc-ops-row-title">
+                          {selectedPlannerRun.summary || "Planner cycle"}
+                        </div>
+                        <div className="mc-ops-row-subtitle">
+                          {selectedPlannerRun.trigger} · {formatRelativeTime(selectedPlannerRun.createdAt)}
+                        </div>
+                      </div>
+                      <span className={`mc-ops-pill status-${selectedPlannerRun.status}`}>
+                        {selectedPlannerRun.status}
+                      </span>
+                    </div>
+                    <div className="mc-ops-run-metrics">
+                      <span>{selectedPlannerRun.createdIssueCount} created</span>
+                      <span>{selectedPlannerRun.updatedIssueCount} updated</span>
+                      <span>{selectedPlannerRun.dispatchedTaskCount} dispatched</span>
+                    </div>
+                    <div className="mc-ops-list">
+                      {plannerRunIssues.length === 0 ? (
+                        <div className="mc-feed-empty">No issue details for this planner cycle.</div>
+                      ) : (
+                        plannerRunIssues.map((issue) => (
+                          <button
+                            key={issue.id}
+                            type="button"
+                            className={`mc-ops-row mc-ops-row-button ${selectedIssueId === issue.id ? "selected" : ""}`}
+                            onClick={() => setSelectedIssueId(issue.id)}
+                          >
+                            <div>
+                              <div className="mc-ops-row-title">{issue.title}</div>
+                              <div className="mc-ops-row-subtitle">
+                                {issue.projectId ? "Project-linked" : "Goal-linked"}
+                              </div>
+                            </div>
+                            <span className={`mc-ops-pill status-${issue.status}`}>{issue.status}</span>
+                          </button>
+                        ))
+                      )}
+                    </div>
+                  </div>
+                ) : (
+                  <div className="mc-feed-empty">Select a planner run above to inspect its issue set.</div>
+                )}
+              </div>
+
+              <div className="mc-ops-section">
+                <h3>Goals</h3>
+                <div className="mc-ops-list">
+                  {goals.length === 0 ? (
+                    <div className="mc-feed-empty">No goals yet.</div>
+                  ) : (
+                    goals.slice(0, 8).map((goal) => (
+                      <div key={goal.id} className="mc-ops-row">
+                        <div>
+                          <div className="mc-ops-row-title">{goal.title}</div>
+                          {goal.description && (
+                            <div className="mc-ops-row-subtitle">{goal.description}</div>
+                          )}
+                        </div>
+                        <span className={`mc-ops-pill status-${goal.status}`}>{goal.status}</span>
+                      </div>
+                    ))
+                  )}
+                </div>
+              </div>
+
+              <div className="mc-ops-section">
+                <h3>Projects</h3>
+                <div className="mc-ops-list">
+                  {projects.length === 0 ? (
+                    <div className="mc-feed-empty">No projects yet.</div>
+                  ) : (
+                    projects.slice(0, 8).map((project) => (
+                      <div key={project.id} className="mc-ops-row">
+                        <div>
+                          <div className="mc-ops-row-title">{project.name}</div>
+                          {project.description && (
+                            <div className="mc-ops-row-subtitle">{project.description}</div>
+                          )}
+                        </div>
+                        <span className={`mc-ops-pill status-${project.status}`}>{project.status}</span>
+                      </div>
+                    ))
+                  )}
+                </div>
+              </div>
+
+              <div className="mc-ops-section">
+                <h3>Planner-managed issues</h3>
+                <div className="mc-ops-filters">
+                  <label className="mc-ops-filter">
+                    <span>Goal</span>
+                    <select
+                      value={selectedGoalFilter}
+                      onChange={(e) => setSelectedGoalFilter(e.target.value)}
+                    >
+                      <option value="all">All goals</option>
+                      {goals.map((goal) => (
+                        <option key={goal.id} value={goal.id}>
+                          {goal.title}
+                        </option>
+                      ))}
+                    </select>
+                  </label>
+                  <label className="mc-ops-filter">
+                    <span>Project</span>
+                    <select
+                      value={selectedProjectFilter}
+                      onChange={(e) => setSelectedProjectFilter(e.target.value)}
+                    >
+                      <option value="all">All projects</option>
+                      {projects.map((project) => (
+                        <option key={project.id} value={project.id}>
+                          {project.name}
+                        </option>
+                      ))}
+                    </select>
+                  </label>
+                </div>
+                <div className="mc-ops-list">
+                  {filteredIssues.length === 0 ? (
+                    <div className="mc-feed-empty">No planner-managed issues yet.</div>
+                  ) : (
+                    filteredIssues.slice(0, 12).map((issue) => (
+                      <button
+                        key={issue.id}
+                        type="button"
+                        className={`mc-ops-row mc-ops-row-button ${selectedIssueId === issue.id ? "selected" : ""}`}
+                        onClick={() => setSelectedIssueId(issue.id)}
+                      >
+                        <div>
+                          <div className="mc-ops-row-title">{issue.title}</div>
+                          <div className="mc-ops-row-subtitle">
+                            {(getAgent(issue.assigneeAgentRoleId)?.displayName || "Unassigned") +
+                              (issue.taskId ? ` · task linked` : "")}
+                          </div>
+                        </div>
+                        <span className={`mc-ops-pill status-${issue.status}`}>{issue.status}</span>
+                      </button>
+                    ))
+                  )}
+                </div>
+              </div>
+
+              <div className="mc-ops-section">
+                <h3>Selected issue</h3>
+                {selectedIssue ? (
+                  <div className="mc-ops-run-card">
+                    <div className="mc-ops-row">
+                      <div>
+                        <div className="mc-ops-row-title">{selectedIssue.title}</div>
+                        <div className="mc-ops-row-subtitle">
+                          {(selectedIssue.goalId
+                            ? goals.find((goal) => goal.id === selectedIssue.goalId)?.title
+                            : "No goal") || "No goal"}
+                          {" · "}
+                          {(selectedIssue.projectId
+                            ? projects.find((project) => project.id === selectedIssue.projectId)?.name
+                            : "No project") || "No project"}
+                        </div>
+                      </div>
+                      <span className={`mc-ops-pill status-${selectedIssue.status}`}>
+                        {selectedIssue.status}
+                      </span>
+                    </div>
+                    {selectedIssue.description && (
+                      <div className="mc-ops-company-description">{selectedIssue.description}</div>
+                    )}
+                    <div className="mc-ops-actions">
+                      <button
+                        className="mc-refresh-btn"
+                        disabled={!selectedIssue.taskId}
+                        onClick={async () => {
+                          if (!selectedIssue.taskId) return;
+                          const task = await window.electronAPI.getTask(selectedIssue.taskId);
+                          if (!task) return;
+                          setSelectedTaskId(task.id);
+                          setRightTab("task");
+                        }}
+                      >
+                        Open linked task
+                      </button>
+                    </div>
+                    <div className="mc-ops-split">
+                      <div className="mc-ops-subsection">
+                        <h4>Comments</h4>
+                        <div className="mc-ops-list">
+                          {issueComments.length === 0 ? (
+                            <div className="mc-feed-empty">No issue comments yet.</div>
+                          ) : (
+                            issueComments.slice(-6).map((comment) => (
+                              <div key={comment.id} className="mc-ops-row">
+                                <div>
+                                  <div className="mc-ops-row-title">
+                                    {comment.authorType === "agent"
+                                      ? getAgent(comment.authorAgentRoleId)?.displayName || "Agent"
+                                      : comment.authorType}
+                                  </div>
+                                  <div className="mc-ops-row-subtitle">{comment.body}</div>
+                                </div>
+                                <span className="mc-ops-pill">{formatRelativeTime(comment.createdAt)}</span>
+                              </div>
+                            ))
+                          )}
+                        </div>
+                      </div>
+                      <div className="mc-ops-subsection">
+                        <h4>Recent runs</h4>
+                        <div className="mc-ops-list">
+                          {issueRuns.length === 0 ? (
+                            <div className="mc-feed-empty">No runs for this issue yet.</div>
+                          ) : (
+                            issueRuns.slice(0, 6).map((run) => (
+                              <button
+                                key={run.id}
+                                type="button"
+                                className={`mc-ops-row mc-ops-row-button ${selectedIssueRunId === run.id ? "selected" : ""}`}
+                                onClick={() => setSelectedIssueRunId(run.id)}
+                              >
+                                <div>
+                                  <div className="mc-ops-row-title">
+                                    {run.summary || `Run ${run.id.slice(0, 8)}`}
+                                  </div>
+                                  <div className="mc-ops-row-subtitle">
+                                    {formatRelativeTime(run.updatedAt)}
+                                    {run.taskId ? " · task linked" : ""}
+                                  </div>
+                                </div>
+                                <span className={`mc-ops-pill status-${run.status}`}>{run.status}</span>
+                              </button>
+                            ))
+                          )}
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+                ) : (
+                  <div className="mc-feed-empty">Select an issue to inspect it.</div>
+                )}
+              </div>
+
+              <div className="mc-ops-section">
+                <h3>Selected run</h3>
+                {selectedIssueRun ? (
+                  <div className="mc-ops-run-card">
+                    <div className="mc-ops-row">
+                      <div>
+                        <div className="mc-ops-row-title">
+                          {selectedIssueRun.summary || `Run ${selectedIssueRun.id.slice(0, 8)}`}
+                        </div>
+                        <div className="mc-ops-row-subtitle">
+                          {selectedIssueRun.status} · {formatRelativeTime(selectedIssueRun.createdAt)}
+                        </div>
+                      </div>
+                      <span className={`mc-ops-pill status-${selectedIssueRun.status}`}>
+                        {selectedIssueRun.status}
+                      </span>
+                    </div>
+                    <div className="mc-ops-run-metrics">
+                      <span>{selectedIssueRun.taskId ? "Task linked" : "No task linked"}</span>
+                      <span>{selectedIssueRun.agentRoleId ? "Agent assigned" : "Unassigned"}</span>
+                      <span>{selectedIssueRun.error ? "Has error" : "No error"}</span>
+                    </div>
+                    <div className="mc-ops-subsection">
+                      <h4>Timeline</h4>
+                      <div className="mc-ops-list">
+                        {runEvents.length === 0 ? (
+                          <div className="mc-feed-empty">No run events captured.</div>
+                        ) : (
+                          runEvents.slice(-8).map((event) => (
+                            <div key={event.id} className="mc-ops-row">
+                              <div>
+                                <div className="mc-ops-row-title">{event.type}</div>
+                                <div className="mc-ops-row-subtitle">
+                                  {Object.entries(event.payload || {})
+                                    .slice(0, 2)
+                                    .map(([key, value]) => `${key}: ${String(value)}`)
+                                    .join(" · ")}
+                                </div>
+                              </div>
+                              <span className="mc-ops-pill">{formatRelativeTime(event.timestamp)}</span>
+                            </div>
+                          ))
+                        )}
+                      </div>
+                    </div>
+                    {selectedIssueRun.error && (
+                      <div className="mc-ops-row">
+                        <div>
+                          <div className="mc-ops-row-title">Latest error</div>
+                          <div className="mc-ops-row-subtitle">{selectedIssueRun.error}</div>
+                        </div>
+                      </div>
+                    )}
+                  </div>
+                ) : (
+                  <div className="mc-feed-empty">Select an issue run to inspect it.</div>
+                )}
+              </div>
+            </div>
           ) : (
             <div className="mc-task-detail">
               {selectedTask ? (
@@ -1352,6 +2163,381 @@ const styles = `
   .mc-status-badge.online {
     background: var(--color-success-subtle);
     color: var(--color-success);
+  }
+
+  .mc-planner-strip {
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+    padding: 14px 20px;
+    background: var(--color-bg-secondary);
+    border-bottom: 1px solid var(--color-border);
+  }
+
+  .mc-planner-summary,
+  .mc-planner-controls,
+  .mc-planner-runs {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    flex-wrap: wrap;
+  }
+
+  .mc-planner-summary {
+    justify-content: space-between;
+  }
+
+  .mc-planner-metrics {
+    display: flex;
+    gap: 10px;
+    flex-wrap: wrap;
+  }
+
+  .mc-planner-metric {
+    display: flex;
+    flex-direction: column;
+    gap: 2px;
+    min-width: 92px;
+    padding: 8px 10px;
+    border-radius: 8px;
+    border: 1px solid var(--color-border);
+    background: var(--color-bg-primary);
+  }
+
+  .mc-planner-metric-value {
+    font-size: 16px;
+    font-weight: 600;
+    color: var(--color-text-primary);
+  }
+
+  .mc-planner-metric-label {
+    font-size: 10px;
+    color: var(--color-text-secondary);
+    text-transform: uppercase;
+    letter-spacing: 0.4px;
+  }
+
+  .mc-planner-title-row {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+  }
+
+  .mc-planner-title-row h2 {
+    margin: 0;
+    font-size: 12px;
+    font-weight: 600;
+    letter-spacing: 0.4px;
+    color: var(--color-text-primary);
+  }
+
+  .mc-planner-status {
+    padding: 3px 8px;
+    border-radius: 999px;
+    font-size: 10px;
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 0.4px;
+  }
+
+  .mc-planner-status.enabled {
+    background: var(--color-success-subtle);
+    color: var(--color-success);
+  }
+
+  .mc-planner-status.disabled {
+    background: var(--color-bg-tertiary);
+    color: var(--color-text-muted);
+  }
+
+  .mc-planner-company,
+  .mc-planner-field {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    padding: 6px 10px;
+    border: 1px solid var(--color-border);
+    border-radius: 8px;
+    background: var(--color-bg-primary);
+  }
+
+  .mc-planner-field.checkbox {
+    cursor: pointer;
+  }
+
+  .mc-planner-field span,
+  .mc-planner-company span {
+    font-size: 11px;
+    color: var(--color-text-secondary);
+  }
+
+  .mc-planner-company select,
+  .mc-planner-field select,
+  .mc-planner-field input[type="number"] {
+    border: none;
+    outline: none;
+    background: transparent;
+    color: var(--color-text-primary);
+    font-size: 12px;
+    min-width: 88px;
+  }
+
+  .mc-planner-field input[type="checkbox"] {
+    margin: 0;
+  }
+
+  .mc-planner-runs {
+    align-items: stretch;
+  }
+
+  .mc-planner-run {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 12px;
+    min-width: 280px;
+    padding: 8px 10px;
+    border-radius: 8px;
+    border: 1px solid var(--color-border);
+    background: var(--color-bg-primary);
+    cursor: pointer;
+    text-align: left;
+  }
+
+  .mc-planner-run.selected {
+    border-color: var(--color-accent, var(--color-border));
+    background: var(--color-bg-tertiary);
+  }
+
+  .mc-planner-run-main {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    min-width: 0;
+  }
+
+  .mc-planner-run-status,
+  .mc-planner-run-trigger {
+    font-size: 10px;
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 0.4px;
+    color: var(--color-text-muted);
+  }
+
+  .mc-planner-run-status.completed {
+    color: var(--color-success);
+  }
+
+  .mc-planner-run-status.failed {
+    color: var(--color-danger);
+  }
+
+  .mc-planner-run-status.running,
+  .mc-planner-run-status.queued {
+    color: var(--color-warning);
+  }
+
+  .mc-planner-run-summary,
+  .mc-planner-run-time,
+  .mc-planner-muted {
+    font-size: 11px;
+    color: var(--color-text-secondary);
+  }
+
+  .mc-planner-run-summary {
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    max-width: 320px;
+  }
+
+  .mc-ops-panel {
+    display: flex;
+    flex-direction: column;
+    gap: 14px;
+    padding: 16px;
+    overflow-y: auto;
+  }
+
+  .mc-ops-section {
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+  }
+
+  .mc-ops-section h3 {
+    margin: 0;
+    font-size: 11px;
+    font-weight: 600;
+    letter-spacing: 0.5px;
+    color: var(--color-text-secondary);
+    text-transform: uppercase;
+  }
+
+  .mc-ops-company-name {
+    margin: 0;
+    font-size: 16px;
+    font-weight: 600;
+    color: var(--color-text-primary);
+  }
+
+  .mc-ops-company-description,
+  .mc-ops-row-subtitle,
+  .mc-ops-run-metrics {
+    margin: 0;
+    font-size: 12px;
+    color: var(--color-text-secondary);
+  }
+
+  .mc-ops-stats {
+    display: flex;
+    gap: 10px;
+  }
+
+  .mc-ops-stat-card,
+  .mc-ops-run-card {
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
+    padding: 10px 12px;
+    border-radius: 10px;
+    border: 1px solid var(--color-border);
+    background: var(--color-bg-secondary);
+  }
+
+  .mc-ops-stat-value {
+    font-size: 18px;
+    font-weight: 600;
+    color: var(--color-text-primary);
+  }
+
+  .mc-ops-stat-label {
+    font-size: 10px;
+    color: var(--color-text-secondary);
+    text-transform: uppercase;
+    letter-spacing: 0.4px;
+  }
+
+  .mc-ops-list {
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+  }
+
+  .mc-ops-filters,
+  .mc-ops-actions,
+  .mc-ops-split {
+    display: flex;
+    gap: 10px;
+    flex-wrap: wrap;
+  }
+
+  .mc-ops-split {
+    align-items: flex-start;
+  }
+
+  .mc-ops-subsection {
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+    min-width: 240px;
+    flex: 1;
+  }
+
+  .mc-ops-subsection h4 {
+    margin: 0;
+    font-size: 11px;
+    font-weight: 600;
+    color: var(--color-text-secondary);
+    text-transform: uppercase;
+    letter-spacing: 0.4px;
+  }
+
+  .mc-ops-filter {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    padding: 6px 10px;
+    border-radius: 8px;
+    border: 1px solid var(--color-border);
+    background: var(--color-bg-secondary);
+  }
+
+  .mc-ops-filter span {
+    font-size: 11px;
+    color: var(--color-text-secondary);
+  }
+
+  .mc-ops-filter select {
+    border: none;
+    background: transparent;
+    color: var(--color-text-primary);
+    outline: none;
+  }
+
+  .mc-ops-row {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 12px;
+    padding: 10px 12px;
+    border-radius: 8px;
+    border: 1px solid var(--color-border);
+    background: var(--color-bg-secondary);
+  }
+
+  .mc-ops-row-button {
+    width: 100%;
+    cursor: pointer;
+    text-align: left;
+  }
+
+  .mc-ops-row-button.selected {
+    border-color: var(--color-accent, var(--color-border));
+    background: var(--color-bg-tertiary);
+  }
+
+  .mc-ops-row-title {
+    font-size: 13px;
+    font-weight: 500;
+    color: var(--color-text-primary);
+  }
+
+  .mc-ops-pill {
+    padding: 4px 8px;
+    border-radius: 999px;
+    font-size: 10px;
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 0.4px;
+    background: var(--color-bg-tertiary);
+    color: var(--color-text-secondary);
+    white-space: nowrap;
+  }
+
+  .mc-ops-pill.status-active,
+  .mc-ops-pill.status-in_progress,
+  .mc-ops-pill.status-running,
+  .mc-ops-pill.status-todo {
+    color: var(--color-warning);
+  }
+
+  .mc-ops-pill.status-completed,
+  .mc-ops-pill.status-done {
+    color: var(--color-success);
+  }
+
+  .mc-ops-pill.status-failed,
+  .mc-ops-pill.status-cancelled,
+  .mc-ops-pill.status-blocked {
+    color: var(--color-danger);
+  }
+
+  .mc-ops-run-metrics {
+    display: flex;
+    gap: 12px;
+    flex-wrap: wrap;
   }
 
   /* Main Content Layout */
