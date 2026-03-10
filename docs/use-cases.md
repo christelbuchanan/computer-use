@@ -13,6 +13,7 @@ Use cases:
 - Inbox autopilot (triage, drafts, cleanup suggestions)
 - Chief-of-staff briefing (morning executive brief)
 - Dev task queue management (agent-ready backlog execution)
+- Founder-directed autonomous company operations ("zero-human company" loop)
 - Smart-home orchestration via integrations
 - "Figure it out" fallback orchestration for hard tasks
 
@@ -23,6 +24,9 @@ Cowork OS supports these via:
 - Slash skill workflows: `/simplify [objective] ...` for quality passes and `/batch <objective> ...` for parallelizable migration/transform workflows
 - Integrations: Notion, Gmail/Google Calendar (if configured), Apple Calendar/Reminders (macOS)
 - Web automation: browser tools (plus MCP puppeteer fallback for some sites)
+- Company-ops primitives: venture workspace kit, digital twin operators, strategic planner, and Mission Control ops monitoring
+
+For the full founder-operated company recipe, see [Zero-Human Company Operations](zero-human-company.md).
 
 ## Test Prompts (Copy/Paste)
 
