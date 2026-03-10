@@ -1,7 +1,7 @@
 import { useState, useEffect, useCallback } from "react";
 import { Plus, Trash2, Power, Edit3, Search, User, Play, Square, Zap } from "lucide-react";
 import type { AgentRoleData, AgentCapability, HeartbeatEvent } from "../../electron/preload";
-import type { HeartbeatStatus } from "../../shared/types";
+import type { Company, HeartbeatStatus } from "../../shared/types";
 import { PersonaTemplateGallery } from "./PersonaTemplateGallery";
 import { AgentRoleEditor } from "./AgentRoleEditor";
 
@@ -14,6 +14,13 @@ interface TwinHeartbeatInfo {
   lastHeartbeatAt?: number;
   nextHeartbeatAt?: number;
 }
+
+const COMPANY_OPERATOR_TEMPLATE_NAMES = [
+  "Company Planner",
+  "Founder Office Operator",
+  "Growth Operator",
+  "Customer Ops Lead",
+];
 
 function formatRelativeTime(timestamp: number): string {
   const diff = timestamp - Date.now();
@@ -34,7 +41,11 @@ function formatLastSeen(timestamp: number): string {
   return `${Math.floor(hrs / 24)}d ago`;
 }
 
-export function DigitalTwinsPanel() {
+interface DigitalTwinsPanelProps {
+  initialCompanyId?: string | null;
+}
+
+export function DigitalTwinsPanel({ initialCompanyId = null }: DigitalTwinsPanelProps) {
   const [roles, setRoles] = useState<AgentRole[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
@@ -45,6 +56,7 @@ export function DigitalTwinsPanel() {
   const [isCreating, setIsCreating] = useState(false);
   const [heartbeatInfos, setHeartbeatInfos] = useState<Map<string, TwinHeartbeatInfo>>(new Map());
   const [triggeringIds, setTriggeringIds] = useState<Set<string>>(new Set());
+  const [selectedCompany, setSelectedCompany] = useState<Company | null>(null);
 
   const loadRoles = useCallback(async () => {
     try {
@@ -77,6 +89,34 @@ export function DigitalTwinsPanel() {
     loadRoles();
     loadHeartbeatStatuses();
   }, [loadRoles, loadHeartbeatStatuses]);
+
+  useEffect(() => {
+    let cancelled = false;
+
+    async function loadCompanyContext() {
+      if (!initialCompanyId) {
+        setSelectedCompany(null);
+        return;
+      }
+      try {
+        const company = await window.electronAPI.getCompany(initialCompanyId);
+        if (!cancelled) {
+          setSelectedCompany(company ?? null);
+        }
+      } catch (err) {
+        if (!cancelled) {
+          console.error("Failed to load company context for digital twins:", err);
+          setSelectedCompany(null);
+        }
+      }
+    }
+
+    void loadCompanyContext();
+
+    return () => {
+      cancelled = true;
+    };
+  }, [initialCompanyId]);
 
   // Subscribe to live heartbeat events
   useEffect(() => {
@@ -172,6 +212,7 @@ export function DigitalTwinsPanel() {
     setEditingRole({
       id: "",
       name: "",
+      companyId: selectedCompany?.id,
       displayName: "",
       description: "",
       icon: "\ud83e\uddd1\u200d\ud83d\udcbb",
@@ -196,6 +237,7 @@ export function DigitalTwinsPanel() {
       if (isCreating) {
         const created = await window.electronAPI.createAgentRole({
           name: role.name,
+          companyId: role.companyId,
           displayName: role.displayName,
           description: role.description,
           icon: role.icon,
@@ -211,6 +253,7 @@ export function DigitalTwinsPanel() {
       } else {
         const updated = await window.electronAPI.updateAgentRole({
           id: role.id,
+          companyId: role.companyId ?? null,
           displayName: role.displayName,
           description: role.description,
           icon: role.icon,
@@ -284,6 +327,18 @@ export function DigitalTwinsPanel() {
 
   const activeRoles = filteredRoles.filter((r) => r.isActive);
   const inactiveRoles = filteredRoles.filter((r) => !r.isActive);
+  const companyRoles = selectedCompany
+    ? activeRoles.filter((role) => role.companyId === selectedCompany.id)
+    : [];
+  const companyInactiveRoles = selectedCompany
+    ? inactiveRoles.filter((role) => role.companyId === selectedCompany.id)
+    : [];
+  const otherActiveRoles = selectedCompany
+    ? activeRoles.filter((role) => role.companyId !== selectedCompany.id)
+    : activeRoles;
+  const otherInactiveRoles = selectedCompany
+    ? inactiveRoles.filter((role) => role.companyId !== selectedCompany.id)
+    : inactiveRoles;
 
   // Show editor if editing or creating
   if (editingRole) {
@@ -348,6 +403,14 @@ export function DigitalTwinsPanel() {
         </div>
 
         {role.description && <p className="dt-card-desc">{role.description}</p>}
+
+        {role.companyId && (
+          <div className="dt-card-meta-row">
+            <span className="dt-company-badge">
+              {selectedCompany?.id === role.companyId ? "Assigned to this company" : "Assigned to another company"}
+            </span>
+          </div>
+        )}
 
         {role.capabilities && role.capabilities.length > 0 && (
           <div className="dt-card-caps">
@@ -447,7 +510,9 @@ export function DigitalTwinsPanel() {
         <div className="dt-header-top">
           <div className="dt-title-area">
             <h2>Digital Twins</h2>
-            <span className="dt-count">{activeRoles.length} active</span>
+          <span className="dt-count">
+            {selectedCompany ? `${companyRoles.length} for ${selectedCompany.name}` : `${activeRoles.length} active`}
+          </span>
           </div>
           <div className="dt-header-actions">
             <button className="dt-btn dt-btn-secondary" onClick={handleCreateBlank}>
@@ -464,6 +529,28 @@ export function DigitalTwinsPanel() {
           Create AI digital twins from persona templates or build custom agents. Each twin absorbs
           cognitively draining tasks so you can stay in flow.
         </p>
+        {selectedCompany ? (
+          <div className="dt-company-context">
+            <div className="dt-company-context-copy">
+              <div className="dt-company-context-title">Company context: {selectedCompany.name}</div>
+              <div className="dt-company-context-text">
+                Start with venture/operator twins for this company, then enable heartbeat so they can
+                participate in the operating loop.
+              </div>
+              <div className="dt-company-context-tags">
+                {COMPANY_OPERATOR_TEMPLATE_NAMES.map((name) => (
+                  <span key={name} className="dt-company-context-tag">
+                    {name}
+                  </span>
+                ))}
+              </div>
+            </div>
+            <button className="dt-btn dt-btn-primary" onClick={() => setGalleryOpen(true)}>
+              <Zap size={14} strokeWidth={1.5} />
+              Operator Templates
+            </button>
+          </div>
+        ) : null}
         <div className="dt-toolbar">
           <div className="dt-search-wrapper">
             <Search size={14} strokeWidth={1.5} />
@@ -508,20 +595,52 @@ export function DigitalTwinsPanel() {
           </div>
         )}
 
-        {!loading && activeRoles.length > 0 && (
+        {!loading && selectedCompany && companyRoles.length > 0 && (
           <div className="dt-section">
-            <h3 className="dt-section-title">Active Twins</h3>
+            <h3 className="dt-section-title">Company Operators</h3>
             <div className="dt-grid">
-              {activeRoles.map((role) => renderTwinCard(role, false))}
+              {companyRoles.map((role) => renderTwinCard(role, false))}
             </div>
           </div>
         )}
 
-        {!loading && showInactive && inactiveRoles.length > 0 && (
+        {!loading && selectedCompany && companyRoles.length === 0 && (
+          <div className="dt-empty dt-empty-company">
+            <h3>No operators assigned to {selectedCompany.name}</h3>
+            <p>
+              Activate venture/operator twins or assign an existing twin to this company from the
+              Companies tab.
+            </p>
+            <button className="dt-btn dt-btn-primary" onClick={() => setGalleryOpen(true)}>
+              <User size={14} strokeWidth={1.5} />
+              Create Company Operator
+            </button>
+          </div>
+        )}
+
+        {!loading && otherActiveRoles.length > 0 && (
           <div className="dt-section">
-            <h3 className="dt-section-title">Inactive Twins</h3>
+            <h3 className="dt-section-title">{selectedCompany ? "Other Active Twins" : "Active Twins"}</h3>
             <div className="dt-grid">
-              {inactiveRoles.map((role) => renderTwinCard(role, true))}
+              {otherActiveRoles.map((role) => renderTwinCard(role, false))}
+            </div>
+          </div>
+        )}
+
+        {!loading && showInactive && selectedCompany && companyInactiveRoles.length > 0 && (
+          <div className="dt-section">
+            <h3 className="dt-section-title">Inactive Company Operators</h3>
+            <div className="dt-grid">
+              {companyInactiveRoles.map((role) => renderTwinCard(role, true))}
+            </div>
+          </div>
+        )}
+
+        {!loading && showInactive && otherInactiveRoles.length > 0 && (
+          <div className="dt-section">
+            <h3 className="dt-section-title">{selectedCompany ? "Other Inactive Twins" : "Inactive Twins"}</h3>
+            <div className="dt-grid">
+              {otherInactiveRoles.map((role) => renderTwinCard(role, true))}
             </div>
           </div>
         )}
@@ -532,6 +651,10 @@ export function DigitalTwinsPanel() {
         <PersonaTemplateGallery
           onClose={() => setGalleryOpen(false)}
           onActivated={handleActivated}
+          initialCategory={selectedCompany ? "operations" : "all"}
+          companyId={selectedCompany?.id ?? null}
+          companyName={selectedCompany?.name ?? null}
+          recommendedTemplateNames={selectedCompany ? COMPANY_OPERATOR_TEMPLATE_NAMES : []}
         />
       )}
 
@@ -621,6 +744,55 @@ export function DigitalTwinsPanel() {
           font-size: 12px;
           color: var(--color-text-muted);
           line-height: 1.4;
+        }
+
+        .dt-company-context {
+          margin: 0 0 12px;
+          padding: 12px 14px;
+          border: 1px solid var(--color-border-subtle);
+          border-radius: 10px;
+          background: var(--color-bg-secondary);
+          display: flex;
+          align-items: center;
+          justify-content: space-between;
+          gap: 12px;
+        }
+
+        .dt-company-context-copy {
+          display: flex;
+          flex-direction: column;
+          gap: 6px;
+          min-width: 0;
+        }
+
+        .dt-company-context-title {
+          font-size: 13px;
+          font-weight: 600;
+          color: var(--color-text-primary);
+        }
+
+        .dt-company-context-text {
+          font-size: 12px;
+          color: var(--color-text-secondary);
+          line-height: 1.4;
+        }
+
+        .dt-company-context-tags {
+          display: flex;
+          flex-wrap: wrap;
+          gap: 8px;
+        }
+
+        .dt-company-context-tag {
+          display: inline-flex;
+          align-items: center;
+          padding: 3px 8px;
+          border-radius: 999px;
+          font-size: 10px;
+          font-weight: 500;
+          color: var(--color-text-secondary);
+          background: var(--color-bg-tertiary);
+          border: 1px solid var(--color-border-subtle);
         }
 
         .dt-toolbar {
@@ -874,6 +1046,24 @@ export function DigitalTwinsPanel() {
           overflow: hidden;
         }
 
+        .dt-card-meta-row {
+          display: flex;
+          align-items: center;
+          gap: 6px;
+        }
+
+        .dt-company-badge {
+          display: inline-flex;
+          align-items: center;
+          padding: 2px 8px;
+          border-radius: 999px;
+          font-size: 10px;
+          font-weight: 500;
+          color: var(--color-text-secondary);
+          background: var(--color-bg-tertiary);
+          border: 1px solid var(--color-border-subtle);
+        }
+
         .dt-card-caps {
           display: flex;
           flex-wrap: wrap;
@@ -984,6 +1174,28 @@ export function DigitalTwinsPanel() {
         .dt-card-action-danger:hover {
           color: var(--color-error);
           border-color: var(--color-error);
+        }
+
+        @media (max-width: 900px) {
+          .dt-company-context,
+          .dt-header-top,
+          .dt-toolbar {
+            flex-direction: column;
+            align-items: stretch;
+          }
+
+          .dt-header-actions {
+            justify-content: stretch;
+          }
+
+          .dt-header-actions .dt-btn,
+          .dt-company-context .dt-btn {
+            justify-content: center;
+          }
+
+          .dt-search-wrapper {
+            max-width: none;
+          }
         }
       `}</style>
     </div>
