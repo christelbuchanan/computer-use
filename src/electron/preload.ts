@@ -594,6 +594,7 @@ const IPC_CHANNELS = {
   IMPROVEMENT_LIST_RUNS: "improvement:listRuns",
   IMPROVEMENT_REFRESH: "improvement:refresh",
   IMPROVEMENT_RUN_NEXT: "improvement:runNext",
+  IMPROVEMENT_RETRY_RUN: "improvement:retryRun",
   IMPROVEMENT_DISMISS_CANDIDATE: "improvement:dismissCandidate",
   IMPROVEMENT_REVIEW_RUN: "improvement:reviewRun",
 
@@ -2103,7 +2104,8 @@ contextBridge.exposeInMainWorld("electronAPI", {
   // Task APIs
   createTask: (data: Any) => ipcRenderer.invoke(IPC_CHANNELS.TASK_CREATE, data),
   getTask: (id: string) => ipcRenderer.invoke(IPC_CHANNELS.TASK_GET, id),
-  listTasks: () => ipcRenderer.invoke(IPC_CHANNELS.TASK_LIST),
+  listTasks: (opts?: { limit?: number; offset?: number }) =>
+    ipcRenderer.invoke(IPC_CHANNELS.TASK_LIST, opts),
   exportTasksJson: (query?: Any) => ipcRenderer.invoke(IPC_CHANNELS.TASK_EXPORT_JSON, query),
   toggleTaskPin: (taskId: string) => ipcRenderer.invoke(IPC_CHANNELS.TASK_PIN, taskId),
   cancelTask: (id: string) => ipcRenderer.invoke(IPC_CHANNELS.TASK_CANCEL, id),
@@ -2841,6 +2843,8 @@ contextBridge.exposeInMainWorld("electronAPI", {
     ipcRenderer.invoke(IPC_CHANNELS.IMPROVEMENT_REFRESH) as Promise<{ candidateCount: number }>,
   runNextImprovementExperiment: () =>
     ipcRenderer.invoke(IPC_CHANNELS.IMPROVEMENT_RUN_NEXT) as Promise<ImprovementRun | null>,
+  retryImprovementRun: (runId: string) =>
+    ipcRenderer.invoke(IPC_CHANNELS.IMPROVEMENT_RETRY_RUN, runId) as Promise<ImprovementRun | null>,
   dismissImprovementCandidate: (candidateId: string) =>
     ipcRenderer.invoke(IPC_CHANNELS.IMPROVEMENT_DISMISS_CANDIDATE, candidateId) as Promise<
       ImprovementCandidate | undefined
@@ -3481,7 +3485,7 @@ export interface ElectronAPI {
   ) => Promise<{ success: boolean; error?: string }>;
   createTask: (data: Any) => Promise<Any>;
   getTask: (id: string) => Promise<Any>;
-  listTasks: () => Promise<Any[]>;
+  listTasks: (opts?: { limit?: number; offset?: number }) => Promise<Any[]>;
   exportTasksJson: (query?: Any) => Promise<Any>;
   toggleTaskPin: (taskId: string) => Promise<Any>;
   cancelTask: (id: string) => Promise<void>;
@@ -4544,6 +4548,7 @@ export interface ElectronAPI {
   listImprovementRuns: (workspaceId?: string) => Promise<ImprovementRun[]>;
   refreshImprovementCandidates: () => Promise<{ candidateCount: number }>;
   runNextImprovementExperiment: () => Promise<ImprovementRun | null>;
+  retryImprovementRun: (runId: string) => Promise<ImprovementRun | null>;
   dismissImprovementCandidate: (candidateId: string) => Promise<ImprovementCandidate | undefined>;
   reviewImprovementRun: (
     runId: string,
