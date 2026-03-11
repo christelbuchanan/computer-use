@@ -158,7 +158,11 @@ function createExecutorWithStubs(responses: LLMResponse[], toolResults: Record<s
     path: "/tmp",
     permissions: { read: true, write: true, delete: true, network: true, shell: true },
   };
-  executor.daemon = { logEvent: vi.fn() };
+  executor.daemon = {
+    logEvent: vi.fn(),
+    getTaskEvents: vi.fn().mockReturnValue([]),
+    updateTask: vi.fn(),
+  };
   applyExecutorFieldDefaults(executor);
   executor.contextManager = {
     compactMessagesWithMeta: vi.fn((messages: Any) => ({
@@ -213,6 +217,7 @@ function createExecutorWithStubs(responses: LLMResponse[], toolResults: Record<s
       description: "",
       input_schema: { type: "object", properties: {} },
     },
+    { name: "create_diagram", description: "", input_schema: { type: "object", properties: {} } },
     { name: "edit_file", description: "", input_schema: { type: "object", properties: {} } },
   ]);
   executor.handleCanvasPushFallback = vi.fn();
@@ -274,7 +279,11 @@ function createExecutorWithLLMHandler(handler: (messages: Any[]) => LLMResponse)
     path: "/tmp",
     permissions: { read: true, write: true, delete: true, network: true, shell: true },
   };
-  executor.daemon = { logEvent: vi.fn() };
+  executor.daemon = {
+    logEvent: vi.fn(),
+    getTaskEvents: vi.fn().mockReturnValue([]),
+    updateTask: vi.fn(),
+  };
   applyExecutorFieldDefaults(executor);
   executor.contextManager = {
     compactMessagesWithMeta: vi.fn((messages: Any) => ({
@@ -811,6 +820,69 @@ relationship_memory:
     executor = createExecutorWithStubs([textResponse("OK")], {});
     expect((executor as Any).followUpRequiresCanvasAction("what is in-app canvas?")).toBe(false);
     expect((executor as Any).followUpRequiresCanvasAction("ok thanks")).toBe(false);
+  });
+
+  it("treats inline Mermaid flowchart steps as diagram output rather than file artifacts", () => {
+    executor = createExecutorWithStubs([textResponse("OK")], {});
+    const step: Any = {
+      id: "diagram-contract",
+      kind: "primary",
+      description: "Create a Mermaid flowchart of a typical CI/CD pipeline and display it inline.",
+      status: "pending",
+    };
+
+    const contract = (executor as Any).resolveStepExecutionContract(step);
+
+    expect(Array.from(contract.requiredTools)).toContain("create_diagram");
+    expect(contract.requiresArtifactEvidence).toBe(false);
+    expect(contract.requiresMutation).toBe(true);
+    expect(contract.artifactKind).toBe("diagram");
+  });
+
+  it("does not force artifact-file verification for Mermaid verification wording", () => {
+    executor = createExecutorWithStubs([textResponse("OK")], {});
+    const step: Any = {
+      id: "diagram-verify",
+      kind: "verification",
+      description: "Verify the Mermaid flowchart is displayed inline and includes the main CI/CD stages.",
+      status: "pending",
+    };
+
+    expect((executor as Any).resolveVerificationModeForStep(step)).toBe("none");
+  });
+
+  it("accepts create_diagram as satisfying a diagram step mutation contract", async () => {
+    executor = createExecutorWithStubs(
+      [
+        toolUseResponse("create_diagram", {
+          title: "CI/CD Pipeline",
+          diagram:
+            "flowchart TD\nA[Code] --> B[Build]\nB --> C[Test]\nC --> D[Deploy]",
+        }),
+        textResponse("Displayed the CI/CD pipeline as a Mermaid flowchart."),
+      ],
+      {
+        create_diagram: { success: true, message: 'Diagram "CI/CD Pipeline" is now displayed in the UI.' },
+      },
+    );
+
+    const step: Any = {
+      id: "diagram-step",
+      kind: "primary",
+      description: "Create a Mermaid flowchart of a typical CI/CD pipeline and display it inline.",
+      status: "pending",
+    };
+    (executor as Any).plan = { description: "Plan", steps: [step] };
+
+    await (executor as Any).executeStep(step);
+
+    expect(step.status, String(step.error || "")).toBe("completed");
+    expect((executor as Any).toolRegistry.executeTool).toHaveBeenCalledWith(
+      "create_diagram",
+      expect.objectContaining({
+        title: "CI/CD Pipeline",
+      }),
+    );
   });
 
   it("enforces required-tool contract when create_document is required but never called", async () => {
