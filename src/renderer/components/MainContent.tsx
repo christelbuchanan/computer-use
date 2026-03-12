@@ -2410,6 +2410,7 @@ interface MainContentProps {
   onModelChange: (model: string) => void;
   availableProviders?: Array<{ type: string; name: string; configured: boolean }>;
   uiDensity?: "focused" | "full" | "power";
+  remoteSession?: { deviceId: string; deviceName: string } | null;
 }
 
 // Track command execution sessions for timeline rendering
@@ -2447,6 +2448,7 @@ export function MainContent({
   onModelChange,
   availableProviders = [],
   uiDensity = "focused",
+  remoteSession = null,
 }: MainContentProps) {
   const events = useMemo(() => normalizeEventsForTimelineUi(rawEvents), [rawEvents]);
   const childEvents = useMemo(() => normalizeEventsForTimelineUi(rawChildEvents), [rawChildEvents]);
@@ -6868,6 +6870,16 @@ export function MainContent({
                   <path d="M18 6L6 18M6 6l12 12" />
                 </svg>
               </button>
+            </div>
+          )}
+          {remoteSession && (
+            <div className="task-status-banner task-status-banner-remote">
+              <div className="task-status-banner-content">
+                <strong>Remote session view</strong>
+                <span className="task-status-banner-detail">
+                  You are inspecting the live task history from {remoteSession.deviceName}, not the current device.
+                </span>
+              </div>
             </div>
           )}
           {task.status === "paused" && !hasActiveStructuredInputRequest && (
