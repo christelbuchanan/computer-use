@@ -1,25 +1,60 @@
+import { useState } from "react";
 
 interface DeviceIconProps {
   className?: string;
   size?: number | string;
 }
 
+const sizeStyle = (s: number | string) =>
+  typeof s === "number" ? `${s}px` : s;
+
 export function MacMiniIcon({ className = "", size = 48 }: DeviceIconProps) {
-  // A sleek representation of a Mac Mini
+  const [imgError, setImgError] = useState(false);
+
+  if (imgError) {
+    return (
+      <svg
+        width={size}
+        height={size}
+        viewBox="0 0 64 64"
+        fill="none"
+        xmlns="http://www.w3.org/2000/svg"
+        className={className}
+      >
+        <rect
+          x="8"
+          y="24"
+          width="48"
+          height="16"
+          rx="4"
+          fill="currentColor"
+          fillOpacity="0.9"
+        />
+        <path
+          d="M12 40 C12 44, 52 44, 52 40"
+          stroke="currentColor"
+          strokeWidth="2"
+          strokeOpacity="0.5"
+          strokeLinecap="round"
+        />
+        <circle cx="48" cy="32" r="2" fill="currentColor" fillOpacity="0.5" />
+        <circle cx="42" cy="32" r="1.5" fill="currentColor" fillOpacity="0.3" />
+      </svg>
+    );
+  }
+
   return (
-    <svg
-      width={size}
-      height={size}
-      viewBox="0 0 64 64"
-      fill="none"
-      xmlns="http://www.w3.org/2000/svg"
+    <img
+      src="/mac-mini-m4.png"
+      alt="Mac Mini"
       className={className}
-    >
-      <rect x="8" y="24" width="48" height="16" rx="4" fill="currentColor" fillOpacity="0.9" />
-      <path d="M12 40 C12 44, 52 44, 52 40" stroke="currentColor" strokeWidth="2" strokeOpacity="0.5" strokeLinecap="round" />
-      <circle cx="48" cy="32" r="2" fill="currentColor" fillOpacity="0.5" />
-      <circle cx="42" cy="32" r="1.5" fill="currentColor" fillOpacity="0.3" />
-    </svg>
+      style={{
+        width: sizeStyle(size),
+        height: sizeStyle(size),
+        objectFit: "contain",
+      }}
+      onError={() => setImgError(true)}
+    />
   );
 }
 
@@ -83,15 +118,17 @@ export function MobileIcon({ className = "", size = 48 }: DeviceIconProps) {
   );
 }
 
-export function getPlatformVisualIcon(platform: string, className?: string, size?: number) {
+export function getPlatformVisualIcon(platform: string, className?: string, size?: number, deviceName?: string) {
   const p = platform.toLowerCase();
-  if (p.includes("mac") || p.includes("darwin")) {
+  const n = (deviceName || "").toLowerCase();
+  
+  if (p.includes("mac") || p.includes("darwin") || n.includes("mac")) {
     return <MacMiniIcon className={className} size={size} />;
   }
-  if (p.includes("win")) {
+  if (p.includes("win") || n.includes("windows") || n.includes("pc") || n.includes("desktop")) {
     return <Win11Icon className={className} size={size} />;
   }
-  if (p.includes("ios") || p.includes("android")) {
+  if (p.includes("ios") || p.includes("android") || n.includes("iphone") || n.includes("phone")) {
     return <MobileIcon className={className} size={size} />;
   }
   // Default to server/VPC for Linux or unknown
