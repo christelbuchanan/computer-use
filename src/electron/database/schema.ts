@@ -1924,6 +1924,12 @@ export class DatabaseManager {
           first_seen_at INTEGER NOT NULL,
           last_seen_at INTEGER NOT NULL,
           last_experiment_at INTEGER,
+          failure_streak INTEGER NOT NULL DEFAULT 0,
+          cooldown_until INTEGER,
+          park_reason TEXT,
+          parked_at INTEGER,
+          last_attempt_fingerprint TEXT,
+          last_failure_class TEXT,
           resolved_at INTEGER
         );
 
@@ -1971,8 +1977,13 @@ export class DatabaseManager {
           execution_workspace_id TEXT,
           root_task_id TEXT,
           status TEXT NOT NULL,
+          stage TEXT,
           review_status TEXT NOT NULL,
           promotion_status TEXT DEFAULT 'idle',
+          stop_reason TEXT,
+          provider_health_snapshot TEXT,
+          stage_budget TEXT,
+          pr_required INTEGER NOT NULL DEFAULT 1,
           winner_variant_id TEXT,
           promoted_task_id TEXT,
           promoted_branch_name TEXT,
@@ -2048,11 +2059,27 @@ export class DatabaseManager {
       "ALTER TABLE improvement_runs ADD COLUMN promotion_error TEXT",
       "ALTER TABLE improvement_runs ADD COLUMN promoted_at INTEGER",
       "ALTER TABLE improvement_campaigns ADD COLUMN root_task_id TEXT",
+      "ALTER TABLE improvement_candidates ADD COLUMN failure_streak INTEGER NOT NULL DEFAULT 0",
+      "ALTER TABLE improvement_candidates ADD COLUMN cooldown_until INTEGER",
+      "ALTER TABLE improvement_candidates ADD COLUMN park_reason TEXT",
+      "ALTER TABLE improvement_candidates ADD COLUMN parked_at INTEGER",
+      "ALTER TABLE improvement_candidates ADD COLUMN last_attempt_fingerprint TEXT",
+      "ALTER TABLE improvement_candidates ADD COLUMN last_failure_class TEXT",
+      "ALTER TABLE improvement_campaigns ADD COLUMN stage TEXT",
+      "ALTER TABLE improvement_campaigns ADD COLUMN stop_reason TEXT",
+      "ALTER TABLE improvement_campaigns ADD COLUMN provider_health_snapshot TEXT",
+      "ALTER TABLE improvement_campaigns ADD COLUMN stage_budget TEXT",
+      "ALTER TABLE improvement_campaigns ADD COLUMN pr_required INTEGER NOT NULL DEFAULT 1",
     ]) {
       try {
         this.db.exec(statement);
-      } catch {
-        // Column already exists or table not created yet.
+      } catch (err) {
+        const msg = err instanceof Error ? err.message : String(err);
+        if (/duplicate column name|already exists/i.test(msg)) {
+          continue; // Expected when column exists
+        }
+        console.error("[DatabaseManager] Migration failed (schema may be inconsistent):", statement, msg);
+        throw err;
       }
     }
 
@@ -2062,8 +2089,13 @@ export class DatabaseManager {
     ]) {
       try {
         this.db.exec(statement);
-      } catch {
-        // Column already exists
+      } catch (err) {
+        const msg = err instanceof Error ? err.message : String(err);
+        if (/duplicate column name|already exists/i.test(msg)) {
+          continue; // Expected when column exists
+        }
+        console.error("[DatabaseManager] Migration failed (schema may be inconsistent):", statement, msg);
+        throw err;
       }
     }
 
