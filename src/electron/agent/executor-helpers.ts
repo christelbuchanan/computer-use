@@ -205,6 +205,24 @@ export function isNonRetryableError(errorMessage: string): boolean {
 }
 
 /**
+ * Check if an LLM provider error is non-retryable.
+ * For LLM providers, 429/rate limit/too many requests are TRANSIENT — retry with backoff.
+ * Only billing/quota/payment errors are non-retryable.
+ */
+export function isNonRetryableLLMError(errorMessage: string): boolean {
+  const msg = String(errorMessage || "").toLowerCase();
+  // Rate limit (429) is transient for LLM — we retry
+  if (/429|rate limit|too many requests|free-models-per-min/i.test(msg)) return false;
+  // Billing/quota/payment are non-retryable
+  return (
+    /quota.*exceeded|exceeds?.*usage.*limit|resource.*exhausted|billing|payment.*required|upgrade your plan/i.test(
+      msg,
+    )
+  );
+}
+
+
+/**
  * Check if an error is input-dependent (normal operational error)
  * These errors are due to bad input, not tool failure, and should not trigger circuit breaker
  */
