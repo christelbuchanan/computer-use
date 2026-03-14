@@ -6,6 +6,7 @@ import type { Task, TaskEvent } from "../../shared/types";
 import { getEmojiIcon } from "../utils/emoji-icon-map";
 import { getEffectiveTaskEventType } from "../utils/task-event-compat";
 import { sanitizeToolCallTextFromAssistant } from "../../shared/tool-call-text-sanitizer";
+import { formatProviderErrorForDisplay } from "../../shared/provider-error-format";
 
 interface AgentRoleInfo {
   id: string;
@@ -85,7 +86,11 @@ function isCompactStreamEventType(type: StreamEventType): boolean {
 }
 
 // eslint-disable-next-line @typescript-eslint/no-explicit-any -- event payloads are untyped
-function formatEventContent(type: StreamEventType, payload: TaskEvent["payload"]): string {
+function formatEventContent(
+  type: StreamEventType,
+  payload: TaskEvent["payload"],
+  task?: Task | null,
+): string {
   const p = payload as Record<string, unknown> | undefined;
   const step = p?.step as Record<string, unknown> | undefined;
   const plan = p?.plan as Record<string, unknown> | undefined;
@@ -100,7 +105,7 @@ function formatEventContent(type: StreamEventType, payload: TaskEvent["payload"]
     case "step_completed":
       return `Completed: ${sanitize(step?.description || p?.description || "step") || "step"}`;
     case "step_failed":
-      return `Failed: ${sanitize(step?.description || p?.description || "step") || "step"} — ${sanitize(p?.error)}`;
+      return `Failed: ${sanitize(step?.description || p?.description || "step") || "step"} — ${sanitize(formatProviderErrorForDisplay(String(p?.error || p?.reason || ""), { task }))}`;
     case "plan_created": {
       const steps = (plan?.steps as unknown[]) || (p?.steps as unknown[]) || [];
       return `Created plan with ${steps.length} step${steps.length !== 1 ? "s" : ""}`;
@@ -110,7 +115,7 @@ function formatEventContent(type: StreamEventType, payload: TaskEvent["payload"]
     case "task_cancelled":
       return "Task was cancelled";
     case "error":
-      return sanitize(p?.message || p?.error || "An error occurred");
+      return sanitize(formatProviderErrorForDisplay(String(p?.message || p?.error || "An error occurred"), { task }));
     default:
       return "";
   }
@@ -313,7 +318,7 @@ export function DispatchedAgentsPanel({
       if (!task) continue;
       const role = task.assignedAgentRoleId ? agentRoles.get(task.assignedAgentRoleId) : undefined;
 
-      const content = formatEventContent(effectiveType as StreamEventType, event.payload);
+      const content = formatEventContent(effectiveType as StreamEventType, event.payload, task);
       if (!content) continue;
 
       items.push({
