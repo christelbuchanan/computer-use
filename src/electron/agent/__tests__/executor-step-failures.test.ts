@@ -1367,6 +1367,19 @@ relationship_memory:
     expect(inferred.input.content).toBeUndefined();
   });
 
+  it("normalizes web_search region EU to ALL for Brave API compatibility", () => {
+    executor = createExecutorWithStubs([], {});
+
+    const inferred = (executor as Any).inferMissingParameters("web_search", {
+      query: "AI Act legal personhood",
+      region: "EU",
+    });
+
+    expect(inferred.modified).toBe(true);
+    expect(inferred.input.region).toBe("ALL");
+    expect(inferred.inference).toMatch(/EU.*ALL/);
+  });
+
   it("fails write/create deliverable steps when no file mutation evidence exists", async () => {
     executor = createExecutorWithStubs(
       Array.from({ length: 6 }, () =>
