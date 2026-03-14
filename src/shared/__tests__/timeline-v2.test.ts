@@ -3,6 +3,7 @@ import { describe, expect, it } from "vitest";
 import type { TaskEvent } from "../types";
 import {
   inferTimelineStageForLegacyType,
+  inferTimelineSubStageLabel,
   normalizeTaskEventToTimelineV2,
   projectTimelineEventToLegacy,
 } from "../timeline-v2";
@@ -73,6 +74,27 @@ describe("timeline v2 helpers", () => {
     expect(inferTimelineStageForLegacyType("turn_window_soft_exhausted")).toBe("FIX");
     expect(inferTimelineStageForLegacyType("safety_stop_triggered")).toBe("FIX");
     expect(inferTimelineStageForLegacyType("task_completed")).toBe("DELIVER");
+  });
+
+  it("returns sub-stage labels for BUILD-stage file events", () => {
+    expect(inferTimelineSubStageLabel("file_created")).toBe("Creating file");
+    expect(inferTimelineSubStageLabel("file_modified")).toBe("Modifying file");
+    expect(inferTimelineSubStageLabel("file_deleted")).toBe("Deleting file");
+  });
+
+  it("returns sub-stage labels for FIX-stage events", () => {
+    expect(inferTimelineSubStageLabel("workspace_path_alias_normalized")).toBe("Preparing workspace");
+    expect(inferTimelineSubStageLabel("task_path_root_pinned")).toBe("Preparing workspace");
+    expect(inferTimelineSubStageLabel("verification_preflight_policy_applied")).toBe(
+      "Preparing verification",
+    );
+    expect(inferTimelineSubStageLabel("step_failed")).toBe("Applying fixes");
+    expect(inferTimelineSubStageLabel("retry_started")).toBe("Retrying");
+    expect(inferTimelineSubStageLabel("context_compaction_started")).toBe("Making room to continue");
+    expect(inferTimelineSubStageLabel("verification_failed")).toBe("Verifying results");
+    expect(inferTimelineSubStageLabel("plan_contract_conflict")).toBe("Adjusting approach");
+    expect(inferTimelineSubStageLabel("task_created")).toBeUndefined();
+    expect(inferTimelineSubStageLabel("tool_call")).toBeUndefined();
   });
 
   it("maps workflow_detected to a timeline group start event", () => {
