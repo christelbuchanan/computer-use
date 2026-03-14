@@ -4,6 +4,9 @@ import type Database from "better-sqlite3";
 import type { AgentDaemon } from "../agent/daemon";
 import { AgentRoleRepository } from "./AgentRoleRepository";
 import { TaskRepository, WorkspaceRepository } from "../database/repositories";
+import { writeKitFileWithSnapshot } from "../context/kit-revisions";
+
+type Any = any;
 
 type Mention = {
   display: string;
@@ -309,16 +312,9 @@ export class CrossSignalService {
     const next = upsertMarkedSection(current, sectionLines);
     if (next === current) return;
 
-    const tmpPath = absPath + ".tmp";
     try {
-      fs.writeFileSync(tmpPath, next, "utf8");
-      fs.renameSync(tmpPath, absPath);
+      writeKitFileWithSnapshot(absPath, next, "agent", "service:cross_signals_flush");
     } catch (error) {
-      try {
-        if (fs.existsSync(tmpPath)) fs.unlinkSync(tmpPath);
-      } catch {
-        // ignore
-      }
       console.warn("[CrossSignals] Failed to write CROSS_SIGNALS.md:", error);
     }
   }
