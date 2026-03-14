@@ -4,6 +4,7 @@ import type {
   ImprovementCampaign,
   ImprovementCandidate,
   ImprovementJudgeVerdict,
+  ImprovementRun,
   ImprovementVariantRun,
   Task,
   Workspace,
@@ -20,6 +21,7 @@ const candidates = new Map<string, ImprovementCandidate>();
 const campaigns = new Map<string, ImprovementCampaign>();
 const variants = new Map<string, ImprovementVariantRun>();
 const verdicts = new Map<string, ImprovementJudgeVerdict>();
+const runs = new Map<string, ImprovementRun>();
 
 let mockSettings = {
   enabled: true,
@@ -146,6 +148,11 @@ vi.mock("../ImprovementRepositories", () => ({
       ).length;
     }
   },
+  ImprovementRunRepository: class {
+    list() {
+      return [...runs.values()];
+    }
+  },
   ImprovementVariantRunRepository: class {
     create(input: Any) {
       const variant: ImprovementVariantRun = {
@@ -188,6 +195,23 @@ vi.mock("../ImprovementRepositories", () => ({
     findByCampaignId(campaignId: string) {
       return verdicts.get(campaignId);
     }
+  },
+  clearImprovementHistoryData: () => {
+    const deleted = {
+      candidates: candidates.size,
+      campaigns: campaigns.size,
+      variantRuns: variants.size,
+      judgeVerdicts: verdicts.size,
+      legacyRuns: runs.size,
+    };
+
+    verdicts.clear();
+    variants.clear();
+    campaigns.clear();
+    runs.clear();
+    candidates.clear();
+
+    return deleted;
   },
 }));
 
@@ -240,6 +264,7 @@ describe("ImprovementLoopService", () => {
     campaigns.clear();
     variants.clear();
     verdicts.clear();
+    runs.clear();
     mockImprovementEligibility.mockReturnValue({
       eligible: true,
       reason: "Owner-only self-improvement is enabled.",
@@ -811,5 +836,97 @@ describe("ImprovementLoopService", () => {
     expect(saved.autoRun).toBe(false);
     expect(service.getSettings().enabled).toBe(false);
     expect(service.getSettings().autoRun).toBe(false);
+  });
+
+  it("resets self-improvement history and cancels improvement tasks", async () => {
+    const workspace = makeWorkspace();
+    workspaces.set(workspace.id, workspace);
+
+    const candidate = makeCandidate();
+    candidates.set(candidate.id, candidate);
+
+    const campaign: ImprovementCampaign = {
+      id: "campaign-reset-1",
+      candidateId: candidate.id,
+      workspaceId: workspace.id,
+      executionWorkspaceId: workspace.id,
+      rootTaskId: "task-root-reset",
+      status: "failed",
+      stage: "completed",
+      reviewStatus: "dismissed",
+      promotionStatus: "promotion_failed",
+      trainingEvidence: [],
+      holdoutEvidence: [],
+      replayCases: [],
+      variants: [],
+      createdAt: Date.now(),
+    };
+    campaigns.set(campaign.id, campaign);
+
+    const variant: ImprovementVariantRun = {
+      id: "variant-reset-1",
+      campaignId: campaign.id,
+      candidateId: candidate.id,
+      workspaceId: workspace.id,
+      lane: "minimal_patch",
+      status: "failed",
+      taskId: "task-variant-reset",
+      createdAt: Date.now(),
+    };
+    variants.set(variant.id, variant);
+
+    const verdict: ImprovementJudgeVerdict = {
+      id: "verdict-reset-1",
+      campaignId: campaign.id,
+      status: "failed",
+      summary: "dismissed",
+      notes: [],
+      comparedAt: Date.now(),
+      variantRankings: [],
+      replayCases: [],
+    };
+    verdicts.set(campaign.id, verdict);
+
+    const legacyRun: ImprovementRun = {
+      id: "run-reset-1",
+      candidateId: candidate.id,
+      workspaceId: workspace.id,
+      status: "failed",
+      reviewStatus: "dismissed",
+      taskId: "task-run-reset",
+      createdAt: Date.now(),
+    };
+    runs.set(legacyRun.id, legacyRun);
+
+    const cancelTask = vi.fn().mockResolvedValue(undefined);
+    const daemon = new EventEmitter() as Any;
+    daemon.cancelTask = cancelTask;
+
+    const candidateService = {
+      refresh: vi.fn().mockResolvedValue({ candidateCount: 0 }),
+    } as Any;
+
+    const service = new ImprovementLoopService({} as Any, candidateService);
+    await service.start(daemon);
+
+    const result = await service.resetHistory();
+
+    expect(result.deleted).toEqual({
+      candidates: 1,
+      campaigns: 1,
+      variantRuns: 1,
+      judgeVerdicts: 1,
+      legacyRuns: 1,
+    });
+    expect(result.cancelledTaskIds.sort()).toEqual(
+      ["task-root-reset", "task-run-reset", "task-variant-reset"].sort(),
+    );
+    expect(cancelTask).toHaveBeenCalledTimes(3);
+    expect(candidates.size).toBe(0);
+    expect(campaigns.size).toBe(0);
+    expect(variants.size).toBe(0);
+    expect(verdicts.size).toBe(0);
+    expect(runs.size).toBe(0);
+    expect(result.resetAt).toBeGreaterThan(0);
   });
 });
