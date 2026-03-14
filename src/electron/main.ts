@@ -132,6 +132,7 @@ import { AmbientMonitoringService } from "./monitoring/AmbientMonitoringService"
 import { ImprovementCandidateService } from "./improvement/ImprovementCandidateService";
 import { ImprovementLoopService } from "./improvement/ImprovementLoopService";
 import { createLogger } from "./utils/logger";
+import { registerMediaProtocol, registerMediaScheme } from "./media";
 
 let mainWindow: BrowserWindow | null = null;
 let dbManager: DatabaseManager;
@@ -221,6 +222,7 @@ app.commandLine.appendSwitch("ignore-gpu-blocklist");
 
 // Register canvas:// protocol scheme (must be called before app.ready)
 registerCanvasScheme();
+registerMediaScheme();
 
 // Ensure only one CoWork OS instance runs at a time.
 // Without this, a second instance can mark in-flight tasks as "orphaned" (failed) and contend on the DB.
@@ -1051,7 +1053,9 @@ if (!gotTheLock) {
     });
 
     // Setup IPC handlers
-    await setupIpcHandlers(dbManager, agentDaemon, channelGateway);
+    await setupIpcHandlers(dbManager, agentDaemon, channelGateway, {
+      getMainWindow: () => mainWindow,
+    });
     if (improvementLoopService) {
       setupImprovementHandlers(improvementLoopService);
     }
@@ -1363,6 +1367,7 @@ if (!gotTheLock) {
 
     // Register canvas:// protocol handler (must be after app.ready)
     registerCanvasProtocol();
+    registerMediaProtocol();
 
     // Create window
     createWindow();
