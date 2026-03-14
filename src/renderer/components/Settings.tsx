@@ -2120,41 +2120,6 @@ export function Settings({
                   if (item.macOnly && !isMacPlatform) {
                     return false;
                   }
-                  // Adaptive complexity: three-tier visibility
-                  // - focused: core settings only
-                  // - full (default): standard settings, hides advanced developer tabs
-                  // - power: everything visible
-                  if (uiDensity === "focused") {
-                    const focusedTabs: SettingsTab[] = [
-                      "appearance",
-                      "personality",
-                      "missioncontrol",
-                      "companies",
-                      "digitaltwins",
-                      "voice",
-                      "llm",
-                      "search",
-                      "skills",
-                      "memory",
-                      "guardrails",
-                      "scheduled",
-                      "telegram",
-                      "slack",
-                      "whatsapp",
-                      "teams",
-                      "x",
-                      "morechannels",
-                    ];
-                    if (!focusedTabs.includes(item.tab)) return false;
-                  } else if (uiDensity !== "power") {
-                    const powerOnlyTabs: SettingsTab[] = [
-                      "nodes",
-                      "extensions",
-                      "controlplane",
-                      "policies",
-                    ];
-                    if (powerOnlyTabs.includes(item.tab)) return false;
-                  }
                   // Filter by search query
                   if (sidebarSearch) {
                     return getSidebarItemLabel(item)
