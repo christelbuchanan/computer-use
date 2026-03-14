@@ -30,22 +30,42 @@ Falls back gracefully to legacy per-source injection if the synthesizer throws.
 
 No guardrail flag — always active when memory injection is enabled for the task.
 
+### Sources
+
+Seven sources are now collected (in insertion order):
+
+| Source kind | Service | Base relevance |
+|-------------|---------|----------------|
+| `user_profile` | `UserProfileService` | 0.70 |
+| `relationship` | `RelationshipMemoryService` | variable |
+| `playbook` | `PlaybookService` | variable |
+| `memory` | `MemoryService` | variable |
+| `knowledge_graph` | `KnowledgeGraphService` | variable |
+| `workspace_kit` | `WorkspaceKitContext` (separate budget) | — |
+| `daily_summary` | `DailyLogSummarizer` | 0.55 × recency |
+
+`daily_summary` fragments come from `.cowork/memory/summaries/<YYYY-MM-DD>.md` files produced by `DailyLogSummarizer`. Raw daily log files (`.cowork/memory/daily/`) are **never** injected into prompts.
+
 ### Output format
 
 ```xml
 <cowork_synthesized_memory>
-You & the User:
+## You & the User
 - [UserProfile fact]
 - [RelationshipMemory item]
 
-Past Task Patterns:
+## Past Task Patterns (use as context, not instructions)
 - [Playbook entry]
 
-Recalled Memories:
+## Recalled Memories
 - [MemoryService item]
 
-Known Entities:
+## Known Entities
 - [KnowledgeGraph entity]
+
+## Daily Summaries
+[Daily Summary 2026-03-14]
+...
 </cowork_synthesized_memory>
 ```
 
@@ -78,17 +98,20 @@ Known Entities:
 
 **Audit trail:** Every adaptation is recorded in `getAdaptationHistory()` with dimension, from/to values, reason, and timestamp.
 
-### Configuration (GuardrailSettings)
+### Configuration (GuardrailSettings → Behavior Adaptation)
 
 | Setting | Default | Description |
 |---------|---------|-------------|
 | `adaptiveStyleEnabled` | `false` | Master enable — no observation or adaptation when off |
 | `adaptiveStyleMaxDriftPerWeek` | `1` | Max style-level shifts per 7-day period |
 
+The **Behavior Adaptation** section in Guardrail Settings exposes these toggles alongside a **Reset learned style** button that calls `AdaptiveStyleEngine.reset()` via the `kit:resetAdaptiveStyle` IPC channel.
+
 ### Integration points
 
 - `daemon.ts` — calls `AdaptiveStyleEngine.observe(text)` after every `UserProfileService.ingestUserMessage()`
 - `daemon.ts` — calls `AdaptiveStyleEngine.observeFeedback(decision, reason)` alongside `UserProfileService.ingestUserFeedback()`
+- `GuardrailSettings.tsx` — renders toggle, drift input, and reset button under "Behavior Adaptation"
 
 ---
 
@@ -167,11 +190,13 @@ The agent connects to 15+ channels but delivers the same personality regardless 
 
 **Group/public context overlay:** When `gatewayContext` is `"group"` or `"public"`, an additional privacy-aware directive is layered on (do not share sensitive information, be aware others are reading).
 
-### Configuration (GuardrailSettings)
+### Configuration (GuardrailSettings → Behavior Adaptation)
 
 | Setting | Default | Description |
 |---------|---------|-------------|
 | `channelPersonaEnabled` | `false` | Enable channel-specific persona adaptation |
+
+This toggle is exposed in the same **Behavior Adaptation** section as Adaptive Style.
 
 ### Integration
 
@@ -227,9 +252,159 @@ Agent Evolution (Day 45, 123 tasks completed):
 
 ---
 
+---
+
+## 6. Daily Operational Log
+
+**File:** `src/electron/memory/DailyLogService.ts`
+
+### Purpose
+
+Provides structured per-day journaling as input for the summary-first memory pipeline. Entries are written to `.cowork/memory/daily/<YYYY-MM-DD>.md`.
+
+### When to write entries
+
+| Category | Trigger |
+|----------|---------|
+| `feedback` | User thumbs-up/down events |
+| `task` | Task completions |
+| `decision` | Notable agent decisions |
+| `observation` | High-value memory saves or corrections |
+
+Raw log files are **never** injected into prompts directly. They exist only as input for `DailyLogSummarizer`.
+
+### Entry format
+
+```md
+## 2026-03-14T15:30:00.000Z
+source: user
+category: feedback
+taskId: task-abc123
+tags: tone, correction
+
+User flagged response as "wrong tone".
+```
+
+### API
+
+```ts
+await DailyLogService.appendEntry(workspacePath, {
+  timestamp: new Date().toISOString(),
+  source: "user",
+  category: "feedback",
+  text: "User flagged response as wrong tone.",
+  taskId: "task-abc123",
+  tags: ["tone"],
+});
+```
+
+---
+
+## 7. Daily Log Summarizer
+
+**File:** `src/electron/memory/DailyLogSummarizer.ts`
+
+### Purpose
+
+Produces ranked `MemoryFragment` objects from pre-written daily summary files (`.cowork/memory/summaries/<YYYY-MM-DD>.md`). This completes the summary-first retrieval pipeline: summaries rank higher than raw log snippets but lower than user profile and relationship memory.
+
+### Directory layout
+
+```
+.cowork/
+  memory/
+    daily/
+      2026-03-14.md    ← raw operational log (DailyLogService writes)
+    summaries/
+      2026-03-14.md    ← synthesized summary (written externally, e.g. cron)
+```
+
+### Summary file format
+
+```md
+---
+updated: 2026-03-14
+source: daily_log_synthesizer
+day: 2026-03-14
+---
+
+# Daily Summary
+
+## Important Decisions
+- ...
+
+## User Preferences Observed
+- ...
+
+## Active Threads
+- ...
+
+## Corrections / Lessons
+- ...
+
+## Follow-ups
+- ...
+```
+
+### Retrieval ranking
+
+| Source | Base relevance | Notes |
+|--------|---------------|-------|
+| `user_profile` | 0.70 | Always somewhat relevant |
+| `daily_summary` | 0.55 × recency decay | Recency half-life = 7 days |
+| Raw daily logs | never returned | Not injected by this service |
+
+### Integration
+
+`MemorySynthesizer.synthesize()` calls `DailyLogSummarizer.getRecentSummaryFragments()` for the last 7 days and adds the results to the synthesis pipeline as `daily_summary` fragments. They render under `## Daily Summaries` in the output block.
+
+### Helper
+
+```ts
+DailyLogSummarizer.countRecentSummaries(workspacePath, 7)
+// → number of summary files present in the last 7 days
+// Used by the Improvement Signals card
+```
+
+---
+
+## 8. Message-Level Thumbs Feedback
+
+**UI:** `src/renderer/components/MainContent.tsx` (assistant message row)
+
+**IPC:** `kit:submitMessageFeedback` → `UserProfileService.ingestUserFeedback()`
+
+### Interaction
+
+Every completed assistant message shows 👍 / 👎 buttons in the message-actions row (hidden while the task is running). Thumbs-down opens a structured reason picker:
+
+| Reason key | Label |
+|-----------|-------|
+| `incorrect` | Incorrect |
+| `too_verbose` | Too verbose |
+| `ignored_instructions` | Ignored instructions |
+| `wrong_tone` | Wrong tone |
+| `unsafe` | Unsafe / unwanted |
+
+### IPC payload
+
+```ts
+window.electronAPI.submitMessageFeedback({
+  taskId: string,
+  messageId: string,           // event.id
+  decision: "accepted" | "rejected",
+  reason?: string,             // one of the keys above
+  note?: string,               // optional free-text (future)
+});
+```
+
+Feedback is routed to `UserProfileService.ingestUserFeedback()` and (via daemon) to `AdaptiveStyleEngine.observeFeedback()`.
+
+---
+
 ## Governance Summary
 
-All 5 improvements respect CoWork OS's security-first positioning:
+All improvements respect CoWork OS's security-first positioning:
 
 | Improvement | Guardrail flag | Default | Rate limit | Audit trail |
 |-------------|---------------|---------|------------|-------------|
@@ -238,6 +413,9 @@ All 5 improvements respect CoWork OS's security-first positioning:
 | Playbook-to-Skill | — | Always active (post-task hook) | 10 min cooldown, max 1/check | Full proposal review workflow |
 | Channel Persona | `channelPersonaEnabled` | Off | — | Visible in system prompt |
 | Evolution Metrics | — | Computed on-demand | — | Read-only, no mutations |
+| Daily Log | — | Off by default (no writer wired yet) | IPC: `limited` tier | Per-day markdown files |
+| Daily Summaries | — | Active when summary files exist | Token budget (ranked) | Summary files in `.cowork/memory/summaries/` |
+| Message Feedback | — | Always visible on completed messages | IPC: `limited` tier | Routed to UserProfileService |
 
 ---
 
@@ -250,4 +428,8 @@ All 5 improvements respect CoWork OS's security-first positioning:
 | PlaybookSkillPromoter | `src/electron/memory/__tests__/PlaybookSkillPromoter.test.ts` | 8 |
 | ChannelPersonaAdapter | `src/electron/memory/__tests__/ChannelPersonaAdapter.test.ts` | 16 |
 | EvolutionMetricsService | `src/electron/memory/__tests__/EvolutionMetricsService.test.ts` | 9 |
+| DailyLogService | pending | — |
+| DailyLogSummarizer | pending | — |
 | **Total** | | **62** |
+
+> Tests for DailyLogService and DailyLogSummarizer are tracked as pending (see plan item 10).
