@@ -7,31 +7,69 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [0.5.0] - 2026-03-15
+
 ### Added
-- **Chrome DevTools attach mode**: New `browser_attach` tool connects to an existing Chrome instance via the Chrome DevTools Protocol. Use `debugger_url` (e.g. `http://localhost:9222`) to control signed-in browser sessions. See [Browser Automation](docs/features.md#chrome-devtools-attach-mode).
-- **Batched browser actions**: New `browser_act_batch` tool executes multiple actions (click, fill, type, press, wait, scroll) in sequence with optional per-action delays.
-- **Browser profile presets**: Named presets `user` (system Chrome), `chrome-relay`, and `workspace` for browser tools. Use `profile="user"` to launch with system Chrome profile; use `browser_attach` for existing signed-in sessions.
-- **Docker timezone support**: `COWORK_TZ` environment variable pins the container to an IANA timezone (e.g. `America/New_York`). Supported in Docker Compose, systemd env files, and daemon entrypoints. Invalid values fall back to UTC with a warning.
-- **Gateway exec approval fallback**: Channel-originated `run_command` requests now honor per-agent exec policy and allowlist. When the approval UI cannot be shown (headless/remote), trusted commands from the allowlist are auto-approved.
+- **Sub-Agent Orchestrator**: Delegated execution lanes with confirmation gates, risk classification, and capability-based model selection. High-risk actions are routed through an approval gate before execution.
+- **Autonomous Self-Improvement Loop**: Bounded improvement campaigns with multi-variant experiment evaluation, winner selection, cooldowns, candidate parking, and direct-apply review. Requires owner enrollment under Settings → Automations → Self-Improve.
+- **Unified Memory Synthesizer**: New `MemorySynthesizer` combines all 6 memory subsystems (UserProfile, RelationshipMemory, Playbook, KnowledgeGraph, Memory, WorkspaceKit) into a single deduplicated context block injected into the system prompt.
+- **Workspace Kits**: Structured workspace memory with frontmatter linting, revision snapshots, bootstrap lifecycle management, and a `workspace-kit lint` CLI.
+- **Companies & Strategic Planner**: `CompaniesPanel` and `ControlPlaneCoreService` for zero-human company ops; `StrategicPlannerService` auto-generates issues on the heartbeat loop; company-scoped digital twin personas.
+- **Managed Devices & Remote Sessions**: Fleet connection manager for remote gateway devices, remote file picker, remote directory listing, real-time remote task monitoring and event proxying.
+- **Semantic Timeline**: Normalized event renderer with dedicated cards for agent activity, approval requests, and semantic summaries. Includes collapsible action block summaries with tool usage, duration, and token stats.
+- **Mermaid diagram rendering**: Inline diagram steps route through `create_diagram` and render safely in the task feed. Mermaid dependency added and locked.
+- **Chrome DevTools attach mode**: `browser_attach` connects to an existing Chrome instance via the DevTools Protocol. `browser_act_batch` executes sequences of actions with optional per-action delays.
+- **Google Workspace MCP Connector**: Sheets, Docs, and Chat integration via a new connector marketplace UI.
+- **Sandboxed code execution**: `execute_code` tool runs code in an isolated sandbox (requires E2B configuration). Hidden until E2B is set up.
+- **Document parser tool**: Structured file extraction for agent use.
+- **Inline video playback**: Tokenized local playback protocol, inline video preview component, and markdown-alongside support.
+- **Daily operational log writer**: Ranked daily summaries included in synthesized prompt context.
+- **New persona templates**: Growth Operator, Founder Office Operator, Customer Ops Lead, and Company Planner; company selector in `PersonaTemplateGallery`.
+- **Best-fit workflow lanes**: Support Ops, IT Ops, and Sales Ops.
+- **`geo-seo` plugin pack**: Location-aware SEO skills.
+- **Cron enhancements**: `shellAccess` and `allowUserInput` fields on `CronJob`; toggle checkboxes in scheduled task modal.
+- **Docker timezone support**: `COWORK_TZ` environment variable pins the container to an IANA timezone. Validated at startup; invalid values fall back to UTC.
+- **Gateway exec approval fallback**: Channel-originated `run_command` requests honor per-agent exec policy and allowlist when approval UI is unavailable.
 
 ### Changed
-- **Dashboard chat UI**: Tool-heavy event streams (`tool_call`, `tool_result`) are now batched (400ms flush interval) to avoid UI freeze during rapid tool execution. Milestone events flush immediately. Pending events are flushed on subscription cleanup.
-- **Per-agent exec approval**: Gateway-triggered tasks now merge autonomy policy and apply allowlist fallback for trusted commands when approval UI is unavailable.
+- **Plan mode rename**: "propose" mode renamed to "plan" mode throughout UI and codebase.
+- **Settings restructure**: Automation group renamed to "Automations"; new Companies and Improvement sections added.
+- **Dashboard**: Shows only automated sessions; Heartbeat-titled tasks treated as automated.
+- **Sidebar**: Tasks paginated; improvement runs deep-linked; automated sessions grouped with filter empty states.
+- **Executor thresholds**: Iteration/continuation limits raised; timeout/failure/compaction thresholds tuned with rationale comments.
+- **Tool events**: Batched at 400ms to reduce feed re-render storms; milestone events flush immediately.
+- **Memory injection**: System prompt assembly calls `MemorySynthesizer.synthesize()` replacing 6 independent context calls.
+- **LLM providers**: Improved model listing, error handling, and cache management for `AnthropicCompatibleProvider`; new model refresh endpoint.
 
 ### Fixed
-- **Browser profile=user errors**: Clearer error messages when Chrome is not installed or the profile is locked (Chrome already running). Suggests using `browser_attach` for existing sessions.
-- **Invalid COWORK_TZ**: Docker entrypoint and daemon scripts now validate timezone values; invalid IANA timezones fall back to UTC with a warning instead of causing silent date bugs.
-- **Event batch loss on task switch**: Subscription cleanup now flushes pending batched tool events before unsubscribing.
+- Fixed remote gateway token and connection flow.
+- Fixed remote device task shadow sync and workspace mapping before remote task creation.
+- Fixed control-plane schema not being created/seeded on startup.
+- Fixed `timeline_error` events incorrectly mapped to failed status.
+- Fixed `AdaptiveStyleEngine` calling non-existent `SecureSettingsRepository` API.
+- Removed redundant `LLMProviderFactory.clearCache()` calls after `saveSettings`.
+- Evidence-backed failed steps now auto-waived on partial success.
+- Fixed double-nesting path fallback and browser-session heuristic in executor.
+- Fixed `descriptionHasDiscoveryIntent` triggering on write-intent steps.
+- Enforced 128-tool hard limit for Azure OpenAI API.
+- Tightened transient interruption detection and structured error wrapping for Azure OpenAI.
+- Resolved TypeScript compilation errors in `AdaptiveStyleEngine` and `ChannelPersonaAdapter`.
 
 ### Added (documentation)
-- **Managed Devices workspace**: new Devices tab for local and remote machine management with saved remote devices, per-device summaries, connection controls, task feed, remote task launching, and remote file picking for task attachments.
-- **Automation control center**: Settings now groups Task Queue, Self-Improve, Scheduled Tasks, Webhooks, Event Triggers, and Daily Briefing under a dedicated **Automations** section, and the home dashboard surfaces recent automation runs directly.
-- **Company ops surface expansion**: Companies, Digital Twins, and Mission Control now share company-linked operator context so founder-directed company workflows can move cleanly from setup to planning to execution.
+- Zero-human company ops guide.
+- Behavior adaptation guide.
+- Workspace memory flow architecture guide.
+- OpenClaw vs CoWork OS feature comparison.
+- Troubleshooting steps for connectors and improvement runs.
+- Timezone configuration guidance for self-hosting.
+- Managed Devices and Automations control center docs.
 
 ### Changed (documentation)
-- **Self-improvement execution model**: the autonomous improvement loop now runs bounded single-lane campaigns by default, tracks staged progress (`preflight`, `reproducing`, `implementing`, `verifying`, `completed`), records provider-health state, and only promotes candidates that show reproduction, verification, and PR-readiness evidence.
-- **Improvement failure handling**: repeated provider or deterministic failures now trigger cooldowns, candidate parking, and explicit stop reasons instead of retrying indefinitely.
-- **Remote operations UX**: remote sessions now expose device-aware task history, remote workspace browsing, remote file attachment selection, and a clearer distinction between local and remote task views.
+- README updated for plan mode and current platform features.
+- Digital-twin personas guide updated for company-linked twins and operator roles.
+- Architecture docs renamed propose mode references to plan mode.
+- Features, use-cases, mission-control, and digital-twins docs updated for zero-human company ops.
+- Self-improvement execution model documented: bounded campaigns, staged progress tracking, promotion evidence requirements.
 
 ## [0.4.14] - 2026-03-07
 
