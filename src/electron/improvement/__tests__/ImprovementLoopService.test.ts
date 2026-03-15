@@ -23,7 +23,7 @@ const variants = new Map<string, ImprovementVariantRun>();
 const verdicts = new Map<string, ImprovementJudgeVerdict>();
 const runs = new Map<string, ImprovementRun>();
 
-let mockSettings = {
+const defaultMockSettings = {
   enabled: true,
   autoRun: false,
   includeDevLogs: false,
@@ -34,6 +34,9 @@ let mockSettings = {
   maxQueuedImprovementCampaigns: 1,
   maxOpenCandidatesPerWorkspace: 25,
   requireWorktree: true,
+  requireRepoChecks: true,
+  enforcePatchScope: true,
+  maxPatchFiles: 8,
   reviewRequired: false,
   judgeRequired: false,
   promotionMode: "github_pr" as const,
@@ -43,6 +46,8 @@ let mockSettings = {
   campaignTokenBudget: 60000,
   campaignCostBudget: 15,
 };
+
+let mockSettings = { ...defaultMockSettings };
 
 vi.mock("../ImprovementSettingsManager", () => ({
   ImprovementSettingsManager: {
@@ -242,22 +247,56 @@ vi.mock("../ExperimentEvaluationService", () => ({
         score: passed ? 0.91 : 0.1,
         targetedVerificationPassed: passed,
         verificationPassed: passed,
+        promotable: passed,
+        reproductionEvidenceFound: passed,
+        verificationEvidenceFound: passed,
+        prReadinessEvidenceFound: passed,
         regressionSignals: passed ? [] : ["Missing PR-ready verification evidence."],
+        safetySignals: [],
         failureClassResolved: passed,
         replayPassRate: passed ? 1 : 0,
         diffSizePenalty: 0.02,
+        artifactSummary: {
+          reproductionMethod: passed ? "reproduced from logs" : undefined,
+          changedFiles: passed ? ["src/app.ts"] : [],
+          verificationCommands: passed ? ["npm test"] : [],
+          prReadiness: passed ? "ready" : "not_ready",
+          missingEvidence: passed ? [] : ["pr_readiness"],
+        },
         summary: passed ? `Variant ${params.variant.lane} passed.` : `Variant ${params.variant.lane} failed.`,
         notes: [passed ? "passed" : "failed"],
       };
     }
-    evaluateCampaign() {
-      throw new Error("evaluateCampaign should not be used in staged self-improvement mode");
+    evaluateCampaign(params: Any) {
+      const evaluations = params.variants.map((variant: Any) => this.evaluateVariant({ variant }));
+      const winner = evaluations.find((item: Any) => item.promotable);
+      return {
+        verdict: {
+          id: `judge-${params.campaign.id}`,
+          campaignId: params.campaign.id,
+          winnerVariantId: winner?.variantId,
+          status: winner ? "passed" : "failed",
+          summary: winner ? `Selected ${winner.lane} as the campaign winner.` : "No winner",
+          notes: evaluations.flatMap((item: Any) => item.notes),
+          comparedAt: Date.now(),
+          variantRankings: evaluations.map((item: Any) => ({
+            variantId: item.variantId,
+            score: item.score,
+            lane: item.lane,
+          })),
+          replayCases: params.campaign.replayCases || [],
+        },
+        outcomeMetrics: this.snapshot(params.evalWindowDays || 14),
+        winner,
+        evaluations,
+      };
     }
   },
 }));
 
 describe("ImprovementLoopService", () => {
   beforeEach(() => {
+    mockSettings = { ...defaultMockSettings };
     workspaces.clear();
     tasks.clear();
     candidates.clear();
@@ -375,6 +414,7 @@ describe("ImprovementLoopService", () => {
       markCandidateResolved: vi.fn(),
       markCandidateParked: vi.fn(),
       recordCampaignFailure: vi.fn(),
+      recordCandidateSkip: vi.fn(),
       reopenCandidate: vi.fn(),
       getTopCandidateForWorkspace: vi.fn().mockReturnValue(candidate),
     } as Any;
@@ -458,6 +498,82 @@ describe("ImprovementLoopService", () => {
     expect(candidateService.markCandidateResolved).toHaveBeenCalledWith(candidate.id);
   });
 
+  it("fans out multiple implementation variants and chooses a winner via judge flow", async () => {
+    mockSettings = { ...mockSettings, variantsPerCampaign: 3 };
+    const workspace = makeWorkspace();
+    const candidate = makeCandidate();
+    workspaces.set(workspace.id, workspace);
+    candidates.set(candidate.id, candidate);
+
+    const candidateService = {
+      refresh: vi.fn().mockResolvedValue({ candidateCount: 1 }),
+      dismissCandidate: vi.fn(),
+      markCandidateRunning: vi.fn(),
+      markCandidateReview: vi.fn(),
+      markCandidateResolved: vi.fn(),
+      markCandidateParked: vi.fn(),
+      recordCampaignFailure: vi.fn(),
+      reopenCandidate: vi.fn(),
+      recordCandidateSkip: vi.fn(),
+      getTopCandidateForWorkspace: vi.fn().mockReturnValue(candidate),
+    } as Any;
+
+    const openPullRequest = vi.fn().mockResolvedValue({ success: true, number: 7, url: "https://example.test/pr/7" });
+    const daemon = new EventEmitter() as Any;
+    daemon.createChildTask = vi.fn().mockImplementation(async (params: Any) => {
+      const taskId = `task-${tasks.size + 1}`;
+      const task: Task = {
+        id: taskId,
+        title: params.title,
+        prompt: params.prompt,
+        status: "executing",
+        workspaceId: params.workspaceId,
+        agentConfig: params.agentConfig,
+        source: params.source,
+        createdAt: Date.now(),
+        updatedAt: Date.now(),
+      };
+      tasks.set(task.id, task);
+      return task;
+    });
+    daemon.getWorktreeManager = vi.fn(() => ({
+      shouldUseWorktree: vi.fn().mockResolvedValue(true),
+      openPullRequest,
+      mergeToBase: vi.fn(),
+    }));
+
+    const service = new ImprovementLoopService({} as Any, candidateService);
+    await service.start(daemon);
+    const campaign = await service.runNextExperiment();
+    const scout = campaign!.variants[0];
+
+    completeVariantTask(
+      scout.taskId!,
+      "Reproduction method: reproduced from logs. Verification: scoped failure. PR readiness: not ready until fix is applied.",
+    );
+    daemon.emit("task_completed", { taskId: scout.taskId });
+
+    await vi.waitFor(() => {
+      expect(campaigns.get(campaign!.id)?.status).toBe("implementing");
+      expect([...variants.values()]).toHaveLength(4);
+    });
+
+    const implementationVariants = [...variants.values()].filter((item) => item.id !== scout.id);
+    for (const variant of implementationVariants) {
+      completeVariantTask(
+        variant.taskId!,
+        `Reproduction method: reproduced from logs. Changed files summary: src/${variant.lane}.ts. Verification: npm test passes. PR readiness: ready.`,
+      );
+      daemon.emit("worktree_created", { taskId: variant.taskId, branch: `codex/${variant.id}` });
+      daemon.emit("task_completed", { taskId: variant.taskId });
+    }
+
+    await vi.waitFor(() => {
+      expect(campaigns.get(campaign!.id)?.status).toBe("pr_opened");
+      expect(verdicts.get(campaign!.id)?.status).toBe("passed");
+    });
+  });
+
   it("fails closed when the implementation output is not promotable", async () => {
     const workspace = makeWorkspace();
     const candidate = makeCandidate();
@@ -472,6 +588,7 @@ describe("ImprovementLoopService", () => {
       markCandidateResolved: vi.fn(),
       markCandidateParked: vi.fn(),
       recordCampaignFailure: vi.fn(),
+      recordCandidateSkip: vi.fn(),
       reopenCandidate: vi.fn(),
       getTopCandidateForWorkspace: vi.fn().mockReturnValue(candidate),
     } as Any;
@@ -540,6 +657,7 @@ describe("ImprovementLoopService", () => {
       markCandidateResolved: vi.fn(),
       markCandidateParked: vi.fn(),
       recordCampaignFailure: vi.fn(),
+      recordCandidateSkip: vi.fn(),
       reopenCandidate: vi.fn(),
       getTopCandidateForWorkspace: vi.fn().mockReturnValue(candidate),
     } as Any;
@@ -621,6 +739,7 @@ describe("ImprovementLoopService", () => {
       markCandidateResolved: vi.fn(),
       markCandidateParked: vi.fn(),
       recordCampaignFailure: vi.fn(),
+      recordCandidateSkip: vi.fn(),
       reopenCandidate: vi.fn(),
       getTopCandidateForWorkspace: vi.fn().mockImplementation((workspaceId: string) => {
         return workspaceId === tempWorkspace.id ? candidate : undefined;
@@ -689,6 +808,7 @@ describe("ImprovementLoopService", () => {
       markCandidateResolved: vi.fn(),
       markCandidateParked: vi.fn(),
       recordCampaignFailure: vi.fn(),
+      recordCandidateSkip: vi.fn(),
       reopenCandidate: vi.fn(),
       getTopCandidateForWorkspace: vi.fn().mockImplementation((workspaceId: string) => {
         return workspaceId === observedWorkspace.id ? candidate : undefined;
@@ -752,6 +872,7 @@ describe("ImprovementLoopService", () => {
       markCandidateResolved: vi.fn(),
       markCandidateParked: vi.fn(),
       recordCampaignFailure: vi.fn(),
+      recordCandidateSkip: vi.fn(),
       reopenCandidate: vi.fn(),
       getTopCandidateForWorkspace: vi.fn().mockReturnValue(candidate),
     } as Any;
@@ -768,10 +889,10 @@ describe("ImprovementLoopService", () => {
     await service.start(daemon);
     const campaign = await service.runNextExperiment();
 
-    expect(campaign?.status).toBe("failed");
-    expect(campaign?.promotionStatus).toBe("promotion_failed");
-    expect(campaign?.promotionError).toBe(
-      "Temporary execution workspace is not eligible for PR-based self-improvement.",
+    expect(campaign).toBeNull();
+    expect(candidateService.recordCandidateSkip).toHaveBeenCalledWith(
+      candidate.id,
+      expect.stringContaining("cannot provide required git worktree isolation"),
     );
   });
 
