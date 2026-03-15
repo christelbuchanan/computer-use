@@ -208,6 +208,18 @@ In addition to the passive learning layers above, CoWork OS now includes an auto
 - surface review decisions and notifications
 - promote successful runs by merge or GitHub PR
 
+### Eligibility and governance
+
+The autonomous repo-improvement loop is intentionally **not** a general-user feature yet.
+
+Current eligibility remains locked to the maintainer / owner workflow:
+
+- the app must be running as an **unpackaged** development build
+- the active repo must resolve to the canonical `github.com/CoWork-OS/CoWork-OS` remote
+- the machine must present a **maintainer-signed owner enrollment proof** bound to that machine fingerprint
+
+The enrollment proof can be supplied through the Self-Improve settings UI or via `COWORK_SELF_IMPROVEMENT_OWNER_SIGNATURE` for development workflows. If any of those checks fail, the self-improvement loop remains disabled even if the rest of the automation surface is available.
+
 The current loop is intentionally more conservative than earlier versions. It is optimized for bounded, PR-first experiments instead of broad autonomous branching.
 
 ### Current operating defaults
@@ -348,6 +360,18 @@ The startup and candidate-selection behavior now works like this:
 - timeline events still continue to flow normally
 
 This means self-improvement no longer creates guaranteed-failure tasks during startup for non-git workspaces, and the earlier misleading `ERR_UNHANDLED_ERROR` noise is gone.
+
+### Candidate persistence hardening
+
+Improvement startup also depends on the candidate repository SQL matching the SQLite schema exactly.
+
+One failure mode looked like this:
+
+```text
+[Main] Failed to initialize ImprovementLoopService: SqliteError: 27 values for 28 columns
+```
+
+That error came from `ImprovementCandidateRepository.create()` inserting fewer placeholders than the `improvement_candidates` table actually declares. Current builds correct that mismatch, so candidate rebuilding from failed tasks, feedback, and logs no longer aborts `ImprovementLoopService` initialization during startup.
 
 ### Monitoring and notifications
 
