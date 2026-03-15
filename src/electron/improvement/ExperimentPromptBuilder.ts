@@ -154,9 +154,35 @@ export function buildImprovementVariantPrompt(
     pushEvidence(lines, evidence);
   }
 
+  const likelyFiles = inferLikelyRelevantFiles(context.trainingEvidence);
+  if (likelyFiles.length > 0) {
+    lines.push("", "Likely relevant files / paths from the evidence:");
+    for (const file of likelyFiles) lines.push(`- ${file}`);
+  }
+
+  const likelyVerificationCommands = inferLikelyVerificationCommands(context.trainingEvidence, context.replayCases);
+  if (likelyVerificationCommands.length > 0) {
+    lines.push("", "Preferred targeted verification commands:");
+    for (const command of likelyVerificationCommands) lines.push(`- ${command}`);
+  }
+
   lines.push("", "Hidden holdout policy:");
   lines.push("- Some replay cases are withheld and will be used after you finish.");
   lines.push("- Do not optimize for imagined hidden cases; solve the concrete issue robustly.");
+
+  lines.push("", "Required artifact contract (use these exact labels in your final response):");
+  lines.push("- Reproduction method: <what you reproduced or how you validated the failure>");
+  lines.push("- Root cause: <short root-cause statement, or 'unknown'>");
+  lines.push("- Changed files summary: <comma-separated files, or 'none'>");
+  lines.push("- Verification commands: <commands run, or 'none'>");
+  lines.push("- Verification result: <pass/fail with one sentence>");
+  lines.push("- PR readiness: ready | not ready");
+  lines.push("- Remaining risk: <short statement>");
+
+  lines.push("", "Scout-to-implementation handoff requirements:");
+  lines.push("- If you are in a scout/reproducing lane, do not mutate repository files.");
+  lines.push("- Produce a concrete root-cause and verification recommendation that an implementation lane can reuse.");
+  lines.push("- If evidence is insufficient, say so explicitly instead of guessing.");
 
   lines.push("", "When you finish, include:");
   lines.push("- the reproduction method you used");
@@ -214,4 +240,37 @@ function inferDefaultMutablePaths(instructions: string): string[] {
     return ["Prefer `src/renderer` files implicated by the failure.", "Touch Electron code only if necessary for the fix."];
   }
   return ["Only edit files directly implicated by the failure evidence.", "Keep changes close to existing tests or verification helpers."];
+}
+
+function inferLikelyRelevantFiles(evidence: ImprovementEvidence[]): string[] {
+  const paths = new Set<string>();
+  const matcher = /(?:src|tests?|docs|scripts|logs)\/[^\s,:;)]*/g;
+  for (const item of evidence) {
+    const text = `${item.summary || ""}\n${item.details || ""}`;
+    const matches = text.match(matcher) || [];
+    for (const match of matches) {
+      const normalized = match.trim().replace(/[),.;]+$/, "");
+      if (normalized.length > 3) paths.add(normalized);
+    }
+  }
+  return [...paths].slice(0, 8);
+}
+
+function inferLikelyVerificationCommands(
+  evidence: ImprovementEvidence[],
+  replayCases: ImprovementReplayCase[],
+): string[] {
+  const commands = new Set<string>();
+  const commandPattern = /((?:npm|pnpm|yarn|bun)\s+(?:test|run\s+[\w:-]+))/gi;
+  for (const item of evidence) {
+    const text = `${item.summary || ""}\n${item.details || ""}`;
+    const matches = text.match(commandPattern) || [];
+    for (const match of matches) commands.add(match.trim());
+  }
+  for (const item of replayCases) {
+    const text = `${item.summary || ""}\n${item.details || ""}`;
+    const matches = text.match(commandPattern) || [];
+    for (const match of matches) commands.add(match.trim());
+  }
+  return [...commands].slice(0, 6);
 }
