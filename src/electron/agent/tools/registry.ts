@@ -85,6 +85,9 @@ import {
   resolveModelPreferenceToModelKey,
   resolvePersonalityPreference,
 } from "../../../shared/agent-preferences";
+import { ModelCapabilityRegistry } from "../llm/ModelCapabilityRegistry";
+import { CodeExecTools } from "./code-exec-tools";
+import { DocumentParserTools } from "./document-parser-tools";
 import { isHeadlessMode } from "../../utils/runtime-mode";
 import { sanitizeStoredPreferredName } from "../../utils/preferred-name";
 import { HooksSettingsManager } from "../../hooks/settings";
@@ -95,6 +98,7 @@ import { ScrapingTools } from "./scraping-tools";
 import { DocumentTools } from "./document-tools";
 import { ScratchpadTools } from "./scratchpad-tools";
 import { CitationTracker } from "../citation/CitationTracker";
+import { OrchestrationRepository } from "../OrchestrationRepository";
 import {
   getToolSemantics as getToolSemanticsUtil,
   isArtifactGenerationToolName as isArtifactGenerationToolNameUtil,
@@ -135,6 +139,7 @@ const SUB_AGENT_DEFAULT_DENIED_TOOLS = [
   "spawn_agent",
   "wait_for_agent",
   "get_agent_status",
+  "get_orchestration_status",
   "list_agents",
   "send_agent_message",
   "capture_agent_events",
@@ -370,6 +375,7 @@ export class ToolRegistry {
   private citationTracker?: CitationTracker;
   private gatewayContext?: GatewayContextType;
   private _deepWorkMode = false;
+  private _codeExecTools?: CodeExecTools;
   private deniedTools: Set<string> = new Set();
   private deniedGroups: Set<ToolGroupName> = new Set();
   private denyAllTools = false;
@@ -723,6 +729,7 @@ export class ToolRegistry {
     this.scrapingTools.setWorkspace(workspace);
     this.memoryTools.setWorkspace(workspace);
     this.documentTools.setWorkspace(workspace);
+    this._codeExecTools = undefined;
     this.invalidateToolCaches();
   }
 
@@ -1000,6 +1007,7 @@ export class ToolRegistry {
           "spawn_agent",
           "wait_for_agent",
           "get_agent_status",
+          "get_orchestration_status",
           "list_agents",
           "send_agent_message",
           "capture_agent_events",
@@ -2308,6 +2316,16 @@ ${skillDescriptions}`;
 
     if (name === "manage_heartbeat") {
       return this.manageHeartbeat(input);
+    }
+
+    // Sandboxed code execution
+    if (name === "execute_code") {
+      return await this.executeCode(input);
+    }
+
+    // Document parsing
+    if (name === "parse_document") {
+      return await this.parseDocument(input);
     }
 
     // Sub-Agent / Parallel Agent tools
@@ -6672,12 +6690,147 @@ ${skillDescriptions}`;
   }
 
   /**
+   * Parse a document file (PDF, DOCX, XLSX, PPTX, CSV, JSON, Markdown).
+   */
+  private async parseDocument(input: {
+    path: string;
+    format?: "text" | "structured";
+    max_chars?: number;
+  }) {
+    const parser = new DocumentParserTools(this.workspace);
+    try {
+      return await parser.parseDocument(input);
+    } catch (err) {
+      return {
+        content: "",
+        format: input.format ?? "text",
+        detected_type: "unknown",
+        truncated: false,
+        char_count: 0,
+        error: err instanceof Error ? err.message : String(err),
+      };
+    }
+  }
+
+  /**
+   * Execute code in a sandboxed process.
+   */
+  private async executeCode(input: {
+    language: "python" | "javascript" | "shell";
+    code: string;
+    timeout_seconds?: number;
+    allow_network?: boolean;
+  }) {
+    if (!this._codeExecTools) {
+      this._codeExecTools = new CodeExecTools(this.workspace);
+    }
+    try {
+      return await this._codeExecTools.executeCode(input);
+    } catch (err) {
+      const message = err instanceof Error ? err.message : String(err);
+      return {
+        stdout: "",
+        stderr: message,
+        exit_code: 1,
+        timed_out: false,
+        output_truncated: false,
+        language: input.language,
+      };
+    }
+  }
+
+  /**
+   * Get the persisted status of a DAG orchestration run associated with the current task.
+   */
+  private async getOrchestrationStatus(input: { run_id?: string }): Promise<{
+    success: boolean;
+    run?: {
+      run_id: string;
+      root_task_id: string;
+      workspace_id: string;
+      status: string;
+      created_at: number;
+      completed_at?: number;
+      summary: {
+        total: number;
+        pending: number;
+        spawned: number;
+        running: number;
+        completed: number;
+        failed: number;
+      };
+      tasks: Array<{
+        id: string;
+        title: string;
+        status: string;
+        depends_on: string[];
+        task_id?: string;
+        output?: string;
+        error?: string;
+        capability_hint?: string;
+        started_at?: number;
+        completed_at?: number;
+      }>;
+    };
+    message: string;
+  }> {
+    const repo = new OrchestrationRepository(this.daemon.getDatabase());
+    const requestedRunId = typeof input?.run_id === "string" ? input.run_id.trim() : "";
+    const run = requestedRunId ? repo.findById(requestedRunId) : repo.findByRootTaskId(this.taskId);
+
+    if (!run || run.rootTaskId !== this.taskId) {
+      return {
+        success: false,
+        message: requestedRunId
+          ? `No orchestration run found for run_id ${requestedRunId} under the current task.`
+          : "No orchestration run found for the current task.",
+      };
+    }
+
+    const summary = run.tasks.reduce(
+      (acc, task) => {
+        acc.total += 1;
+        acc[task.status] += 1;
+        return acc;
+      },
+      { total: 0, pending: 0, spawned: 0, running: 0, completed: 0, failed: 0 },
+    );
+
+    return {
+      success: true,
+      run: {
+        run_id: run.id,
+        root_task_id: run.rootTaskId,
+        workspace_id: run.workspaceId,
+        status: run.status,
+        created_at: run.createdAt,
+        completed_at: run.completedAt,
+        summary,
+        tasks: run.tasks.map((task) => ({
+          id: task.id,
+          title: task.title,
+          status: task.status,
+          depends_on: task.dependsOn,
+          task_id: task.taskId,
+          output: task.output,
+          error: task.error,
+          capability_hint: task.capabilityHint,
+          started_at: task.startedAt,
+          completed_at: task.completedAt,
+        })),
+      },
+      message: `Loaded orchestration run ${run.id} (${summary.completed}/${summary.total} completed).`,
+    };
+  }
+
+  /**
    * Spawn a child agent to work on a subtask
    */
   private async spawnAgent(input: {
     prompt: string;
     title?: string;
     model_preference?: string;
+    capability_hint?: string;
     personality?: string;
     wait?: boolean;
     max_turns?: number;
@@ -6689,7 +6842,7 @@ ${skillDescriptions}`;
     result?: Any;
     error?: string;
   }> {
-    const { prompt, title, model_preference, personality, wait = false, max_turns = 20 } = input;
+    const { prompt, title, model_preference, capability_hint, personality, wait = false, max_turns = 20 } = input;
 
     // Validate prompt
     if (!prompt || typeof prompt !== "string" || prompt.trim().length === 0) {
@@ -6750,10 +6903,15 @@ ${skillDescriptions}`;
 
     // Default behavior for tool-spawned sub-agents: cheaper model + concise personality,
     // unless the caller explicitly asks to inherit ("same").
+    // If capability_hint is provided and no explicit model_preference, use registry routing.
+    const capabilityRouted =
+      !model_preference && capability_hint
+        ? ModelCapabilityRegistry.selectForTask(String(capability_hint))
+        : undefined;
     const modelKey =
       modelPref === "same"
         ? undefined
-        : (resolveModelPreferenceToModelKey(model_preference) ?? "haiku-4-5");
+        : (resolveModelPreferenceToModelKey(model_preference ?? capabilityRouted) ?? "haiku-4-5");
     const personalityId: PersonalityId | undefined =
       personalityPref === "same"
         ? undefined
@@ -6961,7 +7119,7 @@ ${skillDescriptions}`;
    * Orchestrate multiple agents in parallel: spawn all, wait for all, return combined results.
    */
   private async orchestrateAgents(input: {
-    tasks: Array<{ prompt: string; title?: string; model_preference?: string }>;
+    tasks: Array<{ prompt: string; title?: string; model_preference?: string; capability_hint?: string }>;
     timeout_seconds?: number;
   }): Promise<{
     success: boolean;
@@ -6992,6 +7150,7 @@ ${skillDescriptions}`;
         prompt: task.prompt,
         title: task.title,
         model_preference: task.model_preference,
+        capability_hint: task.capability_hint,
         wait: false,
         max_turns: 20,
       });
@@ -8220,6 +8379,10 @@ ${skillDescriptions}`;
           required: ["entry"],
         },
       },
+      // Sandboxed code execution
+      ...CodeExecTools.getToolDefinitions(),
+      // Document parsing
+      ...DocumentParserTools.getToolDefinitions(),
       // Sub-Agent / Parallel Agent tools
       {
         name: "spawn_agent",
@@ -8246,6 +8409,13 @@ ${skillDescriptions}`;
               enum: ["same", "cheaper", "smarter"],
               description:
                 'Model selection: "same" uses parent model, "cheaper" selects Haiku (fast/cheap), "smarter" selects Opus (most capable). Default: "cheaper" for cost optimization.',
+            },
+            capability_hint: {
+              type: "string",
+              enum: ["code", "math", "research", "vision", "fast", "long_context"],
+              description:
+                "Route to a model suited for this capability type. Used when model_preference is absent. " +
+                '"code"/"fast" → Haiku, "research"/"math"/"vision"/"long_context" → Sonnet.',
             },
             personality: {
               type: "string",
@@ -8295,6 +8465,11 @@ ${skillDescriptions}`;
                     enum: ["same", "cheaper", "smarter"],
                     description: 'Model selection. Default: "cheaper"',
                   },
+                  capability_hint: {
+                    type: "string",
+                    enum: ["code", "math", "research", "vision", "fast", "long_context"],
+                    description: "Route to a capability-suited model when model_preference is absent.",
+                  },
                 },
                 required: ["prompt"],
               },
@@ -8343,6 +8518,22 @@ ${skillDescriptions}`;
               items: { type: "string" },
               description:
                 "Array of task IDs to check. If empty or omitted, returns status of all child agents.",
+            },
+          },
+        },
+      },
+      {
+        name: "get_orchestration_status",
+        description:
+          "Get the persisted status of a DAG orchestration run created for the current task. " +
+          "Returns the run summary plus per-node dependency and completion state.",
+        input_schema: {
+          type: "object",
+          properties: {
+            run_id: {
+              type: "string",
+              description:
+                "Optional orchestration run ID. If omitted, returns the latest run associated with the current task.",
             },
           },
         },
