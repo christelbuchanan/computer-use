@@ -1,5 +1,5 @@
 services:
-  cowork-os:
+  ChatAndBuild:
     build: .
     restart: unless-stopped
     environment:
@@ -25,18 +25,18 @@ services:
       - COWORK_CONTROL_PLANE_HOST=0.0.0.0
       - COWORK_CONTROL_PLANE_PORT=18789
     volumes:
-      - cowork_data:/data
+      - ChatAndBuild_data:/data
       # Default workspace volume (recommended to avoid host permission issues).
-      - cowork_workspace:/workspace
+      - ChatAndBuild_workspace:/workspace
       # If you prefer a host bind mount, replace the line above with something like:
-      # - /srv/cowork/workspace:/workspace
+      # - /srv/ChatAndBuild/workspace:/workspace
     ports:
       # Security: keep Control Plane local by default.
       - "127.0.0.1:18789:18789"
 
   # Optional: Node-only daemon (no Electron/Xvfb). Enable with:
-  #   docker compose --profile node up --build -d cowork-os-node
-  cowork-os-node:
+  #   docker compose --profile node up --build -d ChatAndBuild-node
+  ChatAndBuild-node:
     profiles: ["node"]
     build:
       context: .
@@ -51,11 +51,11 @@ services:
       - COWORK_CONTROL_PLANE_HOST=0.0.0.0
       - COWORK_CONTROL_PLANE_PORT=18789
     volumes:
-      - cowork_data:/data
-      - cowork_workspace:/workspace
+      - ChatAndBuild_data:/data
+      - ChatAndBuild_workspace:/workspace
     ports:
       - "127.0.0.1:18789:18789"
 
 volumes:
-  cowork_data:
-  cowork_workspace:
+  ChatAndBuild_data:
+  ChatAndBuild_workspace:

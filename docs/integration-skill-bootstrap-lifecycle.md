@@ -161,7 +161,7 @@ Source: `src/electron/agent/tools/registry.ts`
 
 Proposals are persisted per workspace at:
 
-- `.cowork/skills/proposals/<proposal-id>.json`
+- `.ChatAndBuild/skills/proposals/<proposal-id>.json`
 
 Source: `src/electron/agent/skills/SkillProposalService.ts`
 
@@ -222,7 +222,7 @@ The original bootstrap update has now been expanded into a shared workspace-kit 
 
 ### Contract-driven file model
 
-Root `.cowork/` files now have explicit contracts covering:
+Root `.ChatAndBuild/` files now have explicit contracts covering:
 
 - title
 - scope (`task`, `main-session`, `role`, `company-ops`, `heartbeat`, `bootstrap`)
@@ -234,35 +234,35 @@ Root `.cowork/` files now have explicit contracts covering:
 
 Representative root files now include:
 
-- `.cowork/AGENTS.md`
-- `.cowork/MEMORY.md`
-- `.cowork/USER.md`
-- `.cowork/TOOLS.md`
-- `.cowork/IDENTITY.md`
-- `.cowork/RULES.md`
-- `.cowork/SOUL.md`
-- `.cowork/VIBES.md`
-- `.cowork/MISTAKES.md`
-- `.cowork/LORE.md`
-- `.cowork/CROSS_SIGNALS.md`
-- `.cowork/PRIORITIES.md`
-- `.cowork/COMPANY.md`
-- `.cowork/OPERATIONS.md`
-- `.cowork/KPIS.md`
-- `.cowork/HEARTBEAT.md`
-- `.cowork/BOOTSTRAP.md`
+- `.ChatAndBuild/AGENTS.md`
+- `.ChatAndBuild/MEMORY.md`
+- `.ChatAndBuild/USER.md`
+- `.ChatAndBuild/TOOLS.md`
+- `.ChatAndBuild/IDENTITY.md`
+- `.ChatAndBuild/RULES.md`
+- `.ChatAndBuild/SOUL.md`
+- `.ChatAndBuild/VIBES.md`
+- `.ChatAndBuild/MISTAKES.md`
+- `.ChatAndBuild/LORE.md`
+- `.ChatAndBuild/CROSS_SIGNALS.md`
+- `.ChatAndBuild/PRIORITIES.md`
+- `.ChatAndBuild/COMPANY.md`
+- `.ChatAndBuild/OPERATIONS.md`
+- `.ChatAndBuild/KPIS.md`
+- `.ChatAndBuild/HEARTBEAT.md`
+- `.ChatAndBuild/BOOTSTRAP.md`
 
 Project-scoped files now live under:
 
-- `.cowork/projects/<projectId>/CONTEXT.md`
-- `.cowork/projects/<projectId>/ACCESS.md`
+- `.ChatAndBuild/projects/<projectId>/CONTEXT.md`
+- `.ChatAndBuild/projects/<projectId>/ACCESS.md`
 
 Role profile files live under:
 
-- `.cowork/agents/<roleId>/IDENTITY.md`
-- `.cowork/agents/<roleId>/RULES.md`
-- `.cowork/agents/<roleId>/SOUL.md`
-- `.cowork/agents/<roleId>/VIBES.md`
+- `.ChatAndBuild/agents/<roleId>/IDENTITY.md`
+- `.ChatAndBuild/agents/<roleId>/RULES.md`
+- `.ChatAndBuild/agents/<roleId>/SOUL.md`
+- `.ChatAndBuild/agents/<roleId>/VIBES.md`
 
 ### Frontmatter and parsing contract
 
@@ -286,7 +286,7 @@ Current behavior:
 
 State is persisted at:
 
-- `.cowork/workspace-state.json`
+- `.ChatAndBuild/workspace-state.json`
 
 Current schema:
 
@@ -300,10 +300,10 @@ Current schema:
 
 Lifecycle rules:
 
-1. If `.cowork/BOOTSTRAP.md` exists and `bootstrapSeededAt` is empty, seed `bootstrapSeededAt`.
-2. If `.cowork/BOOTSTRAP.md` is later removed and `bootstrapSeededAt` exists, set `onboardingCompletedAt`.
-3. During init in missing-only mode, `.cowork/BOOTSTRAP.md` is not recreated after onboarding is already complete.
-4. `.cowork/HEARTBEAT.md` remains separate from bootstrap and is reserved for recurring heartbeat-only checks.
+1. If `.ChatAndBuild/BOOTSTRAP.md` exists and `bootstrapSeededAt` is empty, seed `bootstrapSeededAt`.
+2. If `.ChatAndBuild/BOOTSTRAP.md` is later removed and `bootstrapSeededAt` exists, set `onboardingCompletedAt`.
+3. During init in missing-only mode, `.ChatAndBuild/BOOTSTRAP.md` is not recreated after onboarding is already complete.
+4. `.ChatAndBuild/HEARTBEAT.md` remains separate from bootstrap and is reserved for recurring heartbeat-only checks.
 
 ### Pure / mutating function split (`kit-status.ts`)
 
@@ -331,11 +331,11 @@ Workspace-kit status is now computed from one shared path and includes:
 
 Tracked directories now include:
 
-- `.cowork/memory/`
-- `.cowork/memory/hourly/`
-- `.cowork/memory/weekly/`
-- `.cowork/projects/`
-- `.cowork/agents/`
+- `.ChatAndBuild/memory/`
+- `.ChatAndBuild/memory/hourly/`
+- `.ChatAndBuild/memory/weekly/`
+- `.ChatAndBuild/projects/`
+- `.ChatAndBuild/agents/`
 
 Lint behavior now includes:
 
@@ -355,7 +355,7 @@ Workspace-kit validation is now available through:
 
 Tracked writes now store previous versions under:
 
-- `.cowork/**/.history/<file>/`
+- `.ChatAndBuild/**/.history/<file>/`
 
 Each revision records:
 
@@ -367,7 +367,7 @@ Each revision records:
 
 ### Quick-open kit files (`kit:openFile`)
 
-The `KIT_OPEN_FILE` IPC handler (`kit:openFile`) opens any `.cowork/`-scoped file in the system editor. If the file does not exist it is seeded from a default template (with full frontmatter and section scaffolding) before opening.
+The `KIT_OPEN_FILE` IPC handler (`kit:openFile`) opens any `.ChatAndBuild/`-scoped file in the system editor. If the file does not exist it is seeded from a default template (with full frontmatter and section scaffolding) before opening.
 
 This channel is part of the shared IPC contract exported from `src/shared/types.ts`, which keeps preload, renderer, and Electron handlers aligned on the same channel names. Related behavior-adaptation IPC channels in that shared contract include:
 
@@ -377,7 +377,7 @@ This channel is part of the shared IPC contract exported from `src/shared/types.
 Exposed in **Memory Hub → Per Workspace** as "Open USER.md" and "Open MEMORY.md" buttons.
 
 Security constraints:
-- `relPath` must start with `.cowork/` and must not contain `..`
+- `relPath` must start with `.ChatAndBuild/` and must not contain `..`
 - Rate-limited to the `limited` tier
 
 ### Source modules
@@ -436,11 +436,11 @@ Use this matrix for release and support verification.
 
 ### Kit + heartbeat
 
-1. Kit init creates the expected `.cowork/` structure for the selected preset, including shared root files plus tracked directories.
+1. Kit init creates the expected `.ChatAndBuild/` structure for the selected preset, including shared root files plus tracked directories.
 2. Kit status reports missing tracked entries, stale files, lint warning/error counts, revision counts, and onboarding state fields.
 3. Files with freshness windows warn when `updated` is missing or stale.
 4. `ACCESS.md` and `TOOLS.md` surface secret-detection errors when likely credentials are pasted into them.
-5. Deleting `.cowork/BOOTSTRAP.md` marks onboarding completed in workspace state.
+5. Deleting `.ChatAndBuild/BOOTSTRAP.md` marks onboarding completed in workspace state.
 6. `npm run kit:lint` and `npm run kit:lint -- --strict` match the in-app health model.
 7. Proactive tasks respect `frequencyMinutes` and do not run each heartbeat.
 

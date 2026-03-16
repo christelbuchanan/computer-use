@@ -39,7 +39,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - **Structured input requests**: plan-mode tasks can use `request_user_input` to pause for persisted multiple-choice decisions, with submission from the desktop UI or Control Plane dashboard.
 - **Tier-1 integration orchestration**: new `integration_setup` flow supports `list`, `inspect`, and `configure` for Resend, Slack, the Google family, Jira, Linear, and HubSpot with `expected_plan_hash` stale-plan protection.
 - **Approval-gated skill expansion**: new `skill_proposal` lifecycle lets agents draft, list, approve, and reject workspace-local skill proposals instead of mutating skills directly.
-- **Workspace bootstrap lifecycle**: `.cowork/BOOTSTRAP.md`, `.cowork/VIBES.md`, `.cowork/LORE.md`, and `.cowork/workspace-state.json` now track onboarding/bootstrap state and heartbeat-ready context.
+- **Workspace bootstrap lifecycle**: `.ChatAndBuild/BOOTSTRAP.md`, `.ChatAndBuild/VIBES.md`, `.ChatAndBuild/LORE.md`, and `.ChatAndBuild/workspace-state.json` now track onboarding/bootstrap state and heartbeat-ready context.
 - **Workspace agent policy**: optional `agent-policy.toml` can require tool families, filter tools, tune loop thresholds, and attach pre-tool / stop-attempt hooks per workspace.
 - **New bundled skills**: added Polymarket, Humanizer, YouTube video intelligence, Stock analysis, Calendly scheduling, Moltbook, and Marketing Strategist skills.
 - **Developer logging capture**: `npm run dev` can mirror timestamped output to `logs/dev-latest.log`, with `npm run dev:log` forcing capture regardless of the Settings toggle.
@@ -85,7 +85,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ## [0.3.90] - 2026-02-23
 
 ### Added
-- **Git Worktree Isolation**: Tasks can run in isolated git worktrees with automatic branch creation (`cowork/<task-slug>`), auto-commit, merge back to base branch, conflict detection, and worktree cleanup after completion.
+- **Git Worktree Isolation**: Tasks can run in isolated git worktrees with automatic branch creation (`ChatAndBuild/<task-slug>`), auto-commit, merge back to base branch, conflict detection, and worktree cleanup after completion.
 - **Collaborative Mode**: Auto-create ephemeral multi-agent teams for a task. Multiple agents work in parallel, sharing their analysis and reasoning in real-time via the Collaborative Thoughts Panel, with a leader agent synthesizing the final result.
 - **Multi-LLM Mode**: Send the same task to multiple LLM providers/models simultaneously. A judge agent synthesizes the best result from all participants. Configure participants and judge via the Multi-LLM Selection Panel.
 - **Agent Comparison Mode**: Run the same task across different agents or models side by side using the ComparisonService. View results in a dedicated comparison UI with diff viewer.
@@ -145,14 +145,14 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Fixed
 - **Hoisted Electron detection in setup**: `npm run setup` now treats `../electron` as valid in npm-hoisted installs, so first-time setup no longer triggers unnecessary full dependency bootstrap.
-- **Native setup install scope**: missing `better-sqlite3` recovery and rebuild now run from the actual install root (not inside `node_modules/cowork-os`), reducing first-run reify pressure that caused frequent macOS `SIGKILL`.
+- **Native setup install scope**: missing `better-sqlite3` recovery and rebuild now run from the actual install root (not inside `node_modules/ChatAndBuild`), reducing first-run reify pressure that caused frequent macOS `SIGKILL`.
 - **Release publish gating**: npm/GitHub package publish jobs now depend on the release validation job, and smoke tests fail if setup unexpectedly falls back to dependency bootstrap.
-- **Install docs hardening**: README now includes a direct native retry-wrapper fallback when `npm run --prefix node_modules/cowork-os setup` is terminated by `zsh: killed`, and recommends local bin launch over `npx` for first run.
+- **Install docs hardening**: README now includes a direct native retry-wrapper fallback when `npm run --prefix node_modules/ChatAndBuild setup` is terminated by `zsh: killed`, and recommends local bin launch over `npx` for first run.
 
 ## [0.3.84] - 2026-02-14
 
 ### Fixed
-- **Release smoke-test module resolution**: installability validation now runs Electron with `cwd` set to the installed `cowork-os` package directory so `require('better-sqlite3')` resolves correctly after setup.
+- **Release smoke-test module resolution**: installability validation now runs Electron with `cwd` set to the installed `ChatAndBuild` package directory so `require('better-sqlite3')` resolves correctly after setup.
 - **Release continuity**: keeps the 0.3.82 npm SIGKILL regression fix while restoring end-to-end GitHub release packaging path after CI validation.
 
 ## [0.3.83] - 2026-02-14
@@ -182,7 +182,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ## [0.3.79] - 2026-02-14
 
 ### Fixed
-- **macOS install reliability carry-forward**: retained the 0.3.71 SIGKILL workaround for first-time users by documenting and reinforcing the `npm install --ignore-scripts` + `npm run --prefix node_modules/cowork-os setup` flow.
+- **macOS install reliability carry-forward**: retained the 0.3.71 SIGKILL workaround for first-time users by documenting and reinforcing the `npm install --ignore-scripts` + `npm run --prefix node_modules/ChatAndBuild setup` flow.
 - **Release workflow hardening**: ensured the macOS release job always creates or reopens the GitHub release as a draft before packaging so `electron-builder` can attach DMG/zip assets without immutable-release failures.
 - **Version alignment**: published metadata now identifies this release as `0.3.79` with the same installability and packaging reliability changes.
 
@@ -249,29 +249,29 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ## [0.3.69] - 2026-02-11
 
 ### Fixed
-- `npm install -g cowork-os` could fail on macOS with `fsevents` (`binding.gyp not found`) due an npm 11 rebuild edge case triggered by `playwright`.
+- `npm install -g ChatAndBuild` could fail on macOS with `fsevents` (`binding.gyp not found`) due an npm 11 rebuild edge case triggered by `playwright`.
 - Switched runtime browser dependency to `playwright-core` via npm alias (`playwright` package name preserved in code) to avoid the failing `fsevents` install path.
-- Added launcher self-heal: on first run, `cowork-os` now verifies direct runtime dependencies and repairs missing packages with a script-free npm install pass before boot.
+- Added launcher self-heal: on first run, `ChatAndBuild` now verifies direct runtime dependencies and repairs missing packages with a script-free npm install pass before boot.
 - Moved `@types/jszip` to `devDependencies` and excluded `@types/*` from runtime dependency checks to avoid unnecessary first-run repair installs.
 - Moved `@electron/rebuild` to runtime dependencies so native fallback rebuild works in npm-installed environments.
 - Fixed native setup fallback to locate `@electron/rebuild` via package exports (instead of resolving blocked subpaths), so fallback rebuild actually runs when needed.
-- `cowork-os` first run now uses the shell retry wrapper for native setup, reducing one-shot startup failures when macOS kills a setup attempt under memory pressure.
+- `ChatAndBuild` first run now uses the shell retry wrapper for native setup, reducing one-shot startup failures when macOS kills a setup attempt under memory pressure.
 
 ## [0.3.68] - 2026-02-11
 
 ### Fixed
-- `cowork-os` CLI startup could still fail with `better-sqlite3` ABI mismatch on first launch.
+- `ChatAndBuild` CLI startup could still fail with `better-sqlite3` ABI mismatch on first launch.
 - Launcher now validates `better-sqlite3` by opening an in-memory database (not just requiring the module) and runs native setup when needed.
 - Native setup script now resolves hoisted dependencies correctly (Electron and `better-sqlite3`) so it works in npm-installed layouts.
 
 ## [0.3.67] - 2026-02-11
 
 ### Added
-- Added npm CLI command support: `cowork-os`, `coworkctl`, `coworkd`, and `coworkd-node`.
+- Added npm CLI command support: `ChatAndBuild`, `ChatAndBuildctl`, `ChatAndBuildd`, and `ChatAndBuildd-node`.
 
 ### Fixed
 - Fixed launcher script to resolve the Electron binary correctly (`require('electron')` instead of `require.resolve`).
-- Included `dist/` in published npm files so the `cowork-os` command can start without requiring a local build step.
+- Included `dist/` in published npm files so the `ChatAndBuild` command can start without requiring a local build step.
 - Moved `electron` to runtime dependencies so CLI launch works after normal npm install.
 
 ## [0.3.66] - 2026-02-11
@@ -304,7 +304,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Fixed
 - npm installs could still fail when the package `postinstall` script itself was SIGKILL'd by macOS memory pressure.
-- Removed `postinstall` from the published npm package so `npm install cowork-os@latest` no longer depends on any CoWork lifecycle hook.
+- Removed `postinstall` from the published npm package so `npm install ChatAndBuild@latest` no longer depends on any CoWork lifecycle hook.
 
 ## [0.3.61] - 2026-02-11
 
@@ -376,7 +376,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   - `/brief [today|tomorrow|week]` - Generate brief summaries (DM only)
   - `/brief schedule|list|unschedule` - Manage recurring brief schedules
 - **Inbound Attachment Persistence** - Channel messages with attachments are saved to workspace
-  - Files persisted under `.cowork/inbox/attachments/<date>/<channel>/<chat>/<message>/`
+  - Files persisted under `.ChatAndBuild/inbox/attachments/<date>/<channel>/<chat>/<message>/`
   - Attachment extraction added to Discord, Slack, Teams, Telegram, Google Chat, and iMessage adapters
   - Saved paths appended to task prompts so agents can inspect files (and images via `analyze_image`)
 - **Cron Template Variables** - Dynamic variables in scheduled task prompts
@@ -411,7 +411,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ### Changed
 - **Task Export** - Moved from `telemetry/` to `reports/` to better reflect purpose (structured task summaries, not telemetry)
 - **Skill Metadata** - Added `requires.bins` and `invocation.disableModelInvocation` to gog and himalaya skills
-- **Local Websearch Skill** - Updated branding (moltbot → cowork) and paths to `Application Support/cowork-os`
+- **Local Websearch Skill** - Updated branding (moltbot → ChatAndBuild) and paths to `Application Support/ChatAndBuild`
 - **Agent Executor** - Improved email fallback logic: prefers `email_imap_unread` when Google Workspace tools are unavailable
 - **Agent Executor** - Fixed missing `tool_result` entries on pause/cancel to keep API message history valid
 - **Channel Tools** - Added channel status and warning metadata to `channel_list_chats` and `channel_history` results

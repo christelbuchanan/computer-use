@@ -15,7 +15,7 @@ describe("preferred-name utils", () => {
   });
 
   it("rejects task fragments as preferred names", () => {
-    expect(extractPreferredNameFromMessage("I'm building a cowork assistant for Nokia")).toBeNull();
+    expect(extractPreferredNameFromMessage("I'm building a ChatAndBuild assistant for Nokia")).toBeNull();
     expect(extractPreferredNameFromMessage("I'm from Turkey")).toBeNull();
     expect(
       extractPreferredNameFromMessage("I am now authenticated but I cannot open the view"),
@@ -23,19 +23,19 @@ describe("preferred-name utils", () => {
   });
 
   it("sanitizes stale preferred-name memory lines", () => {
-    expect(sanitizePreferredNameMemoryLine("Preferred name: building a cowork assistant for Nokia")).toBe(
+    expect(sanitizePreferredNameMemoryLine("Preferred name: building a ChatAndBuild assistant for Nokia")).toBe(
       null,
     );
     expect(sanitizePreferredNameMemoryLine("Preferred name: Mesut")).toBe("Preferred name: Mesut");
   });
 
   it("sanitizes inferred names safely", () => {
-    expect(sanitizeInferredPreferredName("building a cowork assistant")).toBeUndefined();
+    expect(sanitizeInferredPreferredName("building a ChatAndBuild assistant")).toBeUndefined();
     expect(sanitizeInferredPreferredName("Mesut")).toBe("Mesut");
   });
 
   it("keeps explicit multi-part stored names but clears sentence-like values", () => {
     expect(sanitizeStoredPreferredName("Mary Jane Watson Parker")).toBe("Mary Jane Watson Parker");
-    expect(sanitizeStoredPreferredName("building a cowork assistant for Nokia")).toBeUndefined();
+    expect(sanitizeStoredPreferredName("building a ChatAndBuild assistant for Nokia")).toBeUndefined();
   });
 });

@@ -66,7 +66,7 @@ describeWithSqlite("ControlPlaneCoreService", () => {
   };
 
   beforeEach(async () => {
-    tmpDir = fs.mkdtempSync(path.join(os.tmpdir(), "cowork-control-plane-"));
+    tmpDir = fs.mkdtempSync(path.join(os.tmpdir(), "ChatAndBuild-control-plane-"));
     previousUserDataDir = process.env.COWORK_USER_DATA_DIR;
     process.env.COWORK_USER_DATA_DIR = tmpDir;
 
@@ -180,7 +180,7 @@ describeWithSqlite("ControlPlaneCoreService", () => {
 
     const workspace = reloaded?.defaultWorkspaceId ? db.prepare("SELECT * FROM workspaces WHERE id = ?").get(reloaded.defaultWorkspaceId) as Any : null;
     expect(workspace?.path).toContain(path.join("company-workspaces", "workspace-co"));
-    expect(fs.existsSync(path.join(workspace.path, ".cowork"))).toBe(true);
+    expect(fs.existsSync(path.join(workspace.path, ".ChatAndBuild"))).toBe(true);
     expect(fs.existsSync(path.join(workspace.path, "projects"))).toBe(true);
 
     const project = service.createProject({

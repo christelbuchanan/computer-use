@@ -27,7 +27,7 @@ vi.mock("better-sqlite3", () => {
 // Mock electron APIs used by gateway modules
 vi.mock("electron", () => ({
   app: {
-    getPath: vi.fn().mockReturnValue("/tmp/test-cowork"),
+    getPath: vi.fn().mockReturnValue("/tmp/test-ChatAndBuild"),
   },
   BrowserWindow: {
     getAllWindows: vi.fn().mockReturnValue([]),

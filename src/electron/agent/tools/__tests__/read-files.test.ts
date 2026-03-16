@@ -19,7 +19,7 @@ describe("readFilesByPatterns", () => {
   let globTools: GlobTools;
 
   beforeEach(() => {
-    tmpDir = fs.mkdtempSync(path.join(os.tmpdir(), "cowork-read-files-"));
+    tmpDir = fs.mkdtempSync(path.join(os.tmpdir(), "ChatAndBuild-read-files-"));
     workspace = {
       id: "w1",
       name: "Test",
@@ -188,7 +188,7 @@ describe("readFilesByPatterns", () => {
     } as Any;
     const scopedFileTools = new FileTools(workspaceScoped, daemon, "task-3");
 
-    const outsideDir = fs.mkdtempSync(path.join(os.tmpdir(), "cowork-outside-read-"));
+    const outsideDir = fs.mkdtempSync(path.join(os.tmpdir(), "ChatAndBuild-outside-read-"));
     try {
       const outsideFile = path.join(outsideDir, "secret.txt");
       fs.writeFileSync(outsideFile, "top-secret", "utf-8");
@@ -223,7 +223,7 @@ describe("readFilesByPatterns", () => {
     } as Any;
     const scopedFileTools = new FileTools(workspaceScoped, daemon, "task-4");
 
-    const outsideDir = fs.mkdtempSync(path.join(os.tmpdir(), "cowork-outside-write-"));
+    const outsideDir = fs.mkdtempSync(path.join(os.tmpdir(), "ChatAndBuild-outside-write-"));
     try {
       const outsideFile = path.join(outsideDir, "target.txt");
       fs.writeFileSync(outsideFile, "old", "utf-8");

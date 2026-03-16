@@ -6,7 +6,7 @@ const crypto = require('crypto');
 
 const DB_PATH =
   process.env.COWORK_DB_PATH ||
-  path.join(os.homedir(), 'Library', 'Application Support', 'cowork-os', 'cowork-os.db');
+  path.join(os.homedir(), 'Library', 'Application Support', 'ChatAndBuild', 'ChatAndBuild.db');
 const HOOKS_ORIGIN = process.env.COWORK_HOOKS_ORIGIN || 'http://127.0.0.1:9877';
 const HOOKS_TOKEN = process.env.COWORK_HOOKS_TOKEN || 'qa-token';
 const SQLITE_BUSY_TIMEOUT_MS = Number(process.env.COWORK_SQLITE_BUSY_TIMEOUT_MS) || 15000;

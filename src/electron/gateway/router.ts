@@ -1150,7 +1150,7 @@ export class MessageRouter {
 
     const baseDirAbs = path.join(
       workspace.path,
-      ".cowork",
+      ".ChatAndBuild",
       "inbox",
       "attachments",
       stamp,
@@ -1305,7 +1305,7 @@ export class MessageRouter {
     const transcript = extractVoiceTranscriptFromMessageText(params.message.text);
     if (!transcript) return;
 
-    const prioritiesPath = path.join(params.workspace.path, ".cowork", "PRIORITIES.md");
+    const prioritiesPath = path.join(params.workspace.path, ".ChatAndBuild", "PRIORITIES.md");
     if (!fs.existsSync(prioritiesPath)) return;
 
     // Extract structured priorities from the transcript via the configured LLM (best-effort).
@@ -1862,7 +1862,7 @@ export class MessageRouter {
       this.sessionManager.setSessionWorkspace(sessionId, tempWorkspace.id);
     }
 
-    // Optional workspace-local router rules (.cowork/router/rules.monty)
+    // Optional workspace-local router rules (.ChatAndBuild/router/rules.monty)
     // Runs before forwarding to the agent (regular messages only).
     try {
       const freshSession = this.sessionRepo.findById(sessionId);
@@ -7708,7 +7708,7 @@ Platform: \`${platform}\` (${arch})
 Electron: \`${electronVersion}\`
 Node.js: \`${nodeVersion}\`
 
-🔗 [GitHub](https://github.com/CoWork-OS/cowork-os)`;
+🔗 [GitHub](https://github.com/CoWork-OS/ChatAndBuild)`;
 
     await adapter.sendMessage({
       chatId: message.chatId,

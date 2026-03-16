@@ -7,9 +7,9 @@
  * - Providers (LLM, search, etc.)
  * - Integrations (external services)
  *
- * Plugins are defined via cowork.plugin.json manifests and can be:
+ * Plugins are defined via ChatAndBuild.plugin.json manifests and can be:
  * - Built-in (shipped with CoWork)
- * - User-installed (~/.cowork/extensions)
+ * - User-installed (~/.ChatAndBuild/extensions)
  * - Dynamically loaded at runtime
  */
 

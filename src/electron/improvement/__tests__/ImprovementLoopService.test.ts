@@ -374,7 +374,7 @@ describe("ImprovementLoopService", () => {
     return {
       id: "__temp_workspace__:ui-session-test",
       name: "Temporary Workspace",
-      path: "/tmp/cowork-os-temp/ui-session-test",
+      path: "/tmp/ChatAndBuild-temp/ui-session-test",
       createdAt: Date.now(),
       isTemp: true,
       permissions: {
@@ -721,7 +721,7 @@ describe("ImprovementLoopService", () => {
     const tempWorkspace = makeTempWorkspace();
     const realWorkspace = makeWorkspace({
       id: "workspace-real",
-      name: "cowork",
+      name: "ChatAndBuild",
       path: process.cwd(),
     });
     const candidate = makeCandidate();
@@ -786,9 +786,9 @@ describe("ImprovementLoopService", () => {
       name: "new",
       path: "/Users/mesut/Desktop/new",
     });
-    const coworkWorkspace = makeWorkspace({
-      id: "workspace-cowork",
-      name: "cowork",
+    const ChatAndBuildWorkspace = makeWorkspace({
+      id: "workspace-ChatAndBuild",
+      name: "ChatAndBuild",
       path: process.cwd(),
     });
     const candidate = makeCandidate();
@@ -797,7 +797,7 @@ describe("ImprovementLoopService", () => {
     candidate.summary = "Failures are observed in the app, but the fix belongs in CoWork OS code.";
 
     workspaces.set(observedWorkspace.id, observedWorkspace);
-    workspaces.set(coworkWorkspace.id, coworkWorkspace);
+    workspaces.set(ChatAndBuildWorkspace.id, ChatAndBuildWorkspace);
     candidates.set(candidate.id, candidate);
 
     const candidateService = {
@@ -844,13 +844,13 @@ describe("ImprovementLoopService", () => {
 
     expect(campaign).toBeTruthy();
     expect(campaign?.workspaceId).toBe(observedWorkspace.id);
-    expect(campaign?.executionWorkspaceId).toBe(coworkWorkspace.id);
+    expect(campaign?.executionWorkspaceId).toBe(ChatAndBuildWorkspace.id);
     expect(tasks.get(campaign!.rootTaskId!)?.workspaceId).toBe(observedWorkspace.id);
 
     const scoutTask = tasks.get(campaign!.variants[0].taskId!);
-    expect(scoutTask?.workspaceId).toBe(coworkWorkspace.id);
+    expect(scoutTask?.workspaceId).toBe(ChatAndBuildWorkspace.id);
     expect(scoutTask?.prompt).toContain(`Observed workspace: ${observedWorkspace.name} (${observedWorkspace.path})`);
-    expect(scoutTask?.prompt).toContain(`Execution workspace: ${coworkWorkspace.name} (${coworkWorkspace.path})`);
+    expect(scoutTask?.prompt).toContain(`Execution workspace: ${ChatAndBuildWorkspace.name} (${ChatAndBuildWorkspace.path})`);
     expect(scoutTask?.prompt).toContain(
       "Use the observed workspace for failure context and evidence, but inspect and modify code only in the execution workspace git repository.",
     );

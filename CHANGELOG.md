@@ -74,7 +74,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ## [0.4.14] - 2026-03-07
 
 ### Added
-- **Unified Memory Synthesizer**: New `MemorySynthesizer` combines all 6 memory subsystems (UserProfile, RelationshipMemory, Playbook, KnowledgeGraph, Memory, WorkspaceKit) into a single deduplicated, relevance-ranked context block injected into the system prompt. Replaces fragmented per-source injection — reduces token waste, eliminates contradictions, and produces a single `<cowork_synthesized_memory>` block with source attribution for audit trails. Located: `src/electron/memory/MemorySynthesizer.ts`.
+- **Unified Memory Synthesizer**: New `MemorySynthesizer` combines all 6 memory subsystems (UserProfile, RelationshipMemory, Playbook, KnowledgeGraph, Memory, WorkspaceKit) into a single deduplicated, relevance-ranked context block injected into the system prompt. Replaces fragmented per-source injection — reduces token waste, eliminates contradictions, and produces a single `<ChatAndBuild_synthesized_memory>` block with source attribution for audit trails. Located: `src/electron/memory/MemorySynthesizer.ts`.
 - **Adaptive Style Engine**: New `AdaptiveStyleEngine` observes user message patterns (length distribution, emoji frequency, technical vocabulary density) and feedback signals, then gradually adjusts `PersonalityManager` response style preferences. Adaptations are rate-limited by the new `adaptiveStyleMaxDriftPerWeek` guardrail (default 1 shift/week), fully auditable via `getAdaptationHistory()`, and disabled by default (`adaptiveStyleEnabled: false`). Located: `src/electron/memory/AdaptiveStyleEngine.ts`.
 - **Playbook-to-Skill Auto-Promotion Pipeline**: New `PlaybookSkillPromoter` bridges `PlaybookService` and `SkillProposalService`. When a task pattern is reinforced 3+ times (configurable threshold), the service auto-generates a skill proposal with evidence, required tools, and a draft prompt template — routed through the existing admin approval workflow. `PlaybookService` now emits a `pattern-reinforced` event via its new static `EventEmitter`. Per-workspace cooldown (10 min) prevents proposal spam. Located: `src/electron/memory/PlaybookSkillPromoter.ts`.
 - **Cross-Channel Persona Coherence**: New `ChannelPersonaAdapter` applies channel-specific communication directives on top of the core personality — Slack gets concise/bullet-friendly output, Email gets formal structure with greeting/sign-off, WhatsApp/iMessage/Signal get short conversational replies, Discord gets markdown-rich formatting, and Teams gets professional structured output. Controlled by the new `channelPersonaEnabled` guardrail (default off). Located: `src/electron/memory/ChannelPersonaAdapter.ts`.
@@ -96,7 +96,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - **Structured input requests**: plan-mode tasks can use `request_user_input` to pause for persisted multiple-choice decisions, with submission from the desktop UI or Control Plane dashboard.
 - **Tier-1 integration orchestration**: new `integration_setup` flow supports `list`, `inspect`, and `configure` for Resend, Slack, the Google family, Jira, Linear, and HubSpot with `expected_plan_hash` stale-plan protection.
 - **Approval-gated skill expansion**: new `skill_proposal` lifecycle lets agents draft, list, approve, and reject workspace-local skill proposals instead of mutating skills directly.
-- **Workspace bootstrap lifecycle**: `.cowork/BOOTSTRAP.md`, `.cowork/VIBES.md`, `.cowork/LORE.md`, and `.cowork/workspace-state.json` now track onboarding/bootstrap state and heartbeat-ready context.
+- **Workspace bootstrap lifecycle**: `.ChatAndBuild/BOOTSTRAP.md`, `.ChatAndBuild/VIBES.md`, `.ChatAndBuild/LORE.md`, and `.ChatAndBuild/workspace-state.json` now track onboarding/bootstrap state and heartbeat-ready context.
 - **Workspace agent policy**: optional `agent-policy.toml` can require tool families, filter tools, tune loop thresholds, and attach pre-tool / stop-attempt hooks per workspace.
 - **New bundled skills**: added Polymarket, Humanizer, YouTube video intelligence, Stock analysis, Calendly scheduling, Moltbook, and Marketing Strategist skills.
 - **Developer logging capture**: `npm run dev` can mirror timestamped output to `logs/dev-latest.log`, with `npm run dev:log` forcing capture regardless of the Settings toggle.
@@ -169,7 +169,7 @@ This release is the first recommended Windows install baseline for normal users 
 ### Fixed
 - **Windows black-screen startup guard**: app now detects missing renderer entry (`dist/renderer/index.html`) and shows an explicit installation error page instead of opening a blank window.
 - **Unpackaged runtime resource resolution**: bundled skills, persona templates, and plugin packs now resolve from `process.cwd()/resources` when running from npm-installed (non-packaged) Electron runtime, restoring bundled content loading on Windows/Linux npm installs.
-- **Launcher artifact checks**: `cowork-os` CLI now validates both main and renderer build artifacts before launch and surfaces a clearer recovery message if published assets are incomplete.
+- **Launcher artifact checks**: `ChatAndBuild` CLI now validates both main and renderer build artifacts before launch and surfaces a clearer recovery message if published assets are incomplete.
 
 ## [0.4.4] - 2026-02-26
 
@@ -220,7 +220,7 @@ This release is the first recommended Windows install baseline for normal users 
 - **Scoped temp workspace identity**: temp workspaces now use scope prefixes (`ui`, `gateway`, `hooks`, `tray`) for context-specific isolation, replacing the flat ID convention
 - **Temp workspace lease management**: in-memory lease tracking with 6-hour TTL prevents active workspaces from being pruned; UI refreshes leases every 60 seconds
 - **Stale sandbox profile pruning**: automatic periodic cleanup (6-hour interval) of leftover `.sb` sandbox profile files from the system temp directory
-- **Managed scheduled workspace paths**: cron jobs now get deterministic workspace paths under `userData/scheduled-workspaces/` with per-run directories (`<workspace>/.cowork/scheduled-runs/run-<timestamp>-<id>`)
+- **Managed scheduled workspace paths**: cron jobs now get deterministic workspace paths under `userData/scheduled-workspaces/` with per-run directories (`<workspace>/.ChatAndBuild/scheduled-runs/run-<timestamp>-<id>`)
 - **CronService workspace context resolution**: `resolveWorkspaceContext` hook enables runtime workspace migration for scheduled jobs on add (temp→managed) and run (per-run directory creation) phases; adds `{{workspace_path}}`, `{{run_workspace_path}}`, `{{run_workspace_relpath}}` template variables
 - **Cascade delete for temp workspaces**: `deleteWorkspaceAndRelatedData` performs transactional deletion that introspects all tables for `workspace_id`/`task_id`/`session_id` columns and removes related rows before deleting the workspace itself
 
@@ -264,15 +264,15 @@ This release is the first recommended Windows install baseline for normal users 
 - **Task continuation after turn-limit exhaustion**: failed tasks stopped by the global turn limit now show a "Continue" button in the timeline. Clicking it reconstructs the executor from persisted events, resets budgets, and resumes execution from the last plan checkpoint. Respects concurrency limits — overflow continuations are queued and resume automatically when a slot opens.
 - **Step-level user feedback**: users can now interact with in-progress plan steps via retry, skip, stop, or redirect ("drift") actions. Feedback controls appear in both the timeline view and the bubble view on actively running steps. Skipped steps are marked with a new `skipped` status and the executor advances to the next step.
 - **Tool allow-list for child tasks**: parent tasks can now specify an `allowedTools` list in `agentConfig`. When both parent and child define allow-lists, the child receives the intersection — preventing privilege escalation. An empty intersection throws a clear error at child task creation.
-- **LoreService (shared workspace history)**: new service that auto-records milestones from completed tasks into `.cowork/LORE.md`. Entries are debounced, deduplicated, capped at 40, and written into the `<!-- cowork:auto:lore:start -->` marked section. Rebuilds from recent task history on startup.
-- **VIBES.md workspace kit file**: new `.cowork/VIBES.md` for tracking current workspace energy and mode (e.g., crunch, deep-focus, balanced). Loaded before SOUL.md in agent context so current vibes influence personality interpretation. Auto-updated by agents based on cues.
-- **LORE.md workspace kit file**: new `.cowork/LORE.md` for shared history between user and agent. Milestones section is auto-populated by LoreService. Loaded after MISTAKES.md and before daily logs in agent context.
+- **LoreService (shared workspace history)**: new service that auto-records milestones from completed tasks into `.ChatAndBuild/LORE.md`. Entries are debounced, deduplicated, capped at 40, and written into the `<!-- ChatAndBuild:auto:lore:start -->` marked section. Rebuilds from recent task history on startup.
+- **VIBES.md workspace kit file**: new `.ChatAndBuild/VIBES.md` for tracking current workspace energy and mode (e.g., crunch, deep-focus, balanced). Loaded before SOUL.md in agent context so current vibes influence personality interpretation. Auto-updated by agents based on cues.
+- **LORE.md workspace kit file**: new `.ChatAndBuild/LORE.md` for shared history between user and agent. Milestones section is auto-populated by LoreService. Loaded after MISTAKES.md and before daily logs in agent context.
 - **Low-progress loop detection**: detects agents stuck repeatedly probing the same target with mixed tools (≥6 of last 8 calls on same base target across ≥2 tool categories). Injects a course-correction nudge, then escalates to a final warning if looping persists.
 - **Stop-reason nudge**: detects consecutive `tool_use` stops (≥6) or `max_tokens` stops (≥2) and injects a message telling the agent to wrap up and produce a direct answer.
 - **Turn-budget guard for max_tokens recovery**: max_tokens retry is now skipped when insufficient turns remain in the budget, preventing wasted turns on truncated responses that can't be completed.
 - **MCP server tools in context panel**: the active context data now includes tool names from connected MCP servers, giving the UI visibility into what tools each connector provides.
 - **Citation Engine**: per-task citation tracker that intercepts `web_search` and `web_fetch` results, deduplicates URLs, assigns sequential [N] indices, and injects formatted citation lists into the LLM system prompt. Citations appear inline in agent responses and are displayed in a dedicated Citation Panel UI with URL, title, domain, snippet, and access timestamp.
-- **Scratchpad Tools**: session-scoped note-taking system for agents during long-running tasks. `scratchpad_write` stores key-value notes (max 100-char keys, 10,000-char values); `scratchpad_read` retrieves all or specific notes. Persists to `.cowork/scratchpad-{taskId}.json` for crash recovery.
+- **Scratchpad Tools**: session-scoped note-taking system for agents during long-running tasks. `scratchpad_write` stores key-value notes (max 100-char keys, 10,000-char values); `scratchpad_read` retrieves all or specific notes. Persists to `.ChatAndBuild/scratchpad-{taskId}.json` for crash recovery.
 - **Workflow Pipeline**: multi-phase task execution for complex workflows. The Workflow Decomposer detects multi-step prompts (connectives like "then", "after that", "next", "finally") and splits them into sequential phases (research, create, deliver, analyze, general). Each phase creates a child task with output piped to the next phase. Includes LLM-powered fallback decomposition for complex prompts.
 - **Deep Work Mode**: extended execution mode for complex tasks with longer timeouts, progress journaling visible in the task timeline, and automatic memory compression pause during active execution to avoid context disruption.
 - **Document Generation Tools**: three LLM-callable tools (`generate_document` → PDF, `generate_presentation` → PPTX, `generate_spreadsheet` → XLSX) registered as native agent tools with artifact registration and MIME type metadata.
@@ -308,7 +308,7 @@ This release is the first recommended Windows install baseline for normal users 
 
 ### Added
 - **Agent-initiated memory (`memory_save` tool)**: agents can now explicitly save observations, decisions, insights, and errors to the workspace memory database during task execution. Memories are persisted across sessions and recalled via hybrid search in future tasks. Respects workspace memory settings, privacy modes, and sensitive data filtering.
-- **Enhanced `search_memories`**: now searches both the memory database AND `.cowork/` workspace markdown files (MEMORY.md, daily logs, project contexts, etc.). Results are merged, deduplicated, and ranked by relevance. Response includes `source` ("db" or "markdown") and file `path` for markdown hits.
+- **Enhanced `search_memories`**: now searches both the memory database AND `.ChatAndBuild/` workspace markdown files (MEMORY.md, daily logs, project contexts, etc.). Results are merged, deduplicated, and ranked by relevance. Response includes `source` ("db" or "markdown") and file `path` for markdown hits.
 - **Web Scraping (Scrapling integration)**: new scraping subsystem powered by [Scrapling](https://github.com/D4Vinci/Scrapling) with anti-bot bypass, stealth browsing, and structured data extraction. Five new agent tools: `scrape_page` (single URL with TLS fingerprinting, Cloudflare bypass, stealth mode), `scrape_multiple` (batch scrape up to 20 URLs), `scrape_extract` (structured data — tables, lists, headings, metadata), `scrape_session` (multi-step persistent sessions for login→navigate→extract workflows), and `scraping_status` (installation check). Python bridge architecture via stdin/stdout JSON. Configurable fetcher modes (default/stealth/playwright), proxy support, rate limiting, and headless toggle. Settings UI at Settings > Web Scraping. Five new skills: `web-scraper`, `price-tracker`, `site-mapper`, `lead-scraper`, `content-monitor`.
 - **"Think With Me" Socratic mode**: new `think` conversation mode for brainstorming and decision-making without tool execution. Activated via "Think with me" toggle or detected automatically from brainstorm/trade-off/pros-and-cons patterns. Uses Socratic system prompt with read-only tools.
 - **Problem framing pre-flight**: complex execution tasks now show a structured restatement of the problem, assumptions, risks, and proposed approach before diving into tool execution. Triggered by intent complexity scoring (prompt length, action verb count, multi-step signals).
@@ -456,14 +456,14 @@ This release is the first recommended Windows install baseline for normal users 
 
 ### Fixed
 - **Hoisted Electron detection in setup**: `npm run setup` now treats `../electron` as valid in npm-hoisted installs, so first-time setup no longer triggers unnecessary full dependency bootstrap.
-- **Native setup install scope**: missing `better-sqlite3` recovery and rebuild now run from the actual install root (not inside `node_modules/cowork-os`), reducing first-run reify pressure that caused frequent macOS `SIGKILL`.
+- **Native setup install scope**: missing `better-sqlite3` recovery and rebuild now run from the actual install root (not inside `node_modules/ChatAndBuild`), reducing first-run reify pressure that caused frequent macOS `SIGKILL`.
 - **Release publish gating**: npm/GitHub package publish jobs now depend on the release validation job, and smoke tests fail if setup unexpectedly falls back to dependency bootstrap.
-- **Install docs hardening**: README now includes a direct native retry-wrapper fallback when `npm run --prefix node_modules/cowork-os setup` is terminated by `zsh: killed`, and recommends local bin launch over `npx` for first run.
+- **Install docs hardening**: README now includes a direct native retry-wrapper fallback when `npm run --prefix node_modules/ChatAndBuild setup` is terminated by `zsh: killed`, and recommends local bin launch over `npx` for first run.
 
 ## [0.3.84] - 2026-02-14
 
 ### Fixed
-- **Release smoke-test module resolution**: installability validation now runs Electron with `cwd` set to the installed `cowork-os` package directory so `require('better-sqlite3')` resolves correctly after setup.
+- **Release smoke-test module resolution**: installability validation now runs Electron with `cwd` set to the installed `ChatAndBuild` package directory so `require('better-sqlite3')` resolves correctly after setup.
 - **Release continuity**: keeps the 0.3.82 npm SIGKILL regression fix while restoring end-to-end GitHub release packaging path after CI validation.
 
 ## [0.3.83] - 2026-02-14
@@ -493,7 +493,7 @@ This release is the first recommended Windows install baseline for normal users 
 ## [0.3.79] - 2026-02-14
 
 ### Fixed
-- **macOS install reliability carry-forward**: retained the 0.3.71 SIGKILL workaround for first-time users by documenting and reinforcing the `npm install --ignore-scripts` + `npm run --prefix node_modules/cowork-os setup` flow.
+- **macOS install reliability carry-forward**: retained the 0.3.71 SIGKILL workaround for first-time users by documenting and reinforcing the `npm install --ignore-scripts` + `npm run --prefix node_modules/ChatAndBuild setup` flow.
 - **Release workflow hardening**: ensured the macOS release job always creates or reopens the GitHub release as a draft before packaging so `electron-builder` can attach DMG/zip assets without immutable-release failures.
 - **Version alignment**: published metadata now identifies this release as `0.3.79` with the same installability and packaging reliability changes.
 
@@ -560,29 +560,29 @@ This release is the first recommended Windows install baseline for normal users 
 ## [0.3.69] - 2026-02-11
 
 ### Fixed
-- `npm install -g cowork-os` could fail on macOS with `fsevents` (`binding.gyp not found`) due an npm 11 rebuild edge case triggered by `playwright`.
+- `npm install -g ChatAndBuild` could fail on macOS with `fsevents` (`binding.gyp not found`) due an npm 11 rebuild edge case triggered by `playwright`.
 - Switched runtime browser dependency to `playwright-core` via npm alias (`playwright` package name preserved in code) to avoid the failing `fsevents` install path.
-- Added launcher self-heal: on first run, `cowork-os` now verifies direct runtime dependencies and repairs missing packages with a script-free npm install pass before boot.
+- Added launcher self-heal: on first run, `ChatAndBuild` now verifies direct runtime dependencies and repairs missing packages with a script-free npm install pass before boot.
 - Moved `@types/jszip` to `devDependencies` and excluded `@types/*` from runtime dependency checks to avoid unnecessary first-run repair installs.
 - Moved `@electron/rebuild` to runtime dependencies so native fallback rebuild works in npm-installed environments.
 - Fixed native setup fallback to locate `@electron/rebuild` via package exports (instead of resolving blocked subpaths), so fallback rebuild actually runs when needed.
-- `cowork-os` first run now uses the shell retry wrapper for native setup, reducing one-shot startup failures when macOS kills a setup attempt under memory pressure.
+- `ChatAndBuild` first run now uses the shell retry wrapper for native setup, reducing one-shot startup failures when macOS kills a setup attempt under memory pressure.
 
 ## [0.3.68] - 2026-02-11
 
 ### Fixed
-- `cowork-os` CLI startup could still fail with `better-sqlite3` ABI mismatch on first launch.
+- `ChatAndBuild` CLI startup could still fail with `better-sqlite3` ABI mismatch on first launch.
 - Launcher now validates `better-sqlite3` by opening an in-memory database (not just requiring the module) and runs native setup when needed.
 - Native setup script now resolves hoisted dependencies correctly (Electron and `better-sqlite3`) so it works in npm-installed layouts.
 
 ## [0.3.67] - 2026-02-11
 
 ### Added
-- Added npm CLI command support: `cowork-os`, `coworkctl`, `coworkd`, and `coworkd-node`.
+- Added npm CLI command support: `ChatAndBuild`, `ChatAndBuildctl`, `ChatAndBuildd`, and `ChatAndBuildd-node`.
 
 ### Fixed
 - Fixed launcher script to resolve the Electron binary correctly (`require('electron')` instead of `require.resolve`).
-- Included `dist/` in published npm files so the `cowork-os` command can start without requiring a local build step.
+- Included `dist/` in published npm files so the `ChatAndBuild` command can start without requiring a local build step.
 - Moved `electron` to runtime dependencies so CLI launch works after normal npm install.
 
 ## [0.3.66] - 2026-02-11
@@ -615,7 +615,7 @@ This release is the first recommended Windows install baseline for normal users 
 
 ### Fixed
 - npm installs could still fail when the package `postinstall` script itself was SIGKILL'd by macOS memory pressure.
-- Removed `postinstall` from the published npm package so `npm install cowork-os@latest` no longer depends on any CoWork lifecycle hook.
+- Removed `postinstall` from the published npm package so `npm install ChatAndBuild@latest` no longer depends on any CoWork lifecycle hook.
 
 ## [0.3.61] - 2026-02-11
 
@@ -687,7 +687,7 @@ This release is the first recommended Windows install baseline for normal users 
   - `/brief [today|tomorrow|week]` - Generate brief summaries (DM only)
   - `/brief schedule|list|unschedule` - Manage recurring brief schedules
 - **Inbound Attachment Persistence** - Channel messages with attachments are saved to workspace
-  - Files persisted under `.cowork/inbox/attachments/<date>/<channel>/<chat>/<message>/`
+  - Files persisted under `.ChatAndBuild/inbox/attachments/<date>/<channel>/<chat>/<message>/`
   - Attachment extraction added to Discord, Slack, Teams, Telegram, Google Chat, and iMessage adapters
   - Saved paths appended to task prompts so agents can inspect files (and images via `analyze_image`)
 - **Cron Template Variables** - Dynamic variables in scheduled task prompts
@@ -722,7 +722,7 @@ This release is the first recommended Windows install baseline for normal users 
 ### Changed
 - **Task Export** - Moved from `telemetry/` to `reports/` to better reflect purpose (structured task summaries, not telemetry)
 - **Skill Metadata** - Added `requires.bins` and `invocation.disableModelInvocation` to gog and himalaya skills
-- **Local Websearch Skill** - Updated branding (moltbot → cowork) and paths to `Application Support/cowork-os`
+- **Local Websearch Skill** - Updated branding (moltbot → ChatAndBuild) and paths to `Application Support/ChatAndBuild`
 - **Agent Executor** - Improved email fallback logic: prefers `email_imap_unread` when Google Workspace tools are unavailable
 - **Agent Executor** - Fixed missing `tool_result` entries on pause/cancel to keep API message history valid
 - **Channel Tools** - Added channel status and warning metadata to `channel_list_chats` and `channel_history` results

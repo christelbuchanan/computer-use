@@ -154,7 +154,7 @@ CoWork OS is a **security-first personal AI assistant platform** with multi-chan
 - [x] YAML-based skill definitions
 - [x] Priority-based sorting
 - [x] Parameter input modal for skill variables
-- [x] Located: `~/Library/Application Support/cowork-os/skills/`
+- [x] Located: `~/Library/Application Support/ChatAndBuild/skills/`
 
 #### Think With Me Mode
 - [x] Socratic brainstorming mode (`think` conversation mode)
@@ -328,7 +328,7 @@ CoWork OS is a **security-first personal AI assistant platform** with multi-chan
 ## File Structure
 
 ```
-cowork-os/
+ChatAndBuild/
 ├── src/
 │   ├── electron/
 │   │   ├── main.ts

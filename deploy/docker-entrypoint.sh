@@ -6,7 +6,7 @@ if [ -n "$COWORK_TZ" ]; then
   if (TZ="$COWORK_TZ" date +%Z >/dev/null 2>&1); then
     export TZ="$COWORK_TZ"
   else
-    echo "[cowork-entrypoint] Invalid COWORK_TZ='$COWORK_TZ', using UTC" >&2
+    echo "[ChatAndBuild-entrypoint] Invalid COWORK_TZ='$COWORK_TZ', using UTC" >&2
     export TZ="UTC"
   fi
 fi

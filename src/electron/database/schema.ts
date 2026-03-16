@@ -10,10 +10,10 @@ export class DatabaseManager {
   constructor() {
     const userDataPath = getUserDataDir();
 
-    // Run migration from old cowork-oss directory before opening database
+    // Run migration from old ChatAndBuilds directory before opening database
     this.migrateFromLegacyDirectory(userDataPath);
 
-    const dbPath = path.join(userDataPath, "cowork-os.db");
+    const dbPath = path.join(userDataPath, "ChatAndBuild.db");
     this.db = new Database(dbPath);
     this.initializeSchema();
 
@@ -38,7 +38,7 @@ export class DatabaseManager {
   private static readonly MIGRATION_VERSION = 2;
 
   /**
-   * Migrate data from the old cowork-oss directory to the new cowork-os directory.
+   * Migrate data from the old ChatAndBuilds directory to the new ChatAndBuild directory.
    * This ensures users don't lose their data when upgrading.
    */
   private migrateFromLegacyDirectory(newDataPath: string): void {
@@ -46,8 +46,8 @@ export class DatabaseManager {
     const normalizedNewPath = newDataPath.replace(/\/+$/, "");
 
     // Determine the old directory path
-    // Handle both 'cowork-os' and 'cowork-os/' patterns
-    const oldDataPath = normalizedNewPath.replace(/cowork-os$/, "cowork-oss");
+    // Handle both 'ChatAndBuild' and 'ChatAndBuild/' patterns
+    const oldDataPath = normalizedNewPath.replace(/ChatAndBuild$/, "ChatAndBuilds");
 
     // Verify the replacement actually happened (paths should be different)
     if (oldDataPath === normalizedNewPath) {
@@ -61,9 +61,9 @@ export class DatabaseManager {
       return; // No legacy data to migrate
     }
 
-    const newDbPath = path.join(normalizedNewPath, "cowork-os.db");
-    const oldDbPath = path.join(oldDataPath, "cowork-oss.db");
-    const migrationMarker = path.join(normalizedNewPath, ".migrated-from-cowork-oss");
+    const newDbPath = path.join(normalizedNewPath, "ChatAndBuild.db");
+    const oldDbPath = path.join(oldDataPath, "ChatAndBuilds.db");
+    const migrationMarker = path.join(normalizedNewPath, ".migrated-from-ChatAndBuilds");
 
     // Check if migration already completed with current version
     if (fs.existsSync(migrationMarker)) {
@@ -80,7 +80,7 @@ export class DatabaseManager {
       }
     }
 
-    console.log("[DatabaseManager] Migrating data from cowork-oss to cowork-os...");
+    console.log("[DatabaseManager] Migrating data from ChatAndBuilds to ChatAndBuild...");
     console.log("[DatabaseManager] Old path:", oldDataPath);
     console.log("[DatabaseManager] New path:", normalizedNewPath);
 
@@ -106,7 +106,7 @@ export class DatabaseManager {
             `[DatabaseManager] Copying database (old: ${oldDbSize} bytes, new: ${newDbSize} bytes)...`,
           );
           fs.copyFileSync(oldDbPath, newDbPath);
-          migratedFiles.push("cowork-os.db");
+          migratedFiles.push("ChatAndBuild.db");
         } else {
           console.log("[DatabaseManager] Database already exists and is larger, skipping...");
         }

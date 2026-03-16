@@ -6,7 +6,7 @@
 
 ## Executive Summary
 
-CoWork OS already exceeds OpenClaw in several areas (feedback learning, encryption, unified memory synthesis). The main gaps are: (1) **adaptiveStyleEnabled** and **channelPersonaEnabled** exist in guardrails but are **not exposed in the UI** (GuardrailSettings.tsx), (2) session-level memory indexing and daily logs (OpenClaw-style `memory/YYYY-MM-DD.md`), (3) feedback UX (thumbs up/down) to surface the existing backend. **USER.md already exists** in `.cowork/` via kit-contracts and workspace init templates.
+CoWork OS already exceeds OpenClaw in several areas (feedback learning, encryption, unified memory synthesis). The main gaps are: (1) **adaptiveStyleEnabled** and **channelPersonaEnabled** exist in guardrails but are **not exposed in the UI** (GuardrailSettings.tsx), (2) session-level memory indexing and daily logs (OpenClaw-style `memory/YYYY-MM-DD.md`), (3) feedback UX (thumbs up/down) to surface the existing backend. **USER.md already exists** in `.ChatAndBuild/` via kit-contracts and workspace init templates.
 
 ---
 
@@ -14,7 +14,7 @@ CoWork OS already exceeds OpenClaw in several areas (feedback learning, encrypti
 
 | Aspect | OpenClaw | CoWork OS | Winner / Gap |
 |--------|----------|-----------|---------------|
-| **Personalization** | `USER.md`, `IDENTITY.md`, `SOUL.md` in workspace | `UserProfileService`, `RelationshipMemoryService`, **USER.md in `.cowork/`** (kit-contracts), `MemorySynthesizer` | CoWork has both file-based and structured memory |
+| **Personalization** | `USER.md`, `IDENTITY.md`, `SOUL.md` in workspace | `UserProfileService`, `RelationshipMemoryService`, **USER.md in `.ChatAndBuild/`** (kit-contracts), `MemorySynthesizer` | CoWork has both file-based and structured memory |
 | **Session memory** | `MEMORY.md`, `memory/YYYY-MM-DD.md`, session transcripts indexed | `MemoryService`, `search_memories`, `MEMORY.md` in kit, hybrid BM25+embeddings | Gap: no daily logs, no session transcript indexing |
 | **Style adaptation** | Static SOUL/IDENTITY prompts | `AdaptiveStyleEngine` — **exists but no UI toggle** | CoWork ahead but not discoverable |
 | **Feedback learning** | None | `FeedbackService`, `UserProfileService.ingestUserFeedback`, `PlaybookService` | CoWork ahead |
@@ -33,7 +33,7 @@ CoWork OS already exceeds OpenClaw in several areas (feedback learning, encrypti
 - **docs/openclaw-improvement-plan.md** — This plan
 - **README.md** — Links to `docs/getting-started.md`, `docs/evolving-agent-intelligence.md`, etc.
 
-### Kit Contracts (`.cowork/`)
+### Kit Contracts (`.ChatAndBuild/`)
 
 - **src/electron/context/kit-contracts.ts** — Defines `USER.md`, `MEMORY.md`, `SOUL.md`, `IDENTITY.md`, `BOOTSTRAP.md`, `VIBES.md`, `LORE.md`, etc.
 - **USER.md** — Already in `WORKSPACE_KIT_CONTRACTS` with `parser: "kv-lines"`, `mutability: "user_owned"`
@@ -75,8 +75,8 @@ CoWork OS already exceeds OpenClaw in several areas (feedback learning, encrypti
 
 | Task | Description | Files |
 |------|-------------|-------|
-| 2.1 Bootstrap prompt | Ensure BOOTSTRAP.md (or onboarding) prominently prompts users to fill `.cowork/USER.md`. Already referenced in handlers.ts bootstrap content. | [src/electron/ipc/handlers.ts](src/electron/ipc/handlers.ts) |
-| 2.2 Quick-edit link | Add "Edit User Profile" or "Open USER.md" link in Memory settings or workspace kit UI so users can open `.cowork/USER.md` in editor. | [src/renderer/components/MemoryHubSettings.tsx](src/renderer/components/MemoryHubSettings.tsx) or [src/renderer/components/MemorySettings.tsx](src/renderer/components/MemorySettings.tsx) |
+| 2.1 Bootstrap prompt | Ensure BOOTSTRAP.md (or onboarding) prominently prompts users to fill `.ChatAndBuild/USER.md`. Already referenced in handlers.ts bootstrap content. | [src/electron/ipc/handlers.ts](src/electron/ipc/handlers.ts) |
+| 2.2 Quick-edit link | Add "Edit User Profile" or "Open USER.md" link in Memory settings or workspace kit UI so users can open `.ChatAndBuild/USER.md` in editor. | [src/renderer/components/MemoryHubSettings.tsx](src/renderer/components/MemoryHubSettings.tsx) or [src/renderer/components/MemorySettings.tsx](src/renderer/components/MemorySettings.tsx) |
 
 ---
 
@@ -86,7 +86,7 @@ CoWork OS already exceeds OpenClaw in several areas (feedback learning, encrypti
 
 | Task | Description | Files |
 |------|-------------|-------|
-| 3.1 Daily log service | Create `DailyLogService` that writes to `.cowork/memory/YYYY-MM-DD.md`. Append-only. | New: `src/electron/memory/DailyLogService.ts` |
+| 3.1 Daily log service | Create `DailyLogService` that writes to `.ChatAndBuild/memory/YYYY-MM-DD.md`. Append-only. | New: `src/electron/memory/DailyLogService.ts` |
 | 3.2 memory_save daily_log type | Extend `memory_save` tool (or add `append_daily_log`) to write to daily log. | [src/electron/agent/tools/memory-tools.ts](src/electron/agent/tools/memory-tools.ts) |
 | 3.3 Load today + yesterday | Include today's and yesterday's daily log snippets in MemorySynthesizer or WorkspaceKitContext when building context. | [src/electron/memory/MemorySynthesizer.ts](src/electron/memory/MemorySynthesizer.ts) or [src/electron/memory/WorkspaceKitContext.ts](src/electron/memory/WorkspaceKitContext.ts) |
 | 3.4 Session transcript indexing (optional) | Index recent task messages for `search_memories` when `sessionMemoryEnabled` is true. | [src/electron/memory/MemoryService.ts](src/electron/memory/MemoryService.ts), [src/electron/database/repositories.ts](src/electron/database/repositories.ts) |
@@ -132,7 +132,7 @@ CoWork OS already exceeds OpenClaw in several areas (feedback learning, encrypti
 - **Encryption** — SecureSettingsRepository
 - **Playbook-to-Skill** — Auto-promotion of patterns to governed skills
 - **Channel Persona** — Per-channel style (needs UI toggle)
-- **USER.md** — Already in `.cowork/` via kit-contracts
+- **USER.md** — Already in `.ChatAndBuild/` via kit-contracts
 
 ---
 

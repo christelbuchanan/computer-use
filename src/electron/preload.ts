@@ -48,7 +48,7 @@ const ALLOWED_IMAGE_FILE_EXTENSIONS = new Set([".jpg", ".jpeg", ".png", ".gif", 
 const MAX_IMAGES_PER_MESSAGE = 5;
 const MAX_TOTAL_TASK_IMAGE_BYTES = 125 * 1024 * 1024;
 const MAX_IMAGE_ATTACHMENT_BYTES = 25 * 1024 * 1024;
-const MANAGED_IMAGE_TEMP_PREFIX = "cowork-image-";
+const MANAGED_IMAGE_TEMP_PREFIX = "ChatAndBuild-image-";
 const MIME_TYPE_EXTENSION_MAP: Record<string, string> = {
   "image/jpeg": ".jpg",
   "image/png": ".png",
@@ -621,7 +621,7 @@ const IPC_CHANNELS = {
   IMPROVEMENT_REVIEW_RUN: "improvement:reviewRun",
   IMPROVEMENT_RESET_HISTORY: "improvement:resetHistory",
 
-  // Workspace Kit (.cowork)
+  // Workspace Kit (.ChatAndBuild)
   KIT_GET_STATUS: "kit:getStatus",
   KIT_INIT: "kit:init",
   KIT_PROJECT_CREATE: "kit:projectCreate",
@@ -1754,7 +1754,7 @@ interface ManagedDeviceSummary {
     arch?: string;
     node?: string;
     electron?: string;
-    coworkVersion?: string;
+    ChatAndBuildVersion?: string;
     cwd?: string;
     userDataDir?: string;
     headless?: boolean;
@@ -3082,7 +3082,7 @@ contextBridge.exposeInMainWorld("electronAPI", {
       ImprovementCampaign | undefined
     >,
 
-  // Workspace Kit (.cowork) APIs
+  // Workspace Kit (.ChatAndBuild) APIs
   getWorkspaceKitStatus: (workspaceId: string) =>
     ipcRenderer.invoke(IPC_CHANNELS.KIT_GET_STATUS, workspaceId) as Promise<WorkspaceKitStatus>,
   initWorkspaceKit: (request: WorkspaceKitInitRequest) =>
@@ -4782,7 +4782,7 @@ export interface ElectronAPI {
     reviewStatus: "accepted" | "dismissed",
   ) => Promise<ImprovementCampaign | undefined>;
 
-  // Workspace Kit (.cowork)
+  // Workspace Kit (.ChatAndBuild)
   getWorkspaceKitStatus: (workspaceId: string) => Promise<WorkspaceKitStatus>;
   initWorkspaceKit: (request: WorkspaceKitInitRequest) => Promise<WorkspaceKitStatus>;
   createWorkspaceKitProject: (

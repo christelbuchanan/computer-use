@@ -162,7 +162,7 @@ describe("pruneTempWorkspaces", () => {
   });
 
   const createTempRoot = (): string => {
-    const root = fs.mkdtempSync(path.join(os.tmpdir(), "cowork-temp-prune-test-"));
+    const root = fs.mkdtempSync(path.join(os.tmpdir(), "ChatAndBuild-temp-prune-test-"));
     tempDirsToCleanup.push(root);
     return root;
   };
@@ -353,7 +353,7 @@ describe("pruneTempWorkspaces", () => {
 
   it("prunes stale temp workspace DB rows even when temp root does not exist", () => {
     const db = new MockDb();
-    const base = fs.mkdtempSync(path.join(os.tmpdir(), "cowork-temp-prune-missing-root-"));
+    const base = fs.mkdtempSync(path.join(os.tmpdir(), "ChatAndBuild-temp-prune-missing-root-"));
     tempDirsToCleanup.push(base);
     const missingRoot = path.join(base, "missing-root");
     const nowMs = 6_000_000;

@@ -18,7 +18,7 @@ import { HeartbeatService, type HeartbeatServiceDeps } from "../HeartbeatService
 // Mock electron to avoid getPath errors
 vi.mock("electron", () => ({
   app: {
-    getPath: vi.fn().mockReturnValue("/tmp/test-cowork"),
+    getPath: vi.fn().mockReturnValue("/tmp/test-ChatAndBuild"),
   },
 }));
 
@@ -100,8 +100,8 @@ function writeHeartbeatChecklist(workspaceId: string, content: string): void {
   if (!workspacePath) {
     throw new Error(`Unknown workspace ${workspaceId}`);
   }
-  fs.mkdirSync(path.join(workspacePath, ".cowork"), { recursive: true });
-  fs.writeFileSync(path.join(workspacePath, ".cowork", "HEARTBEAT.md"), content, "utf8");
+  fs.mkdirSync(path.join(workspacePath, ".ChatAndBuild"), { recursive: true });
+  fs.writeFileSync(path.join(workspacePath, ".ChatAndBuild", "HEARTBEAT.md"), content, "utf8");
 }
 
 describe("HeartbeatService", () => {
@@ -119,7 +119,7 @@ describe("HeartbeatService", () => {
     heartbeatEvents = [];
     createdTasks = [];
     taskIdCounter = 0;
-    tmpDir = fs.mkdtempSync(path.join(os.tmpdir(), "cowork-heartbeat-"));
+    tmpDir = fs.mkdtempSync(path.join(os.tmpdir(), "ChatAndBuild-heartbeat-"));
     process.env.COWORK_USER_DATA_DIR = path.join(tmpDir, "user-data");
     workspacePaths = new Map([
       ["workspace-1", path.join(tmpDir, "workspace-1")],

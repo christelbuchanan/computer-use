@@ -32,7 +32,7 @@ describe("XAdapter", () => {
     });
     runBirdCommandMock.mockImplementation((_settings: unknown, args: string[]) => {
       if (args[0] === "whoami") {
-        return Promise.resolve({ stdout: "@coworkbot", stderr: "", data: { username: "coworkbot" } });
+        return Promise.resolve({ stdout: "@ChatAndBuildbot", stderr: "", data: { username: "ChatAndBuildbot" } });
       }
       if (args[0] === "mentions") {
         return Promise.resolve({

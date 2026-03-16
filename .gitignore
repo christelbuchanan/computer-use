@@ -59,7 +59,7 @@ docs/.vitepress/dist/
 docs/.vitepress/cache/
 
 # Local npm pack artifacts
-cowork-os-*.tgz
+ChatAndBuild-*.tgz
 
 # Test coverage
 coverage/
@@ -69,7 +69,7 @@ coverage/
 CLAUDE.md
 
 # CoWork local state
-.cowork/
+.ChatAndBuild/
 
 # VM artifacts
 vm-bundle/
@@ -97,7 +97,7 @@ temp/
 *.aiff
 
 # iOS companion project (separate repo)
-cowork-oss/
+ChatAndBuilds/
 docs/ios-companion-example.swift
 Mission_Control_Comparison_Recommendations.docx
 __pycache__/

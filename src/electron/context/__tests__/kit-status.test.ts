@@ -11,14 +11,14 @@ function writeFile(filePath: string, content: string): void {
 }
 
 function kitPath(root: string, ...parts: string[]): string {
-  return path.join(root, ".cowork", ...parts);
+  return path.join(root, ".ChatAndBuild", ...parts);
 }
 
 describe("kit-status", () => {
   let tmpDir: string;
 
   beforeEach(() => {
-    tmpDir = fs.mkdtempSync(path.join(os.tmpdir(), "cowork-kit-status-"));
+    tmpDir = fs.mkdtempSync(path.join(os.tmpdir(), "ChatAndBuild-kit-status-"));
   });
 
   afterEach(() => {
@@ -34,7 +34,7 @@ describe("kit-status", () => {
     expect(status.missingCount).toBeGreaterThan(0);
     expect(status.lintWarningCount).toBe(0);
     expect(status.lintErrorCount).toBe(0);
-    expect(status.files.some((entry) => entry.relPath === path.join(".cowork", "AGENTS.md"))).toBe(true);
+    expect(status.files.some((entry) => entry.relPath === path.join(".ChatAndBuild", "AGENTS.md"))).toBe(true);
     expect(status.onboarding?.bootstrapPresent).toBe(false);
   });
 
@@ -114,9 +114,9 @@ describe("kit-status", () => {
     );
 
     const status = await computeWorkspaceKitStatus(tmpDir, "workspace-2");
-    const tools = status.files.find((entry) => entry.relPath === path.join(".cowork", "TOOLS.md"));
-    const agents = status.files.find((entry) => entry.relPath === path.join(".cowork", "AGENTS.md"));
-    const bootstrap = status.files.find((entry) => entry.relPath === path.join(".cowork", "BOOTSTRAP.md"));
+    const tools = status.files.find((entry) => entry.relPath === path.join(".ChatAndBuild", "TOOLS.md"));
+    const agents = status.files.find((entry) => entry.relPath === path.join(".ChatAndBuild", "AGENTS.md"));
+    const bootstrap = status.files.find((entry) => entry.relPath === path.join(".ChatAndBuild", "BOOTSTRAP.md"));
 
     expect(tools?.exists).toBe(true);
     expect(tools?.stale).toBe(true);

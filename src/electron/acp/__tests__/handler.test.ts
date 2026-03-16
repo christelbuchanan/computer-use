@@ -224,7 +224,7 @@ describe("ACP Handler", () => {
       expect(result.task.id).toBeDefined();
       expect(result.task.assigneeId).toBe("local:coder");
       expect(result.task.status).toBe("running");
-      expect(result.task.coworkTaskId).toBe("task-123");
+      expect(result.task.ChatAndBuildTaskId).toBe("task-123");
       expect(deps.createTask).toHaveBeenCalled();
     });
 

@@ -586,7 +586,7 @@ export class StrategicPlannerService {
             "## Workspace Linking Requirements",
             "This issue is only complete when the project is linked in the CoWork OS control plane database.",
             "Use the control-plane tools: list_projects, list_workspaces, and link_project_workspace.",
-            "Do not treat ad hoc files in .cowork/ as a substitute for the database link.",
+            "Do not treat ad hoc files in .ChatAndBuild/ as a substitute for the database link.",
           ]
         : [];
 

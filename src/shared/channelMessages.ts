@@ -174,7 +174,7 @@ const CHANNEL_UI_COPY: Record<ChannelUiKey, string> = {
   historyNone: "📋 No task history found.\n\nStart a new task by sending a message.",
   historyHeader: "📋 *Recent Tasks*\n\n{history}",
   skillsNone:
-    "📚 No skills available.\n\nSkills are stored in:\n`~/Library/Application Support/cowork-os/skills/`",
+    "📚 No skills available.\n\nSkills are stored in:\n`~/Library/Application Support/ChatAndBuild/skills/`",
   skillsLoadFailed: "❌ Failed to load skills.",
   skillSpecify:
     "❌ Please specify a skill ID.\n\nUsage: `/skill <id>`\n\nUse /skills to see available skills.",

@@ -27,7 +27,7 @@ last_status=1
 
 while [ "$attempt" -le "$MAX_ATTEMPTS" ]; do
   if [ "$attempt" -gt 1 ]; then
-    echo "[cowork] setup:native shell retry ${attempt}/${MAX_ATTEMPTS} in ${delay}s..."
+    echo "[ChatAndBuild] setup:native shell retry ${attempt}/${MAX_ATTEMPTS} in ${delay}s..."
     sleep "$delay"
 
     # Exponential backoff (2,4,8,16,20,20,...) to give macOS time to recover.

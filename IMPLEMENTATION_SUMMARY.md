@@ -292,7 +292,7 @@ Full MCP support for extensibility:
 
 User-defined reusable workflows:
 
-- Skills stored as YAML in `~/Library/Application Support/cowork-os/skills/`
+- Skills stored as YAML in `~/Library/Application Support/ChatAndBuild/skills/`
 - Custom prompts and tool configurations
 - Priority-based sorting
 - Parameter input modal for skills with variables
@@ -390,7 +390,7 @@ Run multiple tasks concurrently:
 ## File Structure
 
 ```
-cowork-os/
+ChatAndBuild/
 ├── package.json
 ├── tsconfig.json
 ├── tsconfig.electron.json

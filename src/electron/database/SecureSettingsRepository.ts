@@ -83,7 +83,7 @@ interface SecureSettingsRow {
 }
 
 /** Machine ID file name - persisted for stable key derivation */
-const MACHINE_ID_FILE = ".cowork-machine-id";
+const MACHINE_ID_FILE = ".ChatAndBuild-machine-id";
 const logger = createLogger("SecureSettingsRepository");
 
 /**
@@ -517,7 +517,7 @@ export class SecureSettingsRepository {
     // Use a combination of:
     // 1. App identifier (hardcoded, same for all installations)
     // 2. Process info (changes per machine but is consistent)
-    const appSalt = "cowork-os-secure-settings-v1";
+    const appSalt = "ChatAndBuild-secure-settings-v1";
     const machineId = this.getMachineIdentifier();
 
     // Derive a 256-bit key using PBKDF2

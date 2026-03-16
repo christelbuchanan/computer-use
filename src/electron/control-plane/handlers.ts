@@ -383,8 +383,8 @@ async function getManagedRemoteNodeInfo(device: ManagedDevice): Promise<NodeInfo
     displayName: device.name || "Remote Device",
     platform: toNodePlatform(runtime.platform || device.platform),
     version:
-      typeof runtime.coworkVersion === "string"
-        ? runtime.coworkVersion
+      typeof runtime.ChatAndBuildVersion === "string"
+        ? runtime.ChatAndBuildVersion
         : device.version || "unknown",
     deviceId: status.clientId,
     modelIdentifier: hostname,
@@ -519,7 +519,7 @@ async function getLocalConfigSnapshot(): Promise<Any> {
         arch: process.arch,
         node: process.version,
         electron: process.versions.electron,
-        coworkVersion: typeof app.getVersion === "function" ? app.getVersion() : undefined,
+        ChatAndBuildVersion: typeof app.getVersion === "function" ? app.getVersion() : undefined,
         headless: isHeadlessMode(),
         cwd: process.cwd(),
         userDataDir: getUserDataDir(),
@@ -557,7 +557,7 @@ async function getLocalConfigSnapshot(): Promise<Any> {
       arch: process.arch,
       node: process.version,
       electron: process.versions.electron,
-      coworkVersion: typeof app.getVersion === "function" ? app.getVersion() : undefined,
+      ChatAndBuildVersion: typeof app.getVersion === "function" ? app.getVersion() : undefined,
       headless: isHeadlessMode(),
       cwd: process.cwd(),
       userDataDir: getUserDataDir(),
@@ -1050,8 +1050,8 @@ async function buildRemoteManagedDeviceSummary(device: ManagedDevice): Promise<M
     connectedAt: status.connectedAt || device.connectedAt,
     lastSeenAt: status.lastActivityAt || status.connectedAt || device.lastSeenAt,
     version:
-      typeof configSnapshot?.runtime?.coworkVersion === "string"
-        ? configSnapshot.runtime.coworkVersion
+      typeof configSnapshot?.runtime?.ChatAndBuildVersion === "string"
+        ? configSnapshot.runtime.ChatAndBuildVersion
         : device.version,
     platform: toNodePlatform(configSnapshot?.runtime?.platform || device.platform),
     activeRunCount: active,
@@ -2857,7 +2857,7 @@ function registerTaskAndWorkspaceMethods(
       arch: process.arch,
       node: process.version,
       electron: process.versions.electron,
-      coworkVersion: typeof app.getVersion === "function" ? app.getVersion() : undefined,
+      ChatAndBuildVersion: typeof app.getVersion === "function" ? app.getVersion() : undefined,
       headless: isHeadlessMode(),
       cwd: process.cwd(),
       userDataDir: getUserDataDir(),

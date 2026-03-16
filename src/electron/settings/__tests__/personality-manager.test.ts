@@ -952,7 +952,7 @@ describe("PersonalityManager - relationship", () => {
     });
 
     it("should clear sentence-like task fragments", () => {
-      PersonalityManager.setUserName("building a cowork agent for Nokia");
+      PersonalityManager.setUserName("building a ChatAndBuild agent for Nokia");
 
       expect((mockStoredSettings.relationship as Any)?.userName).toBeUndefined();
     });
@@ -972,7 +972,7 @@ describe("PersonalityManager - relationship", () => {
     });
 
     it("should ignore stale task-fragment names from corrupted memory", () => {
-      mockStoredSettings = { relationship: { userName: "building a cowork agent for Nokia" } };
+      mockStoredSettings = { relationship: { userName: "building a ChatAndBuild agent for Nokia" } };
       PersonalityManager.clearCache();
 
       expect(PersonalityManager.getUserName()).toBeUndefined();

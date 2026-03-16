@@ -100,14 +100,14 @@ This prevents unintended browsing during automation tasks.
 
 ### Workspace Kit Project Access Rules
 
-If a workspace contains a `.cowork/projects/<projectId>/ACCESS.md` file, built-in tools enforce per-project access based on the task's assigned agent role:
+If a workspace contains a `.ChatAndBuild/projects/<projectId>/ACCESS.md` file, built-in tools enforce per-project access based on the task's assigned agent role:
 
 - `## Allow` and `## Deny` sections accept agent role IDs (one per line prefixed with `-`).
 - Use `all` to match every agent role.
 - Deny wins over allow.
 
 Enforcement applies to:
-- File/edit/grep/search tools when the path is inside `.cowork/projects/<projectId>/...`
+- File/edit/grep/search tools when the path is inside `.ChatAndBuild/projects/<projectId>/...`
 - Workspace-kit context injection (denied projects are excluded from injected context)
 
 Important: shell commands are not subject to these per-project access rules. Keep shell permission disabled unless you explicitly need it, and review shell approvals carefully.
@@ -195,14 +195,14 @@ All settings are now stored encrypted in the database using the `SecureSettingsR
 
 | Data | Location | Encryption |
 |------|----------|------------|
-| All Settings | `app.getPath('userData')/cowork-os.db` | OS Keychain + AES-256 |
-| Database | `app.getPath('userData')/cowork-os.db` | Settings encrypted per-category |
-| Machine ID | `app.getPath('userData')/.cowork-machine-id` | Stable identifier for encryption |
+| All Settings | `app.getPath('userData')/ChatAndBuild.db` | OS Keychain + AES-256 |
+| Database | `app.getPath('userData')/ChatAndBuild.db` | Settings encrypted per-category |
+| Machine ID | `app.getPath('userData')/.ChatAndBuild-machine-id` | Stable identifier for encryption |
 
 Typical `userData` locations:
-- macOS: `~/Library/Application Support/cowork-os/`
-- Linux: `~/.config/cowork-os/`
-- Windows: `%APPDATA%\\cowork-os\\`
+- macOS: `~/Library/Application Support/ChatAndBuild/`
+- Linux: `~/.config/ChatAndBuild/`
+- Windows: `%APPDATA%\\ChatAndBuild\\`
 
 ### Encryption Layers
 
@@ -595,7 +595,7 @@ CoWork OS is designed with security in mind:
 ### Guardrails Settings Location
 
 All guardrail settings can be configured at:
-- **Database**: Stored encrypted in `app.getPath('userData')/cowork-os.db` (category: `guardrails`)
+- **Database**: Stored encrypted in `app.getPath('userData')/ChatAndBuild.db` (category: `guardrails`)
 - **UI**: Settings (gear icon) → Guardrails tab
 
 ### Settings Migration

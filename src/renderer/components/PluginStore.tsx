@@ -213,7 +213,7 @@ export function PluginStore({ onClose, onInstalled }: PluginStoreProps) {
   const normalizeAuthor = (author?: string): string => {
     const trimmed = typeof author === "string" ? author.trim() : "";
     if (!trimmed) return "Unknown";
-    return /^cowork-oss$/i.test(trimmed) ? "CoWork OS" : trimmed;
+    return /^ChatAndBuilds$/i.test(trimmed) ? "CoWork OS" : trimmed;
   };
 
   return (
@@ -252,7 +252,7 @@ export function PluginStore({ onClose, onInstalled }: PluginStoreProps) {
           <div className="ps-action-panel">
             <h4>Install from URL or Git Repository</h4>
             <p className="ps-hint">
-              Paste a GitHub URL (e.g., github:owner/repo) or a direct link to a cowork.plugin.json
+              Paste a GitHub URL (e.g., github:owner/repo) or a direct link to a ChatAndBuild.plugin.json
             </p>
             <div className="ps-input-row">
               <input
@@ -289,7 +289,7 @@ export function PluginStore({ onClose, onInstalled }: PluginStoreProps) {
           <div className="ps-action-panel">
             <h4>Create New Plugin Pack</h4>
             <p className="ps-hint">
-              Creates a new pack skeleton in your extensions directory (~/.cowork/extensions/)
+              Creates a new pack skeleton in your extensions directory (~/.ChatAndBuild/extensions/)
             </p>
             <div className="ps-scaffold-form">
               <div className="ps-input-row">

@@ -68,17 +68,17 @@ export class BrowserTools {
       return this.getSystemChromeUserDataDir();
     }
     if (trimmed === "chrome-relay") {
-      return path.join(this.workspace.path, ".cowork", "browser-profiles", "chrome-relay");
+      return path.join(this.workspace.path, ".ChatAndBuild", "browser-profiles", "chrome-relay");
     }
     if (trimmed === "workspace") {
-      return path.join(this.workspace.path, ".cowork", "browser-profiles", "default");
+      return path.join(this.workspace.path, ".ChatAndBuild", "browser-profiles", "default");
     }
     const safe =
       path
         .basename(profile.trim())
         .replace(/[^a-zA-Z0-9._-]+/g, "_")
         .slice(0, 64) || "default";
-    return path.join(this.workspace.path, ".cowork", "browser-profiles", safe);
+    return path.join(this.workspace.path, ".ChatAndBuild", "browser-profiles", safe);
   }
 
   private getSystemChromeUserDataDir(): string {
@@ -202,7 +202,7 @@ export class BrowserTools {
               type: "string",
               description:
                 "Optional profile. Presets: 'user' (system Chrome signed-in), 'chrome-relay' (extension relay), 'workspace' (workspace default). " +
-                "Or any name for .cowork/browser-profiles/<name>.",
+                "Or any name for .ChatAndBuild/browser-profiles/<name>.",
             },
             browser_channel: {
               type: "string",

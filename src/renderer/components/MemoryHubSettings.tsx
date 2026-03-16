@@ -248,7 +248,7 @@ export function MemoryHubSettings(props?: {
                 Enable Workspace Context Pack Injection
               </div>
               <p className="settings-form-hint" style={{ marginTop: "4px", marginBottom: 0 }}>
-                When enabled, the app may inject redacted notes from <code>.cowork/</code> into
+                When enabled, the app may inject redacted notes from <code>.ChatAndBuild/</code> into
                 agent context to improve continuity.
               </p>
             </div>
@@ -278,7 +278,7 @@ export function MemoryHubSettings(props?: {
                 Enable Maintenance Heartbeats
               </div>
               <p className="settings-form-hint" style={{ marginTop: "4px", marginBottom: 0 }}>
-                When enabled, lead agents treat <code>.cowork/HEARTBEAT.md</code> as the recurring
+                When enabled, lead agents treat <code>.ChatAndBuild/HEARTBEAT.md</code> as the recurring
                 checks contract for proactive maintenance, while staying silent unless they find
                 something actionable.
               </p>
@@ -357,7 +357,7 @@ export function MemoryHubSettings(props?: {
                   Workspace Kit
                 </div>
                 <p className="settings-form-hint" style={{ margin: 0 }}>
-                  Creates recommended <code>.cowork/</code> files for shared, durable context.
+                  Creates recommended <code>.ChatAndBuild/</code> files for shared, durable context.
                 </p>
               </div>
               <div style={{ display: "flex", gap: "8px" }}>
@@ -382,7 +382,7 @@ export function MemoryHubSettings(props?: {
               <div style={{ marginTop: "10px" }}>
                 <div style={{ display: "flex", flexWrap: "wrap", gap: "8px" }}>
                   <span style={getBadgeStyle(kitStatus.hasKitDir ? "success" : "warning")}>
-                    {kitStatus.hasKitDir ? ".cowork ready" : ".cowork missing"}
+                    {kitStatus.hasKitDir ? ".ChatAndBuild ready" : ".ChatAndBuild missing"}
                   </span>
                   <span style={getBadgeStyle(kitStatus.missingCount > 0 ? "error" : "success")}>
                     {kitStatus.missingCount} missing
@@ -604,7 +604,7 @@ export function MemoryHubSettings(props?: {
                 onClick={() =>
                   void window.electronAPI.openWorkspaceKitFile({
                     workspaceId: selectedWorkspaceId,
-                    relPath: ".cowork/USER.md",
+                    relPath: ".ChatAndBuild/USER.md",
                   })
                 }
                 disabled={!selectedWorkspaceId || kitBusy}
@@ -616,7 +616,7 @@ export function MemoryHubSettings(props?: {
                 onClick={() =>
                   void window.electronAPI.openWorkspaceKitFile({
                     workspaceId: selectedWorkspaceId,
-                    relPath: ".cowork/MEMORY.md",
+                    relPath: ".ChatAndBuild/MEMORY.md",
                   })
                 }
                 disabled={!selectedWorkspaceId || kitBusy}

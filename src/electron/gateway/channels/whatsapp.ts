@@ -1755,7 +1755,7 @@ export class WhatsAppAdapter implements ChannelAdapter {
   }
 
   /**
-   * Extract mention-like tokens from text (e.g. '@1415...', '@cowork').
+   * Extract mention-like tokens from text (e.g. '@1415...', '@ChatAndBuild').
    */
   private extractMentionTokensFromText(text: string): string[] {
     return (

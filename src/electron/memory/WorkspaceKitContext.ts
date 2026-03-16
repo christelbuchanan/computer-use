@@ -17,7 +17,7 @@ type ExtractedSection = {
   content: string;
 };
 
-const KIT_DIRNAME = ".cowork";
+const KIT_DIRNAME = ".ChatAndBuild";
 const MAX_FILE_BYTES = 96 * 1024;
 const MAX_SECTION_CHARS = 6000;
 const MAX_TOTAL_CHARS = 16000;

@@ -40,7 +40,7 @@ node -v
 npm -v
 ```
 
-`cowork-os` requires Node `>=24.0.0`.
+`ChatAndBuild` requires Node `>=24.0.0`.
 
 If either command is missing, or you see `v22`/`v23`, install Node.js 24:
 
@@ -53,14 +53,14 @@ node -v
 3. Install and start CoWork OS (Node-only daemon, no sudo/global npm required):
 
 ```bash
-mkdir -p ~/cowork-run
-cd ~/cowork-run
+mkdir -p ~/ChatAndBuild-run
+cd ~/ChatAndBuild-run
 npm init -y >/dev/null
-npm install cowork-os@latest --no-audit --no-fund
+npm install ChatAndBuild@latest --no-audit --no-fund
 
 export COWORK_IMPORT_ENV_SETTINGS=1
 export OPENAI_API_KEY=your_key_here   # or: export ANTHROPIC_API_KEY=your_key_here
-npx coworkd-node --print-control-plane-token
+npx ChatAndBuildd-node --print-control-plane-token
 ```
 
 Keep this terminal open. It runs the server and prints the token you need for login.
@@ -89,10 +89,10 @@ This quick start is great for first run/testing. For always-on production, conti
 - `npm WARN EBADENGINE`:
   Node version is too old. Install Node 24 and retry step 3.
 - `npm ERR! EACCES` on `npm install -g ...`:
-  This guide intentionally uses local install (`npm install` + `npx coworkd-node`) so you do not need global npm permissions.
-- `sh: 1: tsc: not found` after `npx coworkd-node`:
+  This guide intentionally uses local install (`npm install` + `npx ChatAndBuildd-node`) so you do not need global npm permissions.
+- `sh: 1: tsc: not found` after `npx ChatAndBuildd-node`:
   You are likely on an older broken npm publish that missed daemon build artifacts. Upgrade and retry:
-  `npm install cowork-os@latest --no-audit --no-fund`
+  `npm install ChatAndBuild@latest --no-audit --no-fund`
 
 ## Option A: Docker (Headless Electron)
 
@@ -118,12 +118,12 @@ ssh -N -L 28789:127.0.0.1:18789 user@your-vps
 http://127.0.0.1:18789/
 ```
 
-3. Or use `coworkctl`:
+3. Or use `ChatAndBuildctl`:
 
 ```bash
 export COWORK_CONTROL_PLANE_URL=ws://127.0.0.1:18789
 export COWORK_CONTROL_PLANE_TOKEN=... # from logs (first token generation) or via --print-control-plane-token
-node bin/coworkctl.js call config.get
+node bin/ChatAndBuildctl.js call config.get
 ```
 
 1. Build and start:
@@ -135,7 +135,7 @@ docker compose up --build -d
 If you prefer the **Node-only daemon** (no Electron/Xvfb), use the compose profile:
 
 ```bash
-docker compose --profile node up --build -d cowork-os-node
+docker compose --profile node up --build -d ChatAndBuild-node
 ```
 
 Defaults in `docker-compose.yml`:
@@ -147,7 +147,7 @@ Defaults in `docker-compose.yml`:
 2. View the Control Plane token (printed on first startup when it’s generated):
 
 ```bash
-docker compose logs -f cowork-os
+docker compose logs -f ChatAndBuild
 ```
 
 If you need to print it again later, restart with:
@@ -171,43 +171,43 @@ sudo apt-get install -y --no-install-recommends \
 2. Install Node.js (22+ recommended) and build CoWork OS:
 
 ```bash
-git clone https://github.com/CoWork-OS/CoWork-OS.git /opt/cowork-os
-cd /opt/cowork-os
+git clone https://github.com/CoWork-OS/CoWork-OS.git /opt/ChatAndBuild
+cd /opt/ChatAndBuild
 npm run setup:server
 npm run build:daemon
 npm run build:connectors
 ```
 
-On first start, `bin/coworkd-node.js` may rebuild `better-sqlite3` for your Node version (native addon ABI).
+On first start, `bin/ChatAndBuildd-node.js` may rebuild `better-sqlite3` for your Node version (native addon ABI).
 
 3. Create a dedicated user + data dir:
 
 ```bash
-sudo useradd -r -m -s /usr/sbin/nologin cowork || true
-sudo mkdir -p /var/lib/cowork-os
-sudo chown -R cowork:cowork /var/lib/cowork-os
+sudo useradd -r -m -s /usr/sbin/nologin ChatAndBuild || true
+sudo mkdir -p /var/lib/ChatAndBuild
+sudo chown -R ChatAndBuild:ChatAndBuild /var/lib/ChatAndBuild
 ```
 
 If you cloned/built as `root`, ensure the service user can read (and rebuild native deps if needed):
 
 ```bash
-sudo chown -R cowork:cowork /opt/cowork-os
+sudo chown -R ChatAndBuild:ChatAndBuild /opt/ChatAndBuild
 ```
 
 4. Install the systemd unit + env file templates:
 
-- Unit: `deploy/systemd/cowork-os-node.service`
-- Env example: `deploy/systemd/cowork-os.env.example`
+- Unit: `deploy/systemd/ChatAndBuild-node.service`
+- Env example: `deploy/systemd/ChatAndBuild.env.example`
 
 ```bash
-sudo cp /opt/cowork-os/deploy/systemd/cowork-os.env.example /etc/cowork-os.env
-sudo $EDITOR /etc/cowork-os.env
+sudo cp /opt/ChatAndBuild/deploy/systemd/ChatAndBuild.env.example /etc/ChatAndBuild.env
+sudo $EDITOR /etc/ChatAndBuild.env
 
-sudo cp /opt/cowork-os/deploy/systemd/cowork-os-node.service /etc/systemd/system/cowork-os-node.service
+sudo cp /opt/ChatAndBuild/deploy/systemd/ChatAndBuild-node.service /etc/systemd/system/ChatAndBuild-node.service
 sudo systemctl daemon-reload
-sudo systemctl enable --now cowork-os-node
+sudo systemctl enable --now ChatAndBuild-node
 
-sudo journalctl -u cowork-os-node -f
+sudo journalctl -u ChatAndBuild-node -f
 ```
 
 ## Optional: Browser Automation (Playwright)
@@ -218,7 +218,7 @@ Chromium may fail to launch until OS dependencies are installed.
 If you want browser tools on Debian/Ubuntu, you can install Playwright’s Chromium + dependencies:
 
 ```bash
-cd /opt/cowork-os
+cd /opt/ChatAndBuild
 sudo npx playwright install --with-deps chromium
 ```
 
@@ -253,8 +253,8 @@ sudo apt-get install -y --no-install-recommends \
 2. Install Node.js (22+ recommended) and build CoWork OS:
 
 ```bash
-git clone https://github.com/CoWork-OS/CoWork-OS.git /opt/cowork-os
-cd /opt/cowork-os
+git clone https://github.com/CoWork-OS/CoWork-OS.git /opt/ChatAndBuild
+cd /opt/ChatAndBuild
 npm run setup:server
 npm run build:electron
 npm run build:connectors
@@ -263,27 +263,27 @@ npm run build:connectors
 3. Create a dedicated user + data dir:
 
 ```bash
-sudo useradd -r -m -s /usr/sbin/nologin cowork || true
-sudo mkdir -p /var/lib/cowork-os
-sudo chown -R cowork:cowork /var/lib/cowork-os
+sudo useradd -r -m -s /usr/sbin/nologin ChatAndBuild || true
+sudo mkdir -p /var/lib/ChatAndBuild
+sudo chown -R ChatAndBuild:ChatAndBuild /var/lib/ChatAndBuild
 ```
 
 4. Install the systemd unit + env file templates:
 
-- Unit: `deploy/systemd/cowork-os.service`
-- Env example: `deploy/systemd/cowork-os.env.example`
+- Unit: `deploy/systemd/ChatAndBuild.service`
+- Env example: `deploy/systemd/ChatAndBuild.env.example`
 
 Example install commands:
 
 ```bash
-sudo cp /opt/cowork-os/deploy/systemd/cowork-os.env.example /etc/cowork-os.env
-sudo $EDITOR /etc/cowork-os.env
+sudo cp /opt/ChatAndBuild/deploy/systemd/ChatAndBuild.env.example /etc/ChatAndBuild.env
+sudo $EDITOR /etc/ChatAndBuild.env
 
-sudo cp /opt/cowork-os/deploy/systemd/cowork-os.service /etc/systemd/system/cowork-os.service
+sudo cp /opt/ChatAndBuild/deploy/systemd/ChatAndBuild.service /etc/systemd/system/ChatAndBuild.service
 sudo systemctl daemon-reload
-sudo systemctl enable --now cowork-os
+sudo systemctl enable --now ChatAndBuild
 
-sudo journalctl -u cowork-os -f
+sudo journalctl -u ChatAndBuild -f
 ```
 
 ## Recommended: Persistent Data Directory
@@ -291,14 +291,14 @@ sudo journalctl -u cowork-os -f
 On VPS you usually want the DB/settings under a known path (for backups and container volumes).
 
 ```bash
-export COWORK_USER_DATA_DIR=/var/lib/cowork-os
-node bin/coworkd-node.js
+export COWORK_USER_DATA_DIR=/var/lib/ChatAndBuild
+node bin/ChatAndBuildd-node.js
 ```
 
 Or via CLI flag:
 
 ```bash
-node bin/coworkd-node.js --user-data-dir /var/lib/cowork-os
+node bin/ChatAndBuildd-node.js --user-data-dir /var/lib/ChatAndBuild
 ```
 
 ## Bootstrapping a Workspace (Important)
@@ -308,13 +308,13 @@ Headless instances can’t “Select Folder” via UI, so you must either:
 1. Bootstrap a default workspace at startup:
 
 ```bash
-export COWORK_BOOTSTRAP_WORKSPACE_PATH=/srv/cowork/workspace
+export COWORK_BOOTSTRAP_WORKSPACE_PATH=/srv/ChatAndBuild/workspace
 export COWORK_BOOTSTRAP_WORKSPACE_NAME=main
 ```
 
 2. Or create one remotely over the Control Plane using `workspace.create`.
 
-### coworkctl (Simple Control Plane CLI)
+### ChatAndBuildctl (Simple Control Plane CLI)
 
 Use the bundled helper to call Control Plane methods:
 
@@ -322,11 +322,11 @@ Use the bundled helper to call Control Plane methods:
 export COWORK_CONTROL_PLANE_URL=ws://127.0.0.1:18789
 export COWORK_CONTROL_PLANE_TOKEN=... # from startup logs
 
-node bin/coworkctl.js call workspace.list
-node bin/coworkctl.js call workspace.create '{"name":"main","path":"/srv/cowork/workspace"}'
-node bin/coworkctl.js call config.get
-node bin/coworkctl.js watch --event task.event
-node bin/coworkctl.js tail '<taskId>' --limit 200
+node bin/ChatAndBuildctl.js call workspace.list
+node bin/ChatAndBuildctl.js call workspace.create '{"name":"main","path":"/srv/ChatAndBuild/workspace"}'
+node bin/ChatAndBuildctl.js call config.get
+node bin/ChatAndBuildctl.js watch --event task.event
+node bin/ChatAndBuildctl.js tail '<taskId>' --limit 200
 ```
 
 ## Configure Channels (Headless)
@@ -336,12 +336,12 @@ If you want to interact with the agent via Telegram/Discord/Slack/etc on a VPS, 
 Examples:
 
 ```bash
-node bin/coworkctl.js call channel.list
+node bin/ChatAndBuildctl.js call channel.list
 
 # Create a Telegram channel (disabled by default; test then enable)
-node bin/coworkctl.js call channel.create '{"type":"telegram","name":"telegram","config":{"botToken":"..."},"securityConfig":{"mode":"pairing"}}'
-node bin/coworkctl.js call channel.test '{"channelId":"..."}'
-node bin/coworkctl.js call channel.enable '{"channelId":"..."}'
+node bin/ChatAndBuildctl.js call channel.create '{"type":"telegram","name":"telegram","config":{"botToken":"..."},"securityConfig":{"mode":"pairing"}}'
+node bin/ChatAndBuildctl.js call channel.test '{"channelId":"..."}'
+node bin/ChatAndBuildctl.js call channel.enable '{"channelId":"..."}'
 ```
 
 ## Configure LLM/Search Credentials (Headless)
@@ -349,7 +349,7 @@ node bin/coworkctl.js call channel.enable '{"channelId":"..."}'
 You have two headless-friendly options:
 
 1. **Control Plane setup (recommended once running)**  
-   Use the Web UI **LLM Setup** panel or call `llm.configure` via `coworkctl`.
+   Use the Web UI **LLM Setup** panel or call `llm.configure` via `ChatAndBuildctl`.
 2. **Env import on boot**  
    Keep credentials in environment variables and import them at startup.
 
@@ -359,19 +359,19 @@ Examples:
 
 ```bash
 # OpenAI
-node bin/coworkctl.js call llm.configure '{"providerType":"openai","apiKey":"sk-...","model":"gpt-4o-mini"}'
+node bin/ChatAndBuildctl.js call llm.configure '{"providerType":"openai","apiKey":"sk-...","model":"gpt-4o-mini"}'
 
 # Ollama (remote/local URL)
-node bin/coworkctl.js call llm.configure '{"providerType":"ollama","settings":{"baseUrl":"http://127.0.0.1:11434"},"model":"gpt-oss:20b"}'
+node bin/ChatAndBuildctl.js call llm.configure '{"providerType":"ollama","settings":{"baseUrl":"http://127.0.0.1:11434"},"model":"gpt-oss:20b"}'
 
 # Azure OpenAI
-node bin/coworkctl.js call llm.configure '{"providerType":"azure","apiKey":"...","settings":{"endpoint":"https://...","deployment":"gpt-4.1-mini"}}'
+node bin/ChatAndBuildctl.js call llm.configure '{"providerType":"azure","apiKey":"...","settings":{"endpoint":"https://...","deployment":"gpt-4.1-mini"}}'
 ```
 
 Then verify:
 
 ```bash
-node bin/coworkctl.js call config.get
+node bin/ChatAndBuildctl.js call config.get
 ```
 
 ### API-first account lifecycle (agent signup support)
@@ -380,7 +380,7 @@ Use the managed account API to track signup status, store credentials, and let a
 
 ```bash
 # Create or update an account record (secrets stored encrypted)
-node bin/coworkctl.js call account.upsert '{
+node bin/ChatAndBuildctl.js call account.upsert '{
   "provider":"openrouter",
   "label":"OpenRouter production",
   "status":"pending_signup",
@@ -389,7 +389,7 @@ node bin/coworkctl.js call account.upsert '{
 }'
 
 # Add secrets once available (or rotate later)
-node bin/coworkctl.js call account.upsert '{
+node bin/ChatAndBuildctl.js call account.upsert '{
   "id":"<accountId>",
   "status":"active",
   "secrets":{"api_key":"sk-or-..."},
@@ -397,13 +397,13 @@ node bin/coworkctl.js call account.upsert '{
 }'
 
 # List records (redacted by default)
-node bin/coworkctl.js call account.list
+node bin/ChatAndBuildctl.js call account.list
 
 # Fetch a single account
-node bin/coworkctl.js call account.get '{"accountId":"<accountId>"}'
+node bin/ChatAndBuildctl.js call account.get '{"accountId":"<accountId>"}'
 
 # Remove account metadata/credentials
-node bin/coworkctl.js call account.remove '{"accountId":"<accountId>"}'
+node bin/ChatAndBuildctl.js call account.remove '{"accountId":"<accountId>"}'
 ```
 
 ### Option 2: Configure via env import
@@ -442,7 +442,7 @@ You can override bind host/port at startup:
 ```bash
 export COWORK_CONTROL_PLANE_HOST=127.0.0.1
 export COWORK_CONTROL_PLANE_PORT=18789
-node bin/coworkd-node.js
+node bin/ChatAndBuildd-node.js
 ```
 
 Keep `host=127.0.0.1` unless you *fully* understand the security implications of binding to `0.0.0.0`.
@@ -512,21 +512,21 @@ Choose one option based on whether you want to keep data.
 
 ```bash
 # If running via docker-compose in this repo
-cd /path/to/cowork-vps
+cd /path/to/ChatAndBuild-vps
 docker compose down
 
 # If running via systemd
-sudo systemctl stop cowork-os cowork-os-node
-sudo systemctl disable cowork-os cowork-os-node
-sudo rm -f /etc/systemd/system/cowork-os.service
-sudo rm -f /etc/systemd/system/cowork-os-node.service
+sudo systemctl stop ChatAndBuild ChatAndBuild-node
+sudo systemctl disable ChatAndBuild ChatAndBuild-node
+sudo rm -f /etc/systemd/system/ChatAndBuild.service
+sudo rm -f /etc/systemd/system/ChatAndBuild-node.service
 sudo systemctl daemon-reload
 ```
 
 Keep data directories/volumes intact to preserve state:
 
-- Docker: named volume `cowork_data` (and workspace volume `cowork_workspace` unless bound to host)
-- systemd example: `/var/lib/cowork-os`
+- Docker: named volume `ChatAndBuild_data` (and workspace volume `ChatAndBuild_workspace` unless bound to host)
+- systemd example: `/var/lib/ChatAndBuild`
 - Custom env path: value passed in `COWORK_USER_DATA_DIR` or `--user-data-dir`
 
 ### Option 2: Full uninstall + data deletion (irreversible)
@@ -535,11 +535,11 @@ Keep data directories/volumes intact to preserve state:
 
 ```bash
 # Docker (removes anonymous/named volumes used for DB, workspace state, and tasks)
-cd /path/to/cowork-vps
+cd /path/to/ChatAndBuild-vps
 docker compose down -v
 
 # systemd (remove user-data store)
-sudo rm -rf /var/lib/cowork-os
+sudo rm -rf /var/lib/ChatAndBuild
 ```
 
 If you configured a custom user-data directory, also remove it:

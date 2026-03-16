@@ -2,7 +2,7 @@
  * Extension System Types
  *
  * Defines the plugin manifest schema and interfaces for the CoWork extension system.
- * Extensions are loaded from cowork.plugin.json files and can provide:
+ * Extensions are loaded from ChatAndBuild.plugin.json files and can provide:
  * - Channel adapters (messaging platforms)
  * - Tools (agent capabilities)
  * - Providers (LLM, search, etc.)
@@ -11,7 +11,7 @@
 import { ChannelAdapter, ChannelConfig } from "../gateway/channels/types";
 
 /**
- * Plugin manifest schema (cowork.plugin.json)
+ * Plugin manifest schema (ChatAndBuild.plugin.json)
  */
 export interface PluginManifest {
   /** Unique plugin identifier (e.g., "signal", "matrix") */
@@ -36,7 +36,7 @@ export interface PluginManifest {
   homepage?: string;
 
   /** Minimum CoWork version required */
-  coworkVersion?: string;
+  ChatAndBuildVersion?: string;
 
   /** Plugin type */
   type: PluginType;

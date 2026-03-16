@@ -23,8 +23,8 @@ The app is built as an **Electron main process** (backend/orchestration) plus a 
 
 CoWork OS also supports **server/headless deployments** intended for Linux VPS installs:
 
-- Headless Electron daemon: `bin/coworkd.js`
-- Node-only daemon (no Electron/Xvfb): `bin/coworkd-node.js` (entry: `src/daemon/main.ts`)
+- Headless Electron daemon: `bin/ChatAndBuildd.js`
+- Node-only daemon (no Electron/Xvfb): `bin/ChatAndBuildd-node.js` (entry: `src/daemon/main.ts`)
 
 See: `docs/vps-linux.md`.
 
@@ -155,7 +155,7 @@ Notes on "skills":
 - Skills are JSON files (`*.json`) that define reusable workflows/prompts.
 - Skill sources and precedence (highest wins):
   - Workspace skills: `<workspace>/skills/`
-  - Managed skills: Electron `userData/skills/` (on macOS typically `~/Library/Application Support/cowork-os/skills/`)
+  - Managed skills: Electron `userData/skills/` (on macOS typically `~/Library/Application Support/ChatAndBuild/skills/`)
   - Bundled skills: `resources/skills/` (includes use-case templates: booking options, draft reply, family digest, household capture, newsletter digest, transaction scan, inbox manager, chief-of-staff briefing, smart-home brain, dev task queue, figure-it-out agent)
 - Managed and workspace skills can also use a sibling directory named after the skill ID (for example `webxr-dev.json` plus `webxr-dev/`). When present, `{baseDir}` resolves to that sibling directory so the skill can load `SKILL.md`, `references/`, and `scripts/`.
 
@@ -220,7 +220,7 @@ Behavior notes:
 For end-user syntax and policy examples, see [Universal `/simplify` and `/batch`](simplify-batch.md).
 
 Attachment handling:
-- If an inbound channel message includes `attachments`, the gateway persists them under `<workspace>/.cowork/inbox/attachments/...`
+- If an inbound channel message includes `attachments`, the gateway persists them under `<workspace>/.ChatAndBuild/inbox/attachments/...`
 - The persisted workspace paths are appended into the task prompt so agents can inspect them with normal file tools (and `analyze_image` for images)
 - File extraction supports DOCX/PDF/PPTX content, and local image previews can optionally run OCR when `tesseract` is available
 
@@ -267,9 +267,9 @@ CoWork OS can store and retrieve local memories per workspace, with:
 - Auto-capture from task execution
 - **Agent-initiated memory save** via `memory_save` tool — agents can explicitly persist insights, decisions, observations, and errors during task execution for recall in future sessions
 - Privacy protection (sensitive detection, private memories)
-- Search + progressive retrieval — `search_memories` searches both the memory DB and `.cowork/` workspace markdown files
-- Optional workspace kit (`.cowork/`) initialization + indexing for durable human-edited context
-- Project contexts under `.cowork/projects/<projectId>/` with per-project access rules
+- Search + progressive retrieval — `search_memories` searches both the memory DB and `.ChatAndBuild/` workspace markdown files
+- Optional workspace kit (`.ChatAndBuild/`) initialization + indexing for durable human-edited context
+- Project contexts under `.ChatAndBuild/projects/<projectId>/` with per-project access rules
 - ChatGPT export import (distilled via LLM, stored locally)
 - Cross-workspace search for imported ChatGPT memories (`searchImportedGlobal`)
 - Local vector embeddings for memory similarity (no external API required)
@@ -400,7 +400,7 @@ Code:
 
 ### 11. Extensions (Plugin System)
 
-There is a plugin/extension system scaffolded to load `cowork.plugin.json` manifests.
+There is a plugin/extension system scaffolded to load `ChatAndBuild.plugin.json` manifests.
 Treat this as **experimental** until the project formally documents/commits to the plugin ABI.
 
 Code:
@@ -527,7 +527,7 @@ Entry points:
 - Renderer boot: `src/renderer/main.tsx`
 - IPC bridge: `src/electron/preload.ts`
 - Node daemon boot: `src/daemon/main.ts` (non-Electron headless)
-- CLI entry: `bin/coworkd.js` (headless Electron), `bin/coworkd-node.js` (Node-only), `bin/coworkctl.js` (control client)
+- CLI entry: `bin/ChatAndBuildd.js` (headless Electron), `bin/ChatAndBuildd-node.js` (Node-only), `bin/ChatAndBuildctl.js` (control client)
 
 Headless credential import:
 - When `COWORK_IMPORT_ENV_SETTINGS=1` is set, `importProcessEnvToSettings()` reads LLM and search provider keys from environment variables (e.g. `OPENAI_API_KEY`, `ANTHROPIC_API_KEY`, `TAVILY_API_KEY`, etc.) and writes them into encrypted settings on startup. Supports `merge` (default, fill blanks only) and `overwrite` modes.
@@ -566,11 +566,11 @@ CoWork OS persists state under a configurable user-data directory, resolved by `
 Resolution order:
 1. `COWORK_USER_DATA_DIR` environment variable (supports `~` expansion)
 2. `--user-data-dir <path>` CLI argument
-3. Electron `app.getPath('userData')` (macOS: `~/Library/Application Support/cowork-os/`)
-4. Fallback: `$HOME/.cowork` (when running without Electron, e.g. Node daemon)
+3. Electron `app.getPath('userData')` (macOS: `~/Library/Application Support/ChatAndBuild/`)
+4. Fallback: `$HOME/.ChatAndBuild` (when running without Electron, e.g. Node daemon)
 
 What is stored there (see `src/electron/database/schema.ts` migration logic):
-- SQLite DB: `cowork-os.db`
+- SQLite DB: `ChatAndBuild.db`
 - Skills (managed): `userData/skills/`
 - WhatsApp auth/session data: `userData/whatsapp-auth/`
 - Cron store: `userData/cron/`
@@ -744,10 +744,10 @@ Add a `--serve` flag to the existing CLI:
 
 ```bash
 # Start in web mode (no Electron window)
-cowork-os --serve --port 3000
+ChatAndBuild --serve --port 3000
 
 # Start with both Electron window and web server
-cowork-os --serve --port 3000 --with-gui
+ChatAndBuild --serve --port 3000 --with-gui
 ```
 
 ### What Works Unchanged

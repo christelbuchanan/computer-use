@@ -1,8 +1,8 @@
 <p align="center">
   <picture>
-    <source media="(prefers-color-scheme: dark)" srcset="screenshots/cowork-os-logo-text-dark.png">
-    <source media="(prefers-color-scheme: light)" srcset="screenshots/cowork-os-logo-text.png">
-    <img src="screenshots/cowork-os-logo-text.png" alt="CoWork OS" width="360">
+    <source media="(prefers-color-scheme: dark)" srcset="screenshots/ChatAndBuild-logo-text-dark.png">
+    <source media="(prefers-color-scheme: light)" srcset="screenshots/ChatAndBuild-logo-text.png">
+    <img src="screenshots/ChatAndBuild-logo-text.png" alt="CoWork OS" width="360">
   </picture>
 </p>
 
@@ -13,7 +13,7 @@
 
 <p align="center">
   <a href="https://github.com/CoWork-OS/CoWork-OS/actions/workflows/ci.yml"><img src="https://github.com/CoWork-OS/CoWork-OS/actions/workflows/ci.yml/badge.svg" alt="CI"></a>
-  <a href="https://www.npmjs.com/package/cowork-os"><img src="https://img.shields.io/npm/v/cowork-os.svg" alt="npm"></a>
+  <a href="https://www.npmjs.com/package/ChatAndBuild"><img src="https://img.shields.io/npm/v/ChatAndBuild.svg" alt="npm"></a>
   <a href="https://opensource.org/licenses/MIT"><img src="https://img.shields.io/badge/License-MIT-yellow.svg" alt="License: MIT"></a>
   <a href="https://www.apple.com/macos/"><img src="https://img.shields.io/badge/platform-macOS-blue.svg" alt="macOS"></a>
   <a href="https://www.microsoft.com/windows"><img src="https://img.shields.io/badge/platform-Windows-0078D6.svg" alt="Windows"></a>
@@ -30,7 +30,7 @@
 </p>
 
 <p align="center">
-  <img src="screenshots/cowork-os-main-focus.png" alt="CoWork OS Interface" width="700">
+  <img src="screenshots/ChatAndBuild-main-focus.png" alt="CoWork OS Interface" width="700">
 </p>
 
 ### Why CoWork OS?
@@ -83,7 +83,7 @@ Previous updates added four core runtime capabilities:
 
 - **Tier-1 chat integration setup** with `integration_setup` (`list`, `inspect`, `configure`), OAuth support, and stale-plan safety via `expected_plan_hash`
 - **Approval-gated skill expansion** with `skill_proposal` (`create`, `list`, `approve`, `reject`) and workspace-local proposal persistence
-- **Workspace bootstrap + heartbeat alignment** with `.cowork/BOOTSTRAP.md`, `.cowork/VIBES.md`, `.cowork/LORE.md`, onboarding lifecycle state, and proactive task frequency enforcement
+- **Workspace bootstrap + heartbeat alignment** with `.ChatAndBuild/BOOTSTRAP.md`, `.ChatAndBuild/VIBES.md`, `.ChatAndBuild/LORE.md`, onboarding lifecycle state, and proactive task frequency enforcement
 - **Guided input + runtime recovery** with `request_user_input`, adaptive turn-window recovery, context compaction retry, grouped parallel tool lanes, and workspace/task-path repair
 
 See [Integration Setup, Skill Proposals, and Bootstrap Lifecycle](docs/integration-skill-bootstrap-lifecycle.md) for the integration/bootstrap changes, and [Features](docs/features.md) for the guided-input and runtime-recovery additions.
@@ -108,12 +108,12 @@ Download the latest release from [GitHub Releases](https://github.com/CoWork-OS/
 ### Or Install via npm
 
 ```bash
-npm install -g cowork-os
-cowork-os
+npm install -g ChatAndBuild
+ChatAndBuild
 ```
 
 > **Windows npm install notes:**
-> - Run `npm install -g cowork-os` / `npm uninstall -g cowork-os` from `%USERPROFILE%` (or another neutral directory), **not** from `%APPDATA%\npm\node_modules\cowork-os`, to avoid `EBUSY` lock errors.
+> - Run `npm install -g ChatAndBuild` / `npm uninstall -g ChatAndBuild` from `%USERPROFILE%` (or another neutral directory), **not** from `%APPDATA%\npm\node_modules\ChatAndBuild`, to avoid `EBUSY` lock errors.
 > - On Windows ARM64, first launch may take longer while native modules are rebuilt; this can run multiple fallback steps before the app opens.
 > - If native rebuild fails, install [Visual Studio Build Tools 2022 (C++)](https://visualstudio.microsoft.com/visual-cpp-build-tools/) and Python 3, then retry.
 > - If startup logs show `ERR_FILE_NOT_FOUND ... dist/renderer/index.html`, reinstall the latest package and check [Troubleshooting](docs/troubleshooting.md).
@@ -262,7 +262,7 @@ These are the workflows where approval gates, local data control, and measurable
 ### Extensibility
 
 - **139 built-in skills** across developer, productivity, communication, documents, game development, mobile development, financial analysis, infrastructure-as-code, and more
-- **Custom skills** in `~/Library/Application Support/cowork-os/skills/` (macOS) or `%APPDATA%\cowork-os\skills\` (Windows)
+- **Custom skills** in `~/Library/Application Support/ChatAndBuild/skills/` (macOS) or `%APPDATA%\ChatAndBuild\skills\` (Windows)
 - **17 bundled plugin packs** with 55+ role-specific skills and Digital Twin integration
 - **Plugin Store** — browse, install from Git/URL, or scaffold custom packs
 - **MCP support** — client, host, and registry
@@ -277,12 +277,12 @@ Built-in structured entity and relationship memory backed by SQLite. The agent b
 
 ### Memory & Context
 
-Persistent memory with privacy protection, FTS5 search, LLM compression, and a contract-driven workspace kit (`.cowork/`) for durable human-edited context. The workspace kit now separates workspace-wide files such as `AGENTS.md`, `USER.md`, `MEMORY.md`, `TOOLS.md`, `SOUL.md`, `IDENTITY.md`, `RULES.md`, `VIBES.md`, and `LORE.md` from project-scoped files such as `.cowork/projects/<projectId>/CONTEXT.md` and `.cowork/projects/<projectId>/ACCESS.md`. Special files get dedicated lifecycle handling: `BOOTSTRAP.md` is a one-time onboarding checklist tracked through `.cowork/workspace-state.json`, while `HEARTBEAT.md` is reserved for recurring heartbeat-only checks instead of general task context.
+Persistent memory with privacy protection, FTS5 search, LLM compression, and a contract-driven workspace kit (`.ChatAndBuild/`) for durable human-edited context. The workspace kit now separates workspace-wide files such as `AGENTS.md`, `USER.md`, `MEMORY.md`, `TOOLS.md`, `SOUL.md`, `IDENTITY.md`, `RULES.md`, `VIBES.md`, and `LORE.md` from project-scoped files such as `.ChatAndBuild/projects/<projectId>/CONTEXT.md` and `.ChatAndBuild/projects/<projectId>/ACCESS.md`. Special files get dedicated lifecycle handling: `BOOTSTRAP.md` is a one-time onboarding checklist tracked through `.ChatAndBuild/workspace-state.json`, while `HEARTBEAT.md` is reserved for recurring heartbeat-only checks instead of general task context.
 
-Every tracked file follows a shared parser/linter model with freshness windows, secret detection, missing-file status, and revision snapshots stored under `.cowork/**/.history/`. Workspace kit health is surfaced in the app and can be checked locally with `npm run kit:lint` for human-readable output or JSON export. **Import your ChatGPT history** to eliminate the cold-start problem — CoWork OS knows you from day one. All imported data is stored locally and encrypted on your machine. **Proactive session compaction** automatically generates comprehensive structured summaries when context reaches 90% capacity — preserving user messages, decisions, file changes, errors, and pending work so the agent continues seamlessly without losing critical context. [Learn more](docs/features.md#persistent-memory-system) | [Context Compaction](docs/context-compaction.md)
+Every tracked file follows a shared parser/linter model with freshness windows, secret detection, missing-file status, and revision snapshots stored under `.ChatAndBuild/**/.history/`. Workspace kit health is surfaced in the app and can be checked locally with `npm run kit:lint` for human-readable output or JSON export. **Import your ChatGPT history** to eliminate the cold-start problem — CoWork OS knows you from day one. All imported data is stored locally and encrypted on your machine. **Proactive session compaction** automatically generates comprehensive structured summaries when context reaches 90% capacity — preserving user messages, decisions, file changes, errors, and pending work so the agent continues seamlessly without losing critical context. [Learn more](docs/features.md#persistent-memory-system) | [Context Compaction](docs/context-compaction.md)
 
 <p align="center">
-  <img src="screenshots/cowork-os-agents.png" alt="Agent Personas" width="700">
+  <img src="screenshots/ChatAndBuild-agents.png" alt="Agent Personas" width="700">
   <br>
   <em>Role-specific agent personas and intent-first task startup</em>
 </p>
@@ -350,32 +350,32 @@ See [Security Guide](docs/security-guide.md) and [Security Architecture](docs/se
 ## Screenshots
 
 <p align="center">
-  <img src="screenshots/cowork-os-canvas.png" alt="Live Canvas" width="700">
+  <img src="screenshots/ChatAndBuild-canvas.png" alt="Live Canvas" width="700">
   <br><em>Live Canvas for visual, iterative build workflows</em>
 </p>
 
 <p align="center">
-  <img src="screenshots/cowork-os-excel.png" alt="Spreadsheet Output" width="700">
+  <img src="screenshots/ChatAndBuild-excel.png" alt="Spreadsheet Output" width="700">
   <br><em>Structured spreadsheet outputs generated directly in chat</em>
 </p>
 
 <p align="center">
-  <img src="screenshots/cowork-os-connectors.png" alt="Connector Setup" width="700">
+  <img src="screenshots/ChatAndBuild-connectors.png" alt="Connector Setup" width="700">
   <br><em>Enterprise connector setup with OAuth and credential management</em>
 </p>
 
 <p align="center">
-  <img src="screenshots/cowork-os-usageinsights.png" alt="Usage Insights Dashboard" width="700">
+  <img src="screenshots/ChatAndBuild-usageinsights.png" alt="Usage Insights Dashboard" width="700">
   <br><em>Usage Insights dashboard with performance, efficiency, and activity trends</em>
 </p>
 
 <p align="center">
-  <img src="screenshots/cowork-os-extensions.png" alt="Extensions Manager" width="700">
+  <img src="screenshots/ChatAndBuild-extensions.png" alt="Extensions Manager" width="700">
   <br><em>Extensions manager for installed plugin packs and lifecycle controls</em>
 </p>
 
 <p align="center">
-  <img src="screenshots/cowork-os-skillpacks.png" alt="Customize Skill Packs" width="700">
+  <img src="screenshots/ChatAndBuild-skillpacks.png" alt="Customize Skill Packs" width="700">
   <br><em>Pack-level customization with per-skill toggles and suggested prompts</em>
 </p>
 

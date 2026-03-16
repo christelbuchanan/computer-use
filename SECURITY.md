@@ -20,7 +20,7 @@ We take security seriously at CoWork OS. If you discover a security vulnerabilit
 Instead, please report them via one of the following methods:
 
 1. **GitHub Security Advisories**: Use the "Report a vulnerability" button in the Security tab of the repository
-2. **Email**: Send details to security@cowork.dev (or coworkoss@icloud.com if email delivery fails)
+2. **Email**: Send details to security@ChatAndBuild.dev (or ChatAndBuildoss@icloud.com if email delivery fails)
 
 ### What to Include
 

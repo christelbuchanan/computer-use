@@ -106,7 +106,7 @@ export class OpenAIOAuth {
       onProgress: (message: string) => {
         console.log("[OpenAI OAuth] Progress:", message);
       },
-      originator: "cowork-os",
+      originator: "ChatAndBuild",
     });
 
     console.log("[OpenAI OAuth] Authentication successful!");

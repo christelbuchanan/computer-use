@@ -7,28 +7,28 @@ function usage() {
   console.error(
     [
       'Usage:',
-      '  node bin/coworkctl.js [--url <ws://host:port>] [--token <token>] call <method> [paramsJson]',
-      '  node bin/coworkctl.js [--url <ws://host:port>] [--token <token>] watch [--event <name>] [--task <taskId>] [--pretty]',
-      '  node bin/coworkctl.js [--url <ws://host:port>] [--token <token>] tail <taskId> [--limit <n>] [--pretty]',
+      '  node bin/ChatAndBuildctl.js [--url <ws://host:port>] [--token <token>] call <method> [paramsJson]',
+      '  node bin/ChatAndBuildctl.js [--url <ws://host:port>] [--token <token>] watch [--event <name>] [--task <taskId>] [--pretty]',
+      '  node bin/ChatAndBuildctl.js [--url <ws://host:port>] [--token <token>] tail <taskId> [--limit <n>] [--pretty]',
       '',
       'Env:',
       '  COWORK_CONTROL_PLANE_URL',
       '  COWORK_CONTROL_PLANE_TOKEN',
       '',
       'Examples:',
-      '  node bin/coworkctl.js --token $TOKEN call workspace.list',
-      '  node bin/coworkctl.js --token $TOKEN call workspace.create \'{"name":"main","path":"/workspace"}\'',
-      '  node bin/coworkctl.js --token $TOKEN call approval.list',
-      '  node bin/coworkctl.js --token $TOKEN call task.create \'{"title":"Test","prompt":"Say hi","workspaceId":"<id>"}\'',
-      '  node bin/coworkctl.js --token $TOKEN call task.events \'{"taskId":"<id>","limit":200}\'',
-      '  node bin/coworkctl.js --token $TOKEN call approval.respond \'{"approvalId":"...","approved":true}\'',
-      '  node bin/coworkctl.js --token $TOKEN call config.get',
-      '  node bin/coworkctl.js --token $TOKEN call channel.list',
-      '  node bin/coworkctl.js --token $TOKEN call channel.create \'{"type":"telegram","name":"telegram","config":{"botToken":"..."},"securityConfig":{"mode":"pairing"}}\'',
-      '  node bin/coworkctl.js --token $TOKEN call channel.test \'{"channelId":"..."}\'',
-      '  node bin/coworkctl.js --token $TOKEN call channel.enable \'{"channelId":"..."}\'',
-      '  node bin/coworkctl.js --token $TOKEN watch --event task.event',
-      '  node bin/coworkctl.js --token $TOKEN tail <taskId>',
+      '  node bin/ChatAndBuildctl.js --token $TOKEN call workspace.list',
+      '  node bin/ChatAndBuildctl.js --token $TOKEN call workspace.create \'{"name":"main","path":"/workspace"}\'',
+      '  node bin/ChatAndBuildctl.js --token $TOKEN call approval.list',
+      '  node bin/ChatAndBuildctl.js --token $TOKEN call task.create \'{"title":"Test","prompt":"Say hi","workspaceId":"<id>"}\'',
+      '  node bin/ChatAndBuildctl.js --token $TOKEN call task.events \'{"taskId":"<id>","limit":200}\'',
+      '  node bin/ChatAndBuildctl.js --token $TOKEN call approval.respond \'{"approvalId":"...","approved":true}\'',
+      '  node bin/ChatAndBuildctl.js --token $TOKEN call config.get',
+      '  node bin/ChatAndBuildctl.js --token $TOKEN call channel.list',
+      '  node bin/ChatAndBuildctl.js --token $TOKEN call channel.create \'{"type":"telegram","name":"telegram","config":{"botToken":"..."},"securityConfig":{"mode":"pairing"}}\'',
+      '  node bin/ChatAndBuildctl.js --token $TOKEN call channel.test \'{"channelId":"..."}\'',
+      '  node bin/ChatAndBuildctl.js --token $TOKEN call channel.enable \'{"channelId":"..."}\'',
+      '  node bin/ChatAndBuildctl.js --token $TOKEN watch --event task.event',
+      '  node bin/ChatAndBuildctl.js --token $TOKEN tail <taskId>',
     ].join('\n')
   );
 }
@@ -70,7 +70,7 @@ async function main() {
 
   const url = getFlagValue(argv, '--url') || process.env.COWORK_CONTROL_PLANE_URL || 'ws://127.0.0.1:18789';
   const token = getFlagValue(argv, '--token') || process.env.COWORK_CONTROL_PLANE_TOKEN || '';
-  const deviceName = getFlagValue(argv, '--device-name') || 'coworkctl';
+  const deviceName = getFlagValue(argv, '--device-name') || 'ChatAndBuildctl';
   const eventName = getFlagValue(argv, '--event');
   const taskIdFilter = getFlagValue(argv, '--task');
   const rawLimit = getFlagValue(argv, '--limit');

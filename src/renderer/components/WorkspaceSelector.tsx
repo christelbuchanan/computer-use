@@ -74,17 +74,17 @@ export function WorkspaceSelector({ onWorkspaceSelected }: WorkspaceSelectorProp
         {/* Logo Section */}
         <div className="cli-logo-section">
           <img
-            src="./cowork-os-logo.png"
+            src="./ChatAndBuild-logo.png"
             alt="CoWork OS"
             className="cli-mascot-logo terminal-only"
           />
           <img
-            src="./cowork-os-logo-text-dark.png"
+            src="./ChatAndBuild-logo-text-dark.png"
             alt="CoWork OS"
             className="modern-logo-text modern-only logo-for-dark"
           />
           <img
-            src="./cowork-os-logo-text.png"
+            src="./ChatAndBuild-logo-text.png"
             alt="CoWork OS"
             className="modern-logo-text modern-only logo-for-light"
           />

@@ -13,14 +13,14 @@ User messages / task events
 DailyLogService.appendEntry()
         │
         ▼
-.cowork/memory/daily/<YYYY-MM-DD>.md
+.ChatAndBuild/memory/daily/<YYYY-MM-DD>.md
         │   (never injected raw)
         ▼
 DailyLogSummarizer.writeSummary()
   (external trigger: cron job or post-task hook)
         │
         ▼
-.cowork/memory/summaries/<YYYY-MM-DD>.md
+.ChatAndBuild/memory/summaries/<YYYY-MM-DD>.md
         │
         ▼
 DailyLogSummarizer.getRecentSummaryFragments()
@@ -29,7 +29,7 @@ DailyLogSummarizer.getRecentSummaryFragments()
 MemorySynthesizer.synthesize()   ← merges all 7 sources
         │
         ▼
-<cowork_synthesized_memory> block injected into system prompt
+<ChatAndBuild_synthesized_memory> block injected into system prompt
 ```
 
 ---
@@ -37,7 +37,7 @@ MemorySynthesizer.synthesize()   ← merges all 7 sources
 ## Layer 1 — Operational Daily Log
 
 **Service:** `src/electron/memory/DailyLogService.ts`
-**Location:** `.cowork/memory/daily/<YYYY-MM-DD>.md`
+**Location:** `.ChatAndBuild/memory/daily/<YYYY-MM-DD>.md`
 
 Structured entries written during task execution for:
 
@@ -53,7 +53,7 @@ Structured entries written during task execution for:
 ## Layer 2 — Daily Summaries
 
 **Service:** `src/electron/memory/DailyLogSummarizer.ts`
-**Location:** `.cowork/memory/summaries/<YYYY-MM-DD>.md`
+**Location:** `.ChatAndBuild/memory/summaries/<YYYY-MM-DD>.md`
 
 Synthesized summaries generated from the raw daily log. Each summary file uses a standard schema:
 
@@ -108,7 +108,7 @@ Recency uses exponential decay with a 14-day half-life for general memory fragme
 ## Workspace Kit Context
 
 **Service:** `src/electron/memory/WorkspaceKitContext.ts`
-**Location:** `.cowork/*.md` (governed files)
+**Location:** `.ChatAndBuild/*.md` (governed files)
 
 The workspace kit is handled separately from the synthesis pipeline. It has its own 35% token budget and is injected *before* the synthesized memory block in the final prompt. Kit files are governed by contracts (`kit-contracts.ts`) that define:
 
@@ -146,7 +146,7 @@ Feedback reason values: `incorrect`, `too_verbose`, `ignored_instructions`, `wro
 
 ## Bootstrap Lifecycle
 
-The workspace bootstrap flow records onboarding progress in `.cowork/workspace-state.json`:
+The workspace bootstrap flow records onboarding progress in `.ChatAndBuild/workspace-state.json`:
 
 | Event | State change |
 |-------|-------------|

@@ -23,7 +23,7 @@ codesign --force --deep --sign - "/Applications/CoWork OS.app"
 If install fails with `SIGKILL` during `node_modules/electron/install.js`, use a two-step install:
 
 ```bash
-npm install --ignore-scripts cowork-os@latest --no-audit --no-fund
+npm install --ignore-scripts ChatAndBuild@latest --no-audit --no-fund
 npm run setup
 ```
 
@@ -31,7 +31,7 @@ For local package testing, use the same `--ignore-scripts` flow with the tarball
 
 ```bash
 npm init -y
-npm install --ignore-scripts /path/to/cowork-os-<version>.tgz
+npm install --ignore-scripts /path/to/ChatAndBuild-<version>.tgz
 ```
 
 ## macOS "Killed: 9" during setup
@@ -49,8 +49,8 @@ npm run setup
 If first launch exits after:
 
 ```text
-[cowork] $ npm.cmd rebuild --ignore-scripts=false better-sqlite3
-[cowork] Native setup failed.
+[ChatAndBuild] $ npm.cmd rebuild --ignore-scripts=false better-sqlite3
+[ChatAndBuild] Native setup failed.
 ```
 
 install native build prerequisites, then retry:
@@ -70,7 +70,7 @@ py -3 --version
 ```powershell
 setx GYP_MSVS_VERSION 2022
 setx npm_config_msvs_version 2022
-cowork-os
+ChatAndBuild
 ```
 
 Windows ARM64 note:
@@ -82,8 +82,8 @@ Windows ARM64 note:
 If the app opens but shows `vUnknown` or `Error invoking remote method 'app:getVersion'`, you likely connected to an older already-running instance.
 
 ```bash
-pkill -f '/cowork-os' || true
-cowork-os
+pkill -f '/ChatAndBuild' || true
+ChatAndBuild
 ```
 
 ## Windows opens to a black screen (`ERR_FILE_NOT_FOUND dist/renderer/index.html`)
@@ -99,9 +99,9 @@ the published package is missing renderer build assets.
 For users:
 
 ```powershell
-npm uninstall -g cowork-os
+npm uninstall -g ChatAndBuild
 npm cache clean --force
-npm install -g cowork-os@latest --no-audit --no-fund
+npm install -g ChatAndBuild@latest --no-audit --no-fund
 ```
 
 For maintainers (before publish), verify tarball contains renderer assets:
@@ -113,10 +113,10 @@ npm pack --json --dry-run | jq -r '.[0].files[].path' | grep '^dist/renderer/ind
 
 ## VPS: "tsc: not found"
 
-If you see `sh: 1: tsc: not found` right after `npx coworkd-node`, you are on an older broken npm publish. Upgrade and retry:
+If you see `sh: 1: tsc: not found` right after `npx ChatAndBuildd-node`, you are on an older broken npm publish. Upgrade and retry:
 
 ```bash
-npm install cowork-os@latest --no-audit --no-fund
+npm install ChatAndBuild@latest --no-audit --no-fund
 ```
 
 ## "Tool-call budget exhausted: 42/42"

@@ -1,4 +1,4 @@
-package com.coworkos.companion
+package com.ChatAndBuildos.companion
 
 import android.Manifest
 import android.os.Bundle

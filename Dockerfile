@@ -2,7 +2,7 @@
 
 # CoWork OS headless/server image.
 # Note: CoWork OS currently runs in the Electron main process (even in headless mode),
-# so we install Electron runtime deps. A future "coworkd" (Node-only) daemon would simplify this.
+# so we install Electron runtime deps. A future "ChatAndBuildd" (Node-only) daemon would simplify this.
 
 FROM node:22-bookworm-slim
 
@@ -80,4 +80,4 @@ EXPOSE 18789
 HEALTHCHECK --interval=30s --timeout=3s --start-period=25s --retries=3 \
   CMD curl -fsS http://127.0.0.1:18789/health || exit 1
 
-CMD ["sh", "-lc", "xvfb-run -a node bin/coworkd.js"]
+CMD ["sh", "-lc", "xvfb-run -a node bin/ChatAndBuildd.js"]

@@ -1563,7 +1563,7 @@ Skill Management (create, modify, duplicate skills):
 - skill_update: Update an existing skill (managed/workspace only, not bundled)
 - skill_delete: Delete a skill (managed/workspace only, not bundled)
 - skill_proposal: Create/list/approve/reject approval-gated skill proposals (no auto-mutation)
-Skills are stored in ~/Library/Application Support/cowork-os/skills/ (managed) or workspace/skills/ (workspace).
+Skills are stored in ~/Library/Application Support/ChatAndBuild/skills/ (managed) or workspace/skills/ (workspace).
 
 Code Tools (PREFERRED for code navigation and editing):
 - glob: Fast pattern-based file search (e.g., "**/*.ts", "src/**/*.test.ts")
@@ -1578,7 +1578,7 @@ Code Tools (PREFERRED for code navigation and editing):
   Use this for document validation workflows instead of custom scripts.
 - monty_run: Deterministic, sandboxed Python-subset compute for post-processing tool results.
   Use monty_run only when count_text/text_metrics cannot express the computation.
-- monty_list_transforms / monty_run_transform: Run workspace-local transforms from .cowork/transforms/.
+- monty_list_transforms / monty_run_transform: Run workspace-local transforms from .ChatAndBuild/transforms/.
 - monty_transform_file: Apply a transform to a file and write output without returning full file contents to the LLM.
 - extract_json: Extract and parse JSON from messy text (prose + code fences).
 
@@ -1664,7 +1664,7 @@ System Tools:
 - get_env: Read environment variable
 - get_app_paths: Get system paths (home, downloads, etc.)
 - run_applescript: Execute AppleScript on macOS (control apps, automate tasks)
-- search_memories: Search workspace memories, .cowork/ knowledge files, and imported conversations for past context
+- search_memories: Search workspace memories, .ChatAndBuild/ knowledge files, and imported conversations for past context
 - memory_save: Save an observation, decision, insight, or error to workspace memory for future recall
 
 Scheduling:
@@ -1790,7 +1790,7 @@ ${skillDescriptions}`;
    * Execute a tool by name
    */
   async executeTool(name: string, input: Any): Promise<Any> {
-    // Optional workspace-local policy hook (.cowork/policy/tools.monty).
+    // Optional workspace-local policy hook (.ChatAndBuild/policy/tools.monty).
     // Fail-open on policy script errors to avoid bricking tool execution.
     try {
       const policy = await evaluateMontyToolPolicy({
@@ -3937,7 +3937,7 @@ ${skillDescriptions}`;
         name: "skill_create",
         description:
           "Create a new custom skill. The skill will be saved to the managed skills directory " +
-          "(~/Library/Application Support/cowork-os/skills/). Provide the full skill definition.",
+          "(~/Library/Application Support/ChatAndBuild/skills/). Provide the full skill definition.",
         input_schema: {
           type: "object",
           properties: {
@@ -6421,14 +6421,14 @@ ${skillDescriptions}`;
       throw new Error("No workspace path available");
     }
 
-    const kitDir = path.join(workspacePath, ".cowork");
+    const kitDir = path.join(workspacePath, ".ChatAndBuild");
     if (!fs.existsSync(kitDir) || !fs.statSync(kitDir).isDirectory()) {
-      throw new Error("No .cowork/ directory found in workspace. Run the Memory Kit skill first.");
+      throw new Error("No .ChatAndBuild/ directory found in workspace. Run the Memory Kit skill first.");
     }
 
     const vibesPath = path.join(kitDir, "VIBES.md");
-    const AUTO_VIBES_START = "<!-- cowork:auto:vibes:start -->";
-    const AUTO_VIBES_END = "<!-- cowork:auto:vibes:end -->";
+    const AUTO_VIBES_START = "<!-- ChatAndBuild:auto:vibes:start -->";
+    const AUTO_VIBES_END = "<!-- ChatAndBuild:auto:vibes:end -->";
 
     let current = "";
     if (fs.existsSync(vibesPath)) {
@@ -6523,14 +6523,14 @@ ${skillDescriptions}`;
       throw new Error("No workspace path available");
     }
 
-    const kitDir = path.join(workspacePath, ".cowork");
+    const kitDir = path.join(workspacePath, ".ChatAndBuild");
     if (!fs.existsSync(kitDir) || !fs.statSync(kitDir).isDirectory()) {
-      throw new Error("No .cowork/ directory found in workspace. Run the Memory Kit skill first.");
+      throw new Error("No .ChatAndBuild/ directory found in workspace. Run the Memory Kit skill first.");
     }
 
     const lorePath = path.join(kitDir, "LORE.md");
-    const AUTO_LORE_START = "<!-- cowork:auto:lore:start -->";
-    const AUTO_LORE_END = "<!-- cowork:auto:lore:end -->";
+    const AUTO_LORE_START = "<!-- ChatAndBuild:auto:lore:start -->";
+    const AUTO_LORE_END = "<!-- ChatAndBuild:auto:lore:end -->";
 
     let current = "";
     if (fs.existsSync(lorePath)) {
@@ -8324,7 +8324,7 @@ ${skillDescriptions}`;
         description:
           "Update the current workspace vibes/energy mode. Call this when you detect a shift in the user's working " +
           "energy, pace, or intent. For example, if the user says 'let's ship this' switch to crunch mode, or if they " +
-          "say 'just exploring' switch to explore mode. Only operates when a .cowork/ directory exists.",
+          "say 'just exploring' switch to explore mode. Only operates when a .ChatAndBuild/ directory exists.",
         input_schema: {
           type: "object",
           properties: {
@@ -8362,7 +8362,7 @@ ${skillDescriptions}`;
         description:
           "Record a notable shared moment or reference in the workspace lore. Use after significant accomplishments, " +
           "breakthroughs, hard-won debugging sessions, or when the user shares something memorable about the project. " +
-          "Only operates when a .cowork/ directory exists.",
+          "Only operates when a .ChatAndBuild/ directory exists.",
         input_schema: {
           type: "object",
           properties: {

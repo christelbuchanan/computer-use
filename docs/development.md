@@ -86,7 +86,7 @@ npm run qa:eval:build -- --window-days 30 --limit 300 --suite reliability-regres
 npm run qa:eval:run -- --suite reliability-regressions --mode deterministic
 
 # Optional: run against a custom DB path
-COWORK_DB_PATH=/tmp/cowork-eval.db npm run qa:eval:run -- --suite reliability-regressions --mode deterministic
+COWORK_DB_PATH=/tmp/ChatAndBuild-eval.db npm run qa:eval:run -- --suite reliability-regressions --mode deterministic
 
 # Validate production-fix regression policy (mainly used by PR CI)
 npm run qa:eval:enforce-regressions

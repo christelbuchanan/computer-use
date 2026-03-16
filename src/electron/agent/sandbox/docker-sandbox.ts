@@ -188,7 +188,7 @@ export class DockerSandbox implements ISandbox {
    */
   async executeCode(code: string, language: "python" | "javascript"): Promise<SandboxResult> {
     const ext = language === "python" ? ".py" : ".js";
-    const tempFile = path.join(os.tmpdir(), `cowork_script_${Date.now()}${ext}`);
+    const tempFile = path.join(os.tmpdir(), `ChatAndBuild_script_${Date.now()}${ext}`);
 
     try {
       fs.writeFileSync(tempFile, code, "utf8");
@@ -314,7 +314,7 @@ export class DockerSandbox implements ISandbox {
    */
   private buildDockerArgs(options: SandboxOptions): string[] {
     // Generate unique container name for cleanup tracking
-    const containerName = `cowork-sandbox-${Date.now()}-${Math.random().toString(36).slice(2, 8)}`;
+    const containerName = `ChatAndBuild-sandbox-${Date.now()}-${Math.random().toString(36).slice(2, 8)}`;
     this.currentContainerName = containerName;
 
     const args: string[] = ["run", "--rm", "--name", containerName];

@@ -856,14 +856,14 @@ export class TaskExecutor {
     return WEB_SEARCH_PROFILE_MAX_USES_PER_TASK[profile] ?? WEB_SEARCH_PROFILE_MAX_USES_PER_TASK.balanced;
   }
 
-  private static readonly PINNED_MEMORY_RECALL_TAG = "<cowork_memory_recall>";
-  private static readonly PINNED_MEMORY_RECALL_CLOSE_TAG = "</cowork_memory_recall>";
-  private static readonly PINNED_COMPACTION_SUMMARY_TAG = "<cowork_compaction_summary>";
-  private static readonly PINNED_COMPACTION_SUMMARY_CLOSE_TAG = "</cowork_compaction_summary>";
-  private static readonly PINNED_SHARED_CONTEXT_TAG = "<cowork_shared_context>";
-  private static readonly PINNED_SHARED_CONTEXT_CLOSE_TAG = "</cowork_shared_context>";
-  private static readonly PINNED_USER_PROFILE_TAG = "<cowork_user_profile>";
-  private static readonly PINNED_USER_PROFILE_CLOSE_TAG = "</cowork_user_profile>";
+  private static readonly PINNED_MEMORY_RECALL_TAG = "<ChatAndBuild_memory_recall>";
+  private static readonly PINNED_MEMORY_RECALL_CLOSE_TAG = "</ChatAndBuild_memory_recall>";
+  private static readonly PINNED_COMPACTION_SUMMARY_TAG = "<ChatAndBuild_compaction_summary>";
+  private static readonly PINNED_COMPACTION_SUMMARY_CLOSE_TAG = "</ChatAndBuild_compaction_summary>";
+  private static readonly PINNED_SHARED_CONTEXT_TAG = "<ChatAndBuild_shared_context>";
+  private static readonly PINNED_SHARED_CONTEXT_CLOSE_TAG = "</ChatAndBuild_shared_context>";
+  private static readonly PINNED_USER_PROFILE_TAG = "<ChatAndBuild_user_profile>";
+  private static readonly PINNED_USER_PROFILE_CLOSE_TAG = "</ChatAndBuild_user_profile>";
 
   private static readonly BROWSER_TOOL_TIMEOUT_MS = 90 * 1000;
 
@@ -2682,7 +2682,7 @@ export class TaskExecutor {
 
   private computeSharedContextKey(): string {
     // Avoid reading file contents unless something changed.
-    const kitRoot = path.join(this.workspace.path, ".cowork");
+    const kitRoot = path.join(this.workspace.path, ".ChatAndBuild");
     const files = ["PRIORITIES.md", "CROSS_SIGNALS.md", "MISTAKES.md"];
 
     const parts: string[] = [];
@@ -2735,27 +2735,27 @@ export class TaskExecutor {
 
     const sanitize = (text: string) => InputSanitizer.sanitizeMemoryContent(text || "").trim();
 
-    const prioritiesRaw = this.readKitFilePrefix(path.join(".cowork", "PRIORITIES.md"), maxBytes);
-    const signalsRaw = this.readKitFilePrefix(path.join(".cowork", "CROSS_SIGNALS.md"), maxBytes);
-    const mistakesRaw = this.readKitFilePrefix(path.join(".cowork", "MISTAKES.md"), maxBytes);
+    const prioritiesRaw = this.readKitFilePrefix(path.join(".ChatAndBuild", "PRIORITIES.md"), maxBytes);
+    const signalsRaw = this.readKitFilePrefix(path.join(".ChatAndBuild", "CROSS_SIGNALS.md"), maxBytes);
+    const mistakesRaw = this.readKitFilePrefix(path.join(".ChatAndBuild", "MISTAKES.md"), maxBytes);
 
     const sections: string[] = [];
     if (prioritiesRaw) {
       const text = sanitize(clamp(prioritiesRaw, maxSectionChars));
       if (text) {
-        sections.push(`## Priorities (.cowork/PRIORITIES.md)\n${text}`);
+        sections.push(`## Priorities (.ChatAndBuild/PRIORITIES.md)\n${text}`);
       }
     }
     if (signalsRaw) {
       const text = sanitize(clamp(signalsRaw, maxSectionChars));
       if (text) {
-        sections.push(`## Cross-Agent Signals (.cowork/CROSS_SIGNALS.md)\n${text}`);
+        sections.push(`## Cross-Agent Signals (.ChatAndBuild/CROSS_SIGNALS.md)\n${text}`);
       }
     }
     if (mistakesRaw) {
       const text = sanitize(clamp(mistakesRaw, maxSectionChars));
       if (text) {
-        sections.push(`## Mistakes / Preferences (.cowork/MISTAKES.md)\n${text}`);
+        sections.push(`## Mistakes / Preferences (.ChatAndBuild/MISTAKES.md)\n${text}`);
       }
     }
 
@@ -2813,10 +2813,10 @@ export class TaskExecutor {
         if (lines.length >= maxLines) break;
       }
 
-      // Also search workspace kit notes (e.g., `.cowork/memory/*`) via markdown index when available.
+      // Also search workspace kit notes (e.g., `.ChatAndBuild/memory/*`) via markdown index when available.
       if (lines.length < maxLines && this.workspace.permissions.read) {
         try {
-          const kitRoot = path.join(this.workspace.path, ".cowork");
+          const kitRoot = path.join(this.workspace.path, ".ChatAndBuild");
           if (fs.existsSync(kitRoot) && fs.statSync(kitRoot).isDirectory()) {
             const kitMatches = MemoryService.searchWorkspaceMarkdown(
               workspaceId,
@@ -2828,7 +2828,7 @@ export class TaskExecutor {
               if (seen.has(result.id)) continue;
               seen.add(result.id);
               if (result.source !== "markdown") continue;
-              const loc = `.cowork/${result.path}#L${result.startLine}-${result.endLine}`;
+              const loc = `.ChatAndBuild/${result.path}#L${result.startLine}-${result.endLine}`;
               const snippet = formatSnippet(result.snippet, 220);
               if (!snippet) continue;
               lines.push(`- [note] (${loc}) ${snippet}`);
@@ -3261,7 +3261,7 @@ ${transcript}
   private async appendPreCompactionFlushToKitDailyLog(summary: string): Promise<void> {
     if (!this.workspace.permissions.write) return;
 
-    const kitRoot = path.join(this.workspace.path, ".cowork");
+    const kitRoot = path.join(this.workspace.path, ".ChatAndBuild");
     try {
       const stat = fs.statSync(kitRoot);
       if (!stat.isDirectory()) return;
@@ -3285,12 +3285,12 @@ ${transcript}
       } catch {
         const template =
           `# Daily Log (${stamp})\n\n` +
-          `<!-- cowork:auto:daily:start -->\n` +
+          `<!-- ChatAndBuild:auto:daily:start -->\n` +
           `## Open Loops\n\n` +
           `## Next Actions\n\n` +
           `## Decisions\n\n` +
           `## Summary\n\n` +
-          `<!-- cowork:auto:daily:end -->\n\n` +
+          `<!-- ChatAndBuild:auto:daily:end -->\n\n` +
           `## Notes\n` +
           `- \n`;
         await fs.promises.writeFile(dailyPath, template, "utf8");
@@ -8103,8 +8103,8 @@ ${transcript}
       if (!reportText || reportText.trim().length < 50) return;
 
       // Write report to workspace
-      const reportFileName = `cowork-report-${this.task.id.slice(0, 8)}.md`;
-      const reportPath = path.join(this.workspace.path, ".cowork", reportFileName);
+      const reportFileName = `ChatAndBuild-report-${this.task.id.slice(0, 8)}.md`;
+      const reportPath = path.join(this.workspace.path, ".ChatAndBuild", reportFileName);
       await fsPromises.mkdir(path.dirname(reportPath), { recursive: true });
       await fsPromises.writeFile(reportPath, reportText.trim(), "utf-8");
 
@@ -10157,7 +10157,7 @@ You are continuing a previous conversation. The context from the previous conver
         lower,
       );
     const referencesInternalSurface =
-      /\b(?:cowork|co[- ]?work)\b/.test(lower) ||
+      /\b(?:ChatAndBuild|co[- ]?work)\b/.test(lower) ||
       /\b(?:this|its|our|the)\s+app(?:lication)?\b/.test(lower) ||
       /\b(?:this|our|the)\s+app\s+code\b/.test(lower) ||
       /\bapp\s+itself\b/.test(lower) ||
@@ -17241,10 +17241,10 @@ Return ONLY a JSON object:
     const allowSharedContextInjection =
       contextPackInjectionEnabled && (gatewayContext === "private" || allowTrustedSharedMemory);
 
-    // Best-effort: keep `.cowork/` notes searchable for hybrid recall (sync is debounced internally).
+    // Best-effort: keep `.ChatAndBuild/` notes searchable for hybrid recall (sync is debounced internally).
     if (allowMemoryInjection && this.workspace.permissions.read) {
       try {
-        const kitRoot = path.join(this.workspace.path, ".cowork");
+        const kitRoot = path.join(this.workspace.path, ".ChatAndBuild");
         if (fs.existsSync(kitRoot) && fs.statSync(kitRoot).isDirectory()) {
           await MemoryService.syncWorkspaceMarkdown(this.workspace.id, kitRoot, false);
         }
@@ -22900,10 +22900,10 @@ TASK / CONVERSATION HISTORY:
     const allowSharedContextInjection =
       contextPackInjectionEnabled && (gatewayContext === "private" || allowTrustedSharedMemory);
 
-    // Best-effort: keep `.cowork/` notes searchable for hybrid recall (sync is debounced internally).
+    // Best-effort: keep `.ChatAndBuild/` notes searchable for hybrid recall (sync is debounced internally).
     if (allowMemoryInjection && this.workspace.permissions.read) {
       try {
-        const kitRoot = path.join(this.workspace.path, ".cowork");
+        const kitRoot = path.join(this.workspace.path, ".ChatAndBuild");
         if (fs.existsSync(kitRoot) && fs.statSync(kitRoot).isDirectory()) {
           await MemoryService.syncWorkspaceMarkdown(this.workspace.id, kitRoot, false);
         }

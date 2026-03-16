@@ -16,13 +16,13 @@ rm -rf "/Applications/CoWork OS.app"
 ### npm global package install
 
 ```bash
-npm uninstall -g cowork-os
+npm uninstall -g ChatAndBuild
 ```
 
 ### Local install in a folder
 
 ```bash
-rm -rf ~/cowork-run
+rm -rf ~/ChatAndBuild-run
 ```
 
 ### Source/development clone
@@ -41,10 +41,10 @@ docker compose down
 ### VPS/headless systemd install
 
 ```bash
-sudo systemctl stop cowork-os cowork-os-node
-sudo systemctl disable cowork-os cowork-os-node
-sudo rm -f /etc/systemd/system/cowork-os.service
-sudo rm -f /etc/systemd/system/cowork-os-node.service
+sudo systemctl stop ChatAndBuild ChatAndBuild-node
+sudo systemctl disable ChatAndBuild ChatAndBuild-node
+sudo rm -f /etc/systemd/system/ChatAndBuild.service
+sudo rm -f /etc/systemd/system/ChatAndBuild-node.service
 sudo systemctl daemon-reload
 ```
 
@@ -52,11 +52,11 @@ sudo systemctl daemon-reload
 
 Choose the one used by your install:
 
-- macOS (Electron): `~/Library/Application Support/cowork-os/`
-- Linux desktop/Electron: `~/.config/cowork-os/`
-- Linux daemon/headless fallback: `~/.cowork/`
+- macOS (Electron): `~/Library/Application Support/ChatAndBuild/`
+- Linux desktop/Electron: `~/.config/ChatAndBuild/`
+- Linux daemon/headless fallback: `~/.ChatAndBuild/`
 - Node daemon custom path: value passed in `COWORK_USER_DATA_DIR` or `--user-data-dir`
-- Docker/systemd example paths: named volume `cowork_data`, `/var/lib/cowork-os`, and any host bind mount in `/workspace`
+- Docker/systemd example paths: named volume `ChatAndBuild_data`, `/var/lib/ChatAndBuild`, and any host bind mount in `/workspace`
 
 ## Option 2: Full uninstall + data deletion (database included) — irrecoverable
 
@@ -67,9 +67,9 @@ Use this only when you are sure you want to destroy local state.
 ### Delete all user-data locations
 
 ```bash
-rm -rf ~/Library/Application\ Support/cowork-os
-rm -rf ~/.config/cowork-os
-rm -rf ~/.cowork
+rm -rf ~/Library/Application\ Support/ChatAndBuild
+rm -rf ~/.config/ChatAndBuild
+rm -rf ~/.ChatAndBuild
 ```
 
 ### Remove with custom user-data path
@@ -89,7 +89,7 @@ docker compose rm -f
 ### Fully remove systemd/headless example data
 
 ```bash
-sudo rm -rf /var/lib/cowork-os
+sudo rm -rf /var/lib/ChatAndBuild
 ```
 
 After the data wipe, also remove remaining app binaries/shell package entries from Option 1 if you haven't already.

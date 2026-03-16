@@ -506,7 +506,7 @@ describe("TaskExecutor workspace preflight acknowledgement", () => {
     const step = {
       id: "lock-requirements",
       description:
-        "Lock requirements in /Users/mesut/Desktop/linux/coworkos/requirements.md with Debian defaults.",
+        "Lock requirements in /Users/mesut/Desktop/linux/ChatAndBuildos/requirements.md with Debian defaults.",
       kind: "primary",
       status: "pending",
     };
@@ -642,7 +642,7 @@ describe("TaskExecutor workspace preflight acknowledgement", () => {
         errorMessage:
           'Path is outside workspace boundary. Attempted path: /. Workspace: /Users/mesut/Desktop/linux.',
         toolTimeoutMs: 1_000,
-        targetPaths: ["/Users/mesut/Desktop/linux/coworkos/requirements.md"],
+        targetPaths: ["/Users/mesut/Desktop/linux/ChatAndBuildos/requirements.md"],
         stepId: "s-boundary",
       },
     );

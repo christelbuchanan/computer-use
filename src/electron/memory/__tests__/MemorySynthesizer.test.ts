@@ -223,11 +223,11 @@ describe("MemorySynthesizer", () => {
     expect(result.text).toBe("");
   });
 
-  it("wraps fragment output in cowork_synthesized_memory XML tags", () => {
+  it("wraps fragment output in ChatAndBuild_synthesized_memory XML tags", () => {
     const result = MemorySynthesizer.synthesize("ws1", "/workspace", "task");
 
-    expect(result.text).toContain("<cowork_synthesized_memory>");
-    expect(result.text).toContain("</cowork_synthesized_memory>");
+    expect(result.text).toContain("<ChatAndBuild_synthesized_memory>");
+    expect(result.text).toContain("</ChatAndBuild_synthesized_memory>");
   });
 
   it("groups fragments by source for readability", () => {

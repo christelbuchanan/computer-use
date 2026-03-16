@@ -68,7 +68,7 @@ CoWork-OSS uses JSON files for skills. Each skill is a `.json` file with the fol
 ### Skill Sources
 Skills are loaded from three locations (highest precedence wins):
 1. **Workspace** (`workspace/skills/`) - User's project skills
-2. **Managed** (`~/Library/Application Support/cowork-oss/skills/`) - From SkillHub
+2. **Managed** (`~/Library/Application Support/ChatAndBuilds/skills/`) - From SkillHub
 3. **Bundled** (`resources/skills/`) - Pre-packaged with app
 
 ---

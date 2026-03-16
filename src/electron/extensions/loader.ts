@@ -1,10 +1,10 @@
 /**
  * Plugin Loader
  *
- * Discovers, validates, and loads plugins from cowork.plugin.json manifests.
+ * Discovers, validates, and loads plugins from ChatAndBuild.plugin.json manifests.
  * Plugins can be loaded from:
  * - Built-in extensions directory
- * - User extensions directory (~/.cowork/extensions)
+ * - User extensions directory (~/.ChatAndBuild/extensions)
  * - Explicitly specified paths
  */
 
@@ -22,13 +22,13 @@ import {
 } from "./types";
 
 /** Manifest filename */
-const MANIFEST_FILENAME = "cowork.plugin.json";
+const MANIFEST_FILENAME = "ChatAndBuild.plugin.json";
 
 function normalizeLegacyAuthor(author?: string): string | undefined {
   if (typeof author !== "string") return author;
   const trimmed = author.trim();
   if (!trimmed) return undefined;
-  return /^cowork-oss$/i.test(trimmed) ? "CoWork OS" : trimmed;
+  return /^ChatAndBuilds$/i.test(trimmed) ? "CoWork OS" : trimmed;
 }
 
 function normalizeManifestBranding(manifest: PluginManifest): PluginManifest {
@@ -69,7 +69,7 @@ const getDefaultExtensionsDirs = (): string[] => {
   }
 
   // User extensions directory
-  const userDataPath = app?.getPath?.("userData") || path.join(process.env.HOME || process.env.USERPROFILE || "", ".cowork");
+  const userDataPath = app?.getPath?.("userData") || path.join(process.env.HOME || process.env.USERPROFILE || "", ".ChatAndBuild");
   const userExtensionsDir = path.join(userDataPath, "extensions");
   if (fs.existsSync(userExtensionsDir)) {
     dirs.push(userExtensionsDir);
@@ -311,7 +311,7 @@ export async function loadPlugin(pluginPath: string): Promise<PluginLoadResult> 
  * Create the user extensions directory if it doesn't exist
  */
 export function ensureExtensionsDirectory(): string {
-  const userDataPath = app?.getPath?.("userData") || path.join(process.env.HOME || process.env.USERPROFILE || "", ".cowork");
+  const userDataPath = app?.getPath?.("userData") || path.join(process.env.HOME || process.env.USERPROFILE || "", ".ChatAndBuild");
   const extensionsDir = path.join(userDataPath, "extensions");
 
   if (!fs.existsSync(extensionsDir)) {
@@ -325,7 +325,7 @@ export function ensureExtensionsDirectory(): string {
  * Get the path to a plugin's data directory
  */
 export function getPluginDataPath(pluginName: string): string {
-  const userDataPath = app?.getPath?.("userData") || path.join(process.env.HOME || process.env.USERPROFILE || "", ".cowork");
+  const userDataPath = app?.getPath?.("userData") || path.join(process.env.HOME || process.env.USERPROFILE || "", ".ChatAndBuild");
   const pluginDataDir = path.join(userDataPath, "plugin-data", pluginName);
 
   if (!fs.existsSync(pluginDataDir)) {
@@ -338,8 +338,8 @@ export function getPluginDataPath(pluginName: string): string {
 /**
  * Check if a plugin is compatible with current CoWork version
  */
-export function isPluginCompatible(manifest: PluginManifest, coworkVersion: string): boolean {
-  if (!manifest.coworkVersion) {
+export function isPluginCompatible(manifest: PluginManifest, ChatAndBuildVersion: string): boolean {
+  if (!manifest.ChatAndBuildVersion) {
     return true; // No version constraint
   }
 
@@ -353,12 +353,12 @@ export function isPluginCompatible(manifest: PluginManifest, coworkVersion: stri
     return [Number(match[1]), Number(match[2] ?? 0), Number(match[3] ?? 0)];
   };
 
-  const required = parse(manifest.coworkVersion);
+  const required = parse(manifest.ChatAndBuildVersion);
   if (!required) {
     return false;
   }
 
-  const current = parse(coworkVersion);
+  const current = parse(ChatAndBuildVersion);
   if (!current) {
     // If we cannot parse our own version, be permissive rather than breaking plugin loads.
     return true;

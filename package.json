@@ -1,5 +1,5 @@
 {
-  "name": "cowork-os",
+  "name": "ChatAndBuild",
   "version": "0.5.0",
   "description": "CoWork OS - Local-first AI operating system for macOS and Windows",
   "overrides": {
@@ -65,10 +65,10 @@
     "vite.config.ts"
   ],
   "bin": {
-    "cowork-os": "bin/cowork.js",
-    "coworkctl": "bin/coworkctl.js",
-    "coworkd": "bin/coworkd.js",
-    "coworkd-node": "bin/coworkd-node.js"
+    "ChatAndBuild": "bin/ChatAndBuild.js",
+    "ChatAndBuildctl": "bin/ChatAndBuildctl.js",
+    "ChatAndBuildd": "bin/ChatAndBuildd.js",
+    "ChatAndBuildd-node": "bin/ChatAndBuildd-node.js"
   },
   "engines": {
     "node": ">=24.0.0"
@@ -195,7 +195,7 @@
     "vitest": "^4.0.18"
   },
   "build": {
-    "appId": "com.cowork-os.app",
+    "appId": "com.ChatAndBuild.app",
     "productName": "CoWork OS",
     "directories": {
       "output": "release"

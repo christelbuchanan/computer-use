@@ -156,7 +156,7 @@ describe("TaskExecutor plan parsing", () => {
               {
                 id: "1",
                 description:
-                  'I will analyze the workspace brief. [TOOL_CALL]{tool => "read_file", args => {"path":".cowork/workspace-example-community-packs.md"}}[/TOOL_CALL]',
+                  'I will analyze the workspace brief. [TOOL_CALL]{tool => "read_file", args => {"path":".ChatAndBuild/workspace-example-community-packs.md"}}[/TOOL_CALL]',
               },
               {
                 id: "2",

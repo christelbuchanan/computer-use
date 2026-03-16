@@ -19,7 +19,7 @@ import { SecureSettingsRepository } from "../database/SecureSettingsRepository";
 import { getUserDataDir } from "../utils/user-data-dir";
 
 const LEGACY_SETTINGS_FILE = "appearance-settings.json";
-const DEV_LOG_SETTINGS_FILE = path.join(".cowork", "dev-log-settings.json");
+const DEV_LOG_SETTINGS_FILE = path.join(".ChatAndBuild", "dev-log-settings.json");
 
 const DEFAULT_SETTINGS: AppearanceSettings = {
   themeMode: "system",

@@ -107,7 +107,7 @@ export class EditTools {
         throw new Error("File path must be within workspace");
       }
 
-      // Enforce per-project access for `.cowork/projects/*`
+      // Enforce per-project access for `.ChatAndBuild/projects/*`
       const relPosix = getWorkspaceRelativePosixPath(workspaceRoot, fullPath);
       if (relPosix !== null) {
         const projectId = getProjectIdFromWorkspaceRelPath(relPosix);

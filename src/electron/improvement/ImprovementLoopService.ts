@@ -851,14 +851,14 @@ export class ImprovementLoopService {
     const packageJson = this.readPackageMetadata(workspace.path);
     const packageName = packageJson?.name?.toLowerCase?.() || "";
 
-    if (workspaceName.includes("cowork")) score += 6;
-    if (workspacePath.includes("/cowork")) score += 6;
-    if (packageName.includes("cowork")) score += 10;
+    if (workspaceName.includes("ChatAndBuild")) score += 6;
+    if (workspacePath.includes("/ChatAndBuild")) score += 6;
+    if (packageName.includes("ChatAndBuild")) score += 10;
     if (fs.existsSync(path.join(workspace.path, "src", "electron"))) score += 4;
     if (fs.existsSync(path.join(workspace.path, "src", "renderer"))) score += 4;
     if (fs.existsSync(path.join(workspace.path, "logs", "dev-latest.log"))) score += 2;
     if (fs.existsSync(path.join(workspace.path, ".git"))) score += 1;
-    if (candidateText.includes("cowork") && (workspaceName.includes("cowork") || packageName.includes("cowork"))) {
+    if (candidateText.includes("ChatAndBuild") && (workspaceName.includes("ChatAndBuild") || packageName.includes("ChatAndBuild"))) {
       score += 4;
     }
 
@@ -876,7 +876,7 @@ export class ImprovementLoopService {
       .join(" ")
       .toLowerCase();
     if (!text) return false;
-    return /\bcowork\b|\bcowork os\b|src\/electron|src\/renderer|dev-latest\.log|electron app|renderer\b/.test(text);
+    return /\bChatAndBuild\b|\bChatAndBuild os\b|src\/electron|src\/renderer|dev-latest\.log|electron app|renderer\b/.test(text);
   }
 
   private isLikelyCoworkCodeWorkspace(workspace: Workspace): boolean {

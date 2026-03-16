@@ -19,7 +19,7 @@ function mapSignalToCode(signal) {
 }
 
 function buildAppAndLaunch() {
-  console.log('[cowork-os] Build artifacts not found, running npm run build...');
+  console.log('[ChatAndBuild] Build artifacts not found, running npm run build...');
   const build = spawn(npmCmd, ['run', 'build'], {
     cwd: packageDir,
     stdio: 'inherit',
@@ -29,7 +29,7 @@ function buildAppAndLaunch() {
   build.on('exit', (code) => {
     if (code !== 0) {
       console.error(
-        '[cowork-os] Build failed. The installed package may be incomplete. ' +
+        '[ChatAndBuild] Build failed. The installed package may be incomplete. ' +
         'Reinstall the latest release or run `npm run build` from source.'
       );
       process.exit(code || 1);
@@ -42,10 +42,10 @@ if (fs.existsSync(mainPath) && fs.existsSync(rendererIndexPath)) {
   prepareAndLaunchApp();
 } else {
   if (!fs.existsSync(mainPath)) {
-    console.log('[cowork-os] Main process build artifacts are missing.');
+    console.log('[ChatAndBuild] Main process build artifacts are missing.');
   }
   if (!fs.existsSync(rendererIndexPath)) {
-    console.log('[cowork-os] Renderer build artifacts are missing.');
+    console.log('[ChatAndBuild] Renderer build artifacts are missing.');
   }
   buildAppAndLaunch();
 }
@@ -93,7 +93,7 @@ function ensureRuntimeDeps() {
   ];
 
   console.log(
-    `[cowork-os] Missing runtime dependencies detected (${missing.length}); repairing install...`
+    `[ChatAndBuild] Missing runtime dependencies detected (${missing.length}); repairing install...`
   );
   const res = spawnSync(npmCmd, installArgs, {
     cwd: packageDir,
@@ -135,11 +135,11 @@ function runNativeSetup(onDone) {
   const setupScript = path.join(packageDir, 'scripts', 'setup_native.mjs');
   const retryScript = path.join(packageDir, 'scripts', 'setup_native_retry.sh');
   if (!fs.existsSync(setupScript)) {
-    console.error('[cowork-os] Missing native setup script at scripts/setup_native.mjs');
+    console.error('[ChatAndBuild] Missing native setup script at scripts/setup_native.mjs');
     process.exit(1);
   }
 
-  console.log('[cowork-os] Preparing native modules for Electron (first run)...');
+  console.log('[ChatAndBuild] Preparing native modules for Electron (first run)...');
   const setupCommand = fs.existsSync(retryScript)
     ? (process.platform === 'win32' ? process.execPath : 'sh')
     : process.execPath;
@@ -156,7 +156,7 @@ function runNativeSetup(onDone) {
     if (signal) {
       const exitCode = mapSignalToCode(signal);
       console.error(
-        `[cowork-os] Native setup was terminated (${signal}).` +
+        `[ChatAndBuild] Native setup was terminated (${signal}).` +
           (signal === 'SIGKILL'
             ? ' Close other memory-heavy apps and rerun `npm run setup`.'
             : '')
@@ -174,7 +174,7 @@ function runNativeSetup(onDone) {
 
 function prepareAndLaunchApp() {
   if (!ensureRuntimeDeps()) {
-    console.error('[cowork-os] Failed to repair runtime dependencies.');
+    console.error('[ChatAndBuild] Failed to repair runtime dependencies.');
     process.exit(1);
   }
 
@@ -182,8 +182,8 @@ function prepareAndLaunchApp() {
     const electronBinary = resolveElectronBinary();
     if (!electronBinary) {
       console.error(
-        '[cowork-os] Electron runtime is still missing after setup. Reinstall with:\n' +
-          '  npm install --ignore-scripts --omit=optional --no-audit --no-fund cowork-os@latest\n'
+        '[ChatAndBuild] Electron runtime is still missing after setup. Reinstall with:\n' +
+          '  npm install --ignore-scripts --omit=optional --no-audit --no-fund ChatAndBuild@latest\n'
       );
       process.exit(1);
     }
@@ -196,7 +196,7 @@ function prepareAndLaunchApp() {
 
   let electronBinary = resolveElectronBinary();
   if (!electronBinary) {
-    console.log('[cowork-os] Electron runtime is missing. Running setup...');
+    console.log('[ChatAndBuild] Electron runtime is missing. Running setup...');
     runNativeSetup(() => launchAfterSetup());
     return;
   }

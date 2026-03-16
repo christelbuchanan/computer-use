@@ -184,7 +184,7 @@ describe("isAutomatedSession", () => {
 
   it("treats explicit Heartbeat titled tasks as automated even when linkage fields are missing", () => {
     expect(isAutomatedSession(createTask({ source: "api", title: "Heartbeat: CoWork OS Ops Lead" }))).toBe(true);
-    expect(isAutomatedSession(createTask({ title: "Heartbeat: cowork os inc Company Planner" }))).toBe(true);
+    expect(isAutomatedSession(createTask({ title: "Heartbeat: ChatAndBuild os inc Company Planner" }))).toBe(true);
   });
 });
 

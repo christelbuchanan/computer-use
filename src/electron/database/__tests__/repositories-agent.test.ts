@@ -11,7 +11,7 @@ import type { Task, AgentConfig, AgentType } from "../../../shared/types";
 // Mock electron to avoid getPath errors
 vi.mock("electron", () => ({
   app: {
-    getPath: vi.fn().mockReturnValue("/tmp/test-cowork"),
+    getPath: vi.fn().mockReturnValue("/tmp/test-ChatAndBuild"),
   },
 }));
 

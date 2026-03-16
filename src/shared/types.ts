@@ -42,7 +42,7 @@ export interface TraySettings {
 
 // Global memory feature toggles (applies across workspaces)
 export interface MemoryFeaturesSettings {
-  /** Inject `.cowork/*` context pack into the agent prompt (workspace-scoped files). */
+  /** Inject `.ChatAndBuild/*` context pack into the agent prompt (workspace-scoped files). */
   contextPackInjectionEnabled: boolean;
   /** Allow the heartbeat system to perform memory maintenance tasks. */
   heartbeatMaintenanceEnabled: boolean;
@@ -92,7 +92,7 @@ export interface UpdateUserFactRequest {
   pinned?: boolean;
 }
 
-// Workspace Kit (.cowork) helpers (workspace-scoped, file-based context)
+// Workspace Kit (.ChatAndBuild) helpers (workspace-scoped, file-based context)
 export interface WorkspaceKitIssue {
   level: "error" | "warning";
   code: string;
@@ -1074,7 +1074,7 @@ export interface WorktreeInfo {
   workspaceId: string;
   repoPath?: string; // Absolute path to the git repository root
   worktreePath: string; // Absolute path to the worktree directory
-  branchName: string; // e.g., "cowork/fix-login-bug-a1b2c3"
+  branchName: string; // e.g., "ChatAndBuild/fix-login-bug-a1b2c3"
   baseBranch: string; // Branch the worktree was created from (e.g., "main")
   baseCommit: string; // SHA of the commit the worktree was created from
   status: WorktreeStatus;
@@ -1102,16 +1102,16 @@ export interface WorktreeSettings {
   enabled: boolean; // Master toggle (default: false)
   autoCommitOnComplete: boolean; // Auto-commit when task completes (default: true)
   autoCleanOnMerge: boolean; // Remove worktree after successful merge (default: true)
-  branchPrefix: string; // Default: "cowork/"
-  commitMessagePrefix: string; // Default: "[cowork] "
+  branchPrefix: string; // Default: "ChatAndBuild/"
+  commitMessagePrefix: string; // Default: "[ChatAndBuild] "
 }
 
 export const DEFAULT_WORKTREE_SETTINGS: WorktreeSettings = {
   enabled: false,
   autoCommitOnComplete: true,
   autoCleanOnMerge: true,
-  branchPrefix: "cowork/",
-  commitMessagePrefix: "[cowork] ",
+  branchPrefix: "ChatAndBuild/",
+  commitMessagePrefix: "[ChatAndBuild] ",
 };
 
 // ============ Self-Improvement Types ============
@@ -1772,7 +1772,7 @@ export interface Workspace {
 export const TEMP_WORKSPACE_ID = "__temp_workspace__";
 export const TEMP_WORKSPACE_ID_PREFIX = "__temp_workspace__:";
 export const TEMP_WORKSPACE_NAME = "Temporary Workspace";
-export const TEMP_WORKSPACE_ROOT_DIR_NAME = "cowork-os-temp";
+export const TEMP_WORKSPACE_ROOT_DIR_NAME = "ChatAndBuild-temp";
 
 export function isTempWorkspaceId(id: string | null | undefined): boolean {
   if (typeof id !== "string") return false;
@@ -3303,7 +3303,7 @@ export const IPC_CHANNELS = {
   ADMIN_POLICIES_UPDATE: "admin:policiesUpdate",
   ADMIN_POLICIES_CHECK_PACK: "admin:checkPack",
 
-  // Workspace Kit (.cowork)
+  // Workspace Kit (.ChatAndBuild)
   KIT_GET_STATUS: "kit:getStatus",
   KIT_INIT: "kit:init",
   KIT_PROJECT_CREATE: "kit:projectCreate",
@@ -4971,7 +4971,7 @@ export interface SkillInstallProgress {
 }
 
 export interface SkillsConfig {
-  skillsDirectory: string; // Default: ~/Library/Application Support/cowork-os/skills/
+  skillsDirectory: string; // Default: ~/Library/Application Support/ChatAndBuild/skills/
   enabledSkillIds: string[];
   registryUrl?: string; // Default: https://skill-hub.com
   autoUpdate?: boolean; // Auto-update managed skills
@@ -5600,7 +5600,7 @@ export interface ManagedDeviceSummary {
     arch?: string;
     node?: string;
     electron?: string;
-    coworkVersion?: string;
+    ChatAndBuildVersion?: string;
     cwd?: string;
     userDataDir?: string;
     headless?: boolean;

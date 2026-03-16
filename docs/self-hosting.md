@@ -9,7 +9,7 @@ CoWork OS supports **Linux headless/server deployments**. This is intended for:
 The key idea: on Linux you typically do **not** run a desktop app UI. Instead you use:
 
 - **Control Plane Web UI** (built-in, served by the daemon)
-- **Control Plane CLI** (`bin/coworkctl.js`)
+- **Control Plane CLI** (`bin/ChatAndBuildctl.js`)
 - Optional: messaging channels (Telegram/Discord/Slack/etc) as your “chat UI”
 
 If you need the desktop app UI on macOS or Windows, that’s a separate mode.
@@ -50,7 +50,7 @@ Docs:
 On a VPS, users typically interact in one of these ways:
 
 1. **Web UI (recommended first touch)**: open `http://127.0.0.1:18789/` through an SSH tunnel or Tailscale.
-2. **CLI**: use `bin/coworkctl.js` to create workspaces, create tasks, watch events, and respond to approvals.
+2. **CLI**: use `bin/ChatAndBuildctl.js` to create workspaces, create tasks, watch events, and respond to approvals.
 3. **Messaging channels**: configure Telegram/Discord/Slack/etc and treat that as the UI.
 
 There is no requirement to have a macOS machine running.
@@ -105,8 +105,8 @@ Avoid binding the Control Plane directly to `0.0.0.0` unless you fully understan
 
 All persistent state lives under the **user data directory** (DB + encrypted settings + cron store + message history):
 
-- Configure with `COWORK_USER_DATA_DIR=/var/lib/cowork-os` (recommended on VPS)
-- Or `--user-data-dir /var/lib/cowork-os`
+- Configure with `COWORK_USER_DATA_DIR=/var/lib/ChatAndBuild` (recommended on VPS)
+- Or `--user-data-dir /var/lib/ChatAndBuild`
 
 Back up that directory (or the Docker volume) to back up the instance.
 
@@ -116,7 +116,7 @@ To pin the daemon to a specific IANA timezone (e.g. for cron, timestamps, schedu
 
 - Set `COWORK_TZ` in the environment (e.g. `COWORK_TZ=America/New_York`, `COWORK_TZ=Europe/London`).
 - **Docker:** In `docker-compose.yml`, add `COWORK_TZ=America/New_York` under `environment`. The entrypoint sets `TZ` from `COWORK_TZ` before starting.
-- **Systemd:** In `/etc/cowork-os.env` (or your env file), add `COWORK_TZ=America/New_York`. The daemon applies it at startup.
+- **Systemd:** In `/etc/ChatAndBuild.env` (or your env file), add `COWORK_TZ=America/New_York`. The daemon applies it at startup.
 - Invalid IANA timezone values fall back to UTC with a warning.
 
 ## Common Questions (FAQ)
@@ -128,7 +128,7 @@ No. Linux headless mode is designed to be fully usable by itself via Control Pla
 You get a minimal **Web UI** (served by the daemon) plus a CLI. The full desktop UI is available on macOS and Windows.
 
 **How do I run my first task?**  
-Create a workspace (bootstrap or `workspace.create`), then `task.create`, then watch `task.event` (Web UI or `coworkctl`).
+Create a workspace (bootstrap or `workspace.create`), then `task.create`, then watch `task.event` (Web UI or `ChatAndBuildctl`).
 
 **Where are credentials stored?**  
 In the encrypted settings store under the user data directory (see above). In headless mode you can set credentials via Control Plane (`llm.configure` / Web UI LLM Setup) or import from env vars at boot (`COWORK_IMPORT_ENV_SETTINGS=1`).

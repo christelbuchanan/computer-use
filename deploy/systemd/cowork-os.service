@@ -6,20 +6,20 @@ After=network.target
 Type=simple
 
 # Path where you cloned/built CoWork OS on the VPS.
-WorkingDirectory=/opt/cowork-os
+WorkingDirectory=/opt/ChatAndBuild
 
 # Optional env file (LLM keys, data dir, control plane host/port, etc).
-EnvironmentFile=-/etc/cowork-os.env
+EnvironmentFile=-/etc/ChatAndBuild.env
 
 # Headless Electron can fail on some servers without a DISPLAY. Xvfb provides a virtual display.
-ExecStart=/usr/bin/xvfb-run -a /usr/bin/node /opt/cowork-os/bin/coworkd.js
+ExecStart=/usr/bin/xvfb-run -a /usr/bin/node /opt/ChatAndBuild/bin/ChatAndBuildd.js
 
 Restart=on-failure
 RestartSec=5
 
 # Run as an unprivileged user (recommended).
-User=cowork
-Group=cowork
+User=ChatAndBuild
+Group=ChatAndBuild
 
 [Install]
 WantedBy=multi-user.target

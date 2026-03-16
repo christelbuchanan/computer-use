@@ -101,11 +101,11 @@ If a single message pushes context past 100% without triggering the 90% proactiv
 
 ### Memory Persistence
 
-Every compaction summary is flushed to the MemoryService and (if available) the workspace `.cowork/` daily log. This provides durable backup even if the in-context summary is later dropped by a subsequent compaction.
+Every compaction summary is flushed to the MemoryService and (if available) the workspace `.ChatAndBuild/` daily log. This provides durable backup even if the in-context summary is later dropped by a subsequent compaction.
 
 ### Pinned Messages
 
-The compaction summary is stored as a **pinned message** with the `<cowork_compaction_summary>` tag. Pinned messages survive future compaction rounds — they are never removed by the message-removal strategy.
+The compaction summary is stored as a **pinned message** with the `<ChatAndBuild_compaction_summary>` tag. Pinned messages survive future compaction rounds — they are never removed by the message-removal strategy.
 
 ## Configuration
 
@@ -150,7 +150,7 @@ Compaction behavior is controlled by constants in `src/electron/agent/executor-h
 2. **Proactive compaction** — At 90% utilization, `proactiveCompactWithMeta()` compacts to 50%
 3. **Summary generation** — `buildCompactionSummaryBlock()` calls the LLM with the structured prompt
 4. **Overflow guard** — Ensures summary + remaining messages stay below 95%
-5. **Pinned insertion** — Summary upserted as a pinned `<cowork_compaction_summary>` user message
+5. **Pinned insertion** — Summary upserted as a pinned `<ChatAndBuild_compaction_summary>` user message
 6. **Memory flush** — Summary stored in MemoryService for cross-session recall
 7. **UI event** — `context_summarized` event emitted for timeline rendering
 8. **Reactive fallback** — Standard `compactMessagesWithMeta()` runs if proactive didn't trigger

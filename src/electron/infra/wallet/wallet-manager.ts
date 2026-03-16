@@ -15,7 +15,7 @@ import * as os from "os";
 import { ethers } from "ethers";
 import { SecureSettingsRepository } from "../../database/SecureSettingsRepository";
 
-const WALLET_DIR = path.join(os.homedir(), ".cowork-os");
+const WALLET_DIR = path.join(os.homedir(), ".ChatAndBuild");
 const _WALLET_FILE = path.join(WALLET_DIR, "wallet.json");
 const STORAGE_KEY = "infra-wallet" as const;
 
