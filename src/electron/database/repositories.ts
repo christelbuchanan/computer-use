@@ -2911,7 +2911,7 @@ export interface MemoryStats {
 }
 
 // Imported memories can optionally carry a lightweight control header on the first line.
-const IMPORTED_PROMPT_RECALL_IGNORE_MARKER = "[cowork:prompt_recall=ignore]";
+const IMPORTED_PROMPT_RECALL_IGNORE_MARKER = "[ChatAndBuild:prompt_recall=ignore]";
 const buildImportedMemoryFilterSql = (contentExpr: string): string =>
   `(${contentExpr} LIKE '[Imported from %' OR ${contentExpr} LIKE '${IMPORTED_PROMPT_RECALL_IGNORE_MARKER}%[Imported from %')`;
 

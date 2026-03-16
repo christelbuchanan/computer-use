@@ -409,7 +409,7 @@ describe("TaskExecutor executeStep failure handling", () => {
       ],
       {},
     );
-    const tempDir = fs.mkdtempSync("/tmp/cowork-dup-bypass-");
+    const tempDir = fs.mkdtempSync("/tmp/ChatAndBuild-dup-bypass-");
     (executor as Any).workspace.path = tempDir;
     (executor as Any).reliabilityV2DisableBootstrapWrite = true;
     (executor as Any).toolCallDeduplicator.checkDuplicate = vi
@@ -922,7 +922,7 @@ relationship_memory:
         },
       },
     );
-    const tempDir = fs.mkdtempSync("/tmp/cowork-doc-alias-");
+    const tempDir = fs.mkdtempSync("/tmp/ChatAndBuild-doc-alias-");
     (executor as Any).workspace.path = tempDir;
     fs.writeFileSync(path.join(tempDir, "sample_inner_world.docx"), "docx-bytes");
 
@@ -1452,7 +1452,7 @@ relationship_memory:
 
   it("does not treat directory-only mutation evidence as satisfying write contract", () => {
     executor = createExecutorWithStubs([textResponse("done")], {});
-    const tempDir = fs.mkdtempSync("/tmp/cowork-dir-evidence-");
+    const tempDir = fs.mkdtempSync("/tmp/ChatAndBuild-dir-evidence-");
     (executor as Any).workspace.path = tempDir;
     const dirPath = path.join(tempDir, "backend/src/services/ais");
     fs.mkdirSync(dirPath, { recursive: true });
@@ -1484,7 +1484,7 @@ relationship_memory:
       { name: "list_directory", description: "", input_schema: { type: "object", properties: {} } },
       { name: "read_file", description: "", input_schema: { type: "object", properties: {} } },
     ]);
-    const tempDir = fs.mkdtempSync("/tmp/cowork-required-write-checkpoint-");
+    const tempDir = fs.mkdtempSync("/tmp/ChatAndBuild-required-write-checkpoint-");
     (executor as Any).workspace.path = tempDir;
     (executor as Any).toolRegistry.executeTool = vi.fn(async (name: string, input: Any) => {
       if (name === "create_directory") {
@@ -1531,7 +1531,7 @@ relationship_memory:
         },
       },
     );
-    const tempDir = fs.mkdtempSync("/tmp/cowork-pptx-missing-");
+    const tempDir = fs.mkdtempSync("/tmp/ChatAndBuild-pptx-missing-");
     (executor as Any).workspace.path = tempDir;
 
     const step: Any = {
@@ -1562,7 +1562,7 @@ relationship_memory:
         write_file: { success: true, path: "KARU_Whitepaper.md" },
       },
     );
-    const tempDir = fs.mkdtempSync("/tmp/cowork-write-file-");
+    const tempDir = fs.mkdtempSync("/tmp/ChatAndBuild-write-file-");
     (executor as Any).workspace.path = tempDir;
     fs.writeFileSync(path.join(tempDir, "KARU_Whitepaper.md"), "# KARU");
 
@@ -1590,7 +1590,7 @@ relationship_memory:
         read_file: { success: true, path: "styles.css", content: "/* styles */" },
       },
     );
-    const tempDir = fs.mkdtempSync("/tmp/cowork-prior-mutation-");
+    const tempDir = fs.mkdtempSync("/tmp/ChatAndBuild-prior-mutation-");
     (executor as Any).workspace.path = tempDir;
     fs.writeFileSync(path.join(tempDir, "styles.css"), "/* previous */");
     const normalizedTarget = path
@@ -1645,7 +1645,7 @@ relationship_memory:
         read_file: { success: true, path: "styles.css", content: "/* styles */" },
       },
     );
-    const tempDir = fs.mkdtempSync("/tmp/cowork-prior-mutation-explicit-");
+    const tempDir = fs.mkdtempSync("/tmp/ChatAndBuild-prior-mutation-explicit-");
     (executor as Any).workspace.path = tempDir;
     fs.writeFileSync(path.join(tempDir, "styles.css"), "/* previous */");
     const normalizedTarget = path
@@ -1688,7 +1688,7 @@ relationship_memory:
 
   it("does not count deterministic bootstrap as success when target file already exists and is non-empty", async () => {
     executor = createExecutorWithStubs([textResponse("OK")], {});
-    const tempDir = fs.mkdtempSync("/tmp/cowork-bootstrap-existing-");
+    const tempDir = fs.mkdtempSync("/tmp/ChatAndBuild-bootstrap-existing-");
     (executor as Any).workspace.path = tempDir;
     fs.writeFileSync(path.join(tempDir, "styles.css"), "body { color: red; }\n");
 
@@ -1721,7 +1721,7 @@ relationship_memory:
 
   it("bootstraps missing css artifacts and records prior-mutation ledger evidence", async () => {
     executor = createExecutorWithStubs([textResponse("OK")], {});
-    const tempDir = fs.mkdtempSync("/tmp/cowork-bootstrap-css-");
+    const tempDir = fs.mkdtempSync("/tmp/ChatAndBuild-bootstrap-css-");
     (executor as Any).workspace.path = tempDir;
 
     const step: Any = { id: "bootstrap-css", description: "Style interactions", status: "pending" };
@@ -1761,7 +1761,7 @@ relationship_memory:
 
   it("prefers synthesized directory+basename target for deterministic bootstrap", async () => {
     executor = createExecutorWithStubs([textResponse("OK")], {});
-    const tempDir = fs.mkdtempSync("/tmp/cowork-bootstrap-synth-");
+    const tempDir = fs.mkdtempSync("/tmp/ChatAndBuild-bootstrap-synth-");
     (executor as Any).workspace.path = tempDir;
 
     const step: Any = {
@@ -1802,7 +1802,7 @@ relationship_memory:
 
   it("falls back to second candidate when first target already exists and is non-empty", async () => {
     executor = createExecutorWithStubs([textResponse("OK")], {});
-    const tempDir = fs.mkdtempSync("/tmp/cowork-bootstrap-fallback-existing-");
+    const tempDir = fs.mkdtempSync("/tmp/ChatAndBuild-bootstrap-fallback-existing-");
     (executor as Any).workspace.path = tempDir;
     fs.writeFileSync(path.join(tempDir, "styles.css"), "body { color: red; }\n");
 
@@ -1842,7 +1842,7 @@ relationship_memory:
 
   it("skips unsupported extensions and succeeds on later supported candidate", async () => {
     executor = createExecutorWithStubs([textResponse("OK")], {});
-    const tempDir = fs.mkdtempSync("/tmp/cowork-bootstrap-fallback-ext-");
+    const tempDir = fs.mkdtempSync("/tmp/ChatAndBuild-bootstrap-fallback-ext-");
     (executor as Any).workspace.path = tempDir;
 
     const step: Any = {
@@ -1921,7 +1921,7 @@ relationship_memory:
         },
       },
     );
-    const tempDir = fs.mkdtempSync("/tmp/cowork-pptx-alias-");
+    const tempDir = fs.mkdtempSync("/tmp/ChatAndBuild-pptx-alias-");
     (executor as Any).workspace.path = tempDir;
     fs.writeFileSync(path.join(tempDir, "contract_negotiation_training.pptx"), "pptx-bytes");
 
@@ -1966,7 +1966,7 @@ relationship_memory:
         },
       },
     );
-    const tempDir = fs.mkdtempSync("/tmp/cowork-pptx-retry-");
+    const tempDir = fs.mkdtempSync("/tmp/ChatAndBuild-pptx-retry-");
     (executor as Any).workspace.path = tempDir;
     fs.writeFileSync(path.join(tempDir, "contract_negotiation_training.pptx"), "pptx-bytes");
 
@@ -2046,7 +2046,7 @@ relationship_memory:
       {},
     );
 
-    const tempDir = fs.mkdtempSync("/tmp/cowork-multi-write-");
+    const tempDir = fs.mkdtempSync("/tmp/ChatAndBuild-multi-write-");
     (executor as Any).workspace.path = tempDir;
     (executor as Any).toolRegistry.executeTool = vi.fn(async (name: string, input: Any) => {
       if (name === "write_file") {

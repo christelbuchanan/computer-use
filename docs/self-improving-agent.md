@@ -117,8 +117,8 @@ When a task succeeds and similar playbook entries already exist, a `[PLAYBOOK] R
 **Mechanisms:**
 - Captures rejected/edited decisions with reason text
 - Aggregates patterns with occurrence counts
-- Writes weekly feedback JSON logs to `.cowork/feedback/`
-- Updates `.cowork/MISTAKES.md` with auto-section markers
+- Writes weekly feedback JSON logs to `.ChatAndBuild/feedback/`
+- Updates `.ChatAndBuild/MISTAKES.md` with auto-section markers
 - Prunes patterns older than 90 days
 
 ## Learning Flows
@@ -150,7 +150,7 @@ When a task succeeds and similar playbook entries already exist, a `[PLAYBOOK] R
 2. `FeedbackService` captures the pattern with count
 3. `UserProfileService.ingestUserFeedback()` extracts preference facts
 4. `RelationshipMemoryService.ingestUserFeedback()` updates preference/history layers
-5. `.cowork/MISTAKES.md` updated with aggregated pattern
+5. `.ChatAndBuild/MISTAKES.md` updated with aggregated pattern
 
 ### Agent-Initiated Memory Flow (via `memory_save` tool)
 
@@ -163,7 +163,7 @@ When a task succeeds and similar playbook entries already exist, a `[PLAYBOOK] R
 
 1. User invokes `/learn` with an insight, correction, preference, or rule
 2. Agent stores the learning via task execution (MemoryService capture)
-3. Agent appends to `.cowork/MEMORY.md` for human-readable, cross-session persistence
+3. Agent appends to `.ChatAndBuild/MEMORY.md` for human-readable, cross-session persistence
 4. Preferences also reach UserProfileService through normal message ingestion
 
 ## Privacy and Safety
@@ -193,7 +193,7 @@ ClawHub's `pskoett/self-improving-agent` (v1.0.11) is a Claude Code skill that "
 | **User profile learning** | None | Auto-extraction of name, preferences, location, goals from conversation |
 | **Relationship memory** | None | 5-layer relationship context with commitment tracking and due dates |
 | **Compression** | None | LLM-based memory compression for ~10x token efficiency |
-| **Manual learning** | Skill invocation | `/learn` skill + `.cowork/MEMORY.md` persistence |
+| **Manual learning** | Skill invocation | `/learn` skill + `.ChatAndBuild/MEMORY.md` persistence |
 | **Agent-initiated memory** | None | `memory_save` tool for explicit mid-task persistence + `search_memories` for on-demand recall |
 
 The ClawHub skill provides a useful starting pattern for basic learning capture. CoWork OS extends this concept into a full multi-layered learning architecture with offline search, privacy controls, and institutional knowledge management.

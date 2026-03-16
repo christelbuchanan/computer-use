@@ -53,12 +53,12 @@ This will:
 2. **Initialize the Workspace Kit (Optional, Recommended)**
    - Open **Settings** > **Memory Hub**
    - Under **Workspace Kit**, click **Initialize**
-   - This creates a `.cowork/` directory in your workspace for durable context, prompt injection, and project scaffolding
+   - This creates a `.ChatAndBuild/` directory in your workspace for durable context, prompt injection, and project scaffolding
    - The root kit can include shared workspace files such as `AGENTS.md`, `USER.md`, `MEMORY.md`, `TOOLS.md`, `IDENTITY.md`, `RULES.md`, `SOUL.md`, `VIBES.md`, and `LORE.md`
-   - `BOOTSTRAP.md` is a one-time onboarding checklist; once you complete onboarding, removing it marks onboarding complete and CoWork OS tracks that state in `.cowork/workspace-state.json`
+   - `BOOTSTRAP.md` is a one-time onboarding checklist; once you complete onboarding, removing it marks onboarding complete and CoWork OS tracks that state in `.ChatAndBuild/workspace-state.json`
    - `HEARTBEAT.md` is reserved for recurring heartbeat-only checks rather than general task context
-   - Project-specific context lives under `.cowork/projects/<projectId>/`, where `CONTEXT.md` captures project notes and `ACCESS.md` captures project access boundaries
-   - Changes to tracked kit files keep revision snapshots under `.cowork/**/.history/`
+   - Project-specific context lives under `.ChatAndBuild/projects/<projectId>/`, where `CONTEXT.md` captures project notes and `ACCESS.md` captures project access boundaries
+   - Changes to tracked kit files keep revision snapshots under `.ChatAndBuild/**/.history/`
    - You can validate kit health, freshness, and secret/missing-file warnings locally with `npm run kit:lint`
 
 2. **Create a Task**
@@ -121,7 +121,7 @@ If you want to use CoWork OS as a founder-operated autonomous company shell:
 1. Choose a real git-backed workspace.
 2. Open **Settings** > **Memory Hub**.
 3. Initialize **Venture operator kit**.
-4. Fill in the generated `.cowork/` company files (`COMPANY.md`, `OPERATIONS.md`, `KPIS.md`, `PRIORITIES.md`, `HEARTBEAT.md`).
+4. Fill in the generated `.ChatAndBuild/` company files (`COMPANY.md`, `OPERATIONS.md`, `KPIS.md`, `PRIORITIES.md`, `HEARTBEAT.md`).
 5. Open **Settings** > **Companies**.
 6. Create or select the company shell you want to operate.
 7. Click **Open Digital Twins** from that company.
@@ -390,26 +390,26 @@ src/
 **Main Process (Backend)**:
 - Use `console.log()` - shows in terminal
 - Check logs:
-  - macOS: `~/Library/Application Support/cowork-os/`
-  - Windows: `%APPDATA%\\cowork-os\\`
+  - macOS: `~/Library/Application Support/ChatAndBuild/`
+  - Windows: `%APPDATA%\\ChatAndBuild\\`
 
 ### Database
 
 SQLite database location:
-- macOS: `~/Library/Application Support/cowork-os/cowork-os.db`
-- Windows: `%APPDATA%\\cowork-os\\cowork-os.db`
+- macOS: `~/Library/Application Support/ChatAndBuild/ChatAndBuild.db`
+- Windows: `%APPDATA%\\ChatAndBuild\\ChatAndBuild.db`
 
 View it with any SQLite browser or:
 ```bash
 # macOS
-sqlite3 ~/Library/Application\ Support/cowork-os/cowork-os.db
+sqlite3 ~/Library/Application\ Support/ChatAndBuild/ChatAndBuild.db
 .tables
 SELECT * FROM tasks;
 ```
 
 ```powershell
 # Windows (PowerShell)
-sqlite3 "$env:APPDATA\cowork-os\cowork-os.db"
+sqlite3 "$env:APPDATA\ChatAndBuild\ChatAndBuild.db"
 .tables
 SELECT * FROM tasks;
 ```
@@ -444,7 +444,7 @@ npm run dev
 ### Issue: "Permission denied" for workspace
 
 **Solution**: Choose a folder you have write access to, like:
-- `~/Documents/cowork-test`
+- `~/Documents/ChatAndBuild-test`
 - `~/Downloads/test`
 
 Don't use system folders like `/System` or `/Applications`.

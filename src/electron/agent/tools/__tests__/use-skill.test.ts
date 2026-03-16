@@ -641,7 +641,7 @@ describe("set_user_name tool", () => {
 
     it("should reject sentence-like task fragments", async () => {
       await expect(
-        registry.executeTool("set_user_name", { name: "building a cowork assistant for Nokia" }),
+        registry.executeTool("set_user_name", { name: "building a ChatAndBuild assistant for Nokia" }),
       ).rejects.toThrow("Name looks invalid");
     });
 

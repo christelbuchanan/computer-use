@@ -194,7 +194,7 @@ During transition, you may want to run both platforms:
 
 CoWork OS uses a JSON-based skill format. If your existing platform exports skills, you may need to convert them. Skills are stored in:
 ```
-~/Library/Application Support/cowork-os/skills/
+~/Library/Application Support/ChatAndBuild/skills/
 ```
 
 For Codex-style skill repos that only ship a `SKILL.md`, create a CoWork manifest such as `webxr-dev.json` and, if you want to preserve bundled instructions, add a sibling directory such as `webxr-dev/SKILL.md`. The same sidecar directory can also contain `references/` and `scripts/` that the prompt references through `{baseDir}`.

@@ -10,7 +10,7 @@ vi.mock("electron", () => ({
     showItemInFolder: vi.fn(),
   },
   app: {
-    getPath: vi.fn().mockReturnValue("/tmp/test-cowork"),
+    getPath: vi.fn().mockReturnValue("/tmp/test-ChatAndBuild"),
   },
 }));
 
@@ -48,7 +48,7 @@ describe("TextTools", () => {
 
   beforeEach(async () => {
     vi.clearAllMocks();
-    tmpDir = await fs.mkdtemp(path.join(os.tmpdir(), "cowork-text-tools-"));
+    tmpDir = await fs.mkdtemp(path.join(os.tmpdir(), "ChatAndBuild-text-tools-"));
     const workspace = mkWorkspace(tmpDir);
     const fileTools = new FileTools(workspace, mockDaemon as Any, "task-1");
     tools = new TextTools(workspace, mockDaemon as Any, "task-1", fileTools);

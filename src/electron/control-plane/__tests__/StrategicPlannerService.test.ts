@@ -54,7 +54,7 @@ describeWithSqlite("StrategicPlannerService", () => {
   };
 
   beforeEach(async () => {
-    tmpDir = fs.mkdtempSync(path.join(os.tmpdir(), "cowork-planner-"));
+    tmpDir = fs.mkdtempSync(path.join(os.tmpdir(), "ChatAndBuild-planner-"));
     previousUserDataDir = process.env.COWORK_USER_DATA_DIR;
     process.env.COWORK_USER_DATA_DIR = tmpDir;
 
@@ -268,7 +268,7 @@ describeWithSqlite("StrategicPlannerService", () => {
     expect(run.status).toBe("completed");
     expect(prompts).toHaveLength(1);
     expect(prompts[0]).toContain("link_project_workspace");
-    expect(prompts[0]).toContain("Do not treat ad hoc files in .cowork/");
+    expect(prompts[0]).toContain("Do not treat ad hoc files in .ChatAndBuild/");
   });
 
   it("does not redispatch the same planner-managed issue on the next run when it already has a task", async () => {

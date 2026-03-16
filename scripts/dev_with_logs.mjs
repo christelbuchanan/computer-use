@@ -3,7 +3,7 @@ import { spawn } from "node:child_process";
 import fs from "node:fs";
 import path from "node:path";
 
-const DEV_LOG_SETTINGS_PATH = path.join(".cowork", "dev-log-settings.json");
+const DEV_LOG_SETTINGS_PATH = path.join(".ChatAndBuild", "dev-log-settings.json");
 
 function parseBoolean(value) {
   if (typeof value !== "string") return undefined;

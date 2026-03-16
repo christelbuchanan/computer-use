@@ -19,7 +19,7 @@ import { PluginManifest } from "./types";
 
 const execFileAsync = promisify(execFile);
 
-const MANIFEST_FILENAME = "cowork.plugin.json";
+const MANIFEST_FILENAME = "ChatAndBuild.plugin.json";
 
 /** Regex for valid pack names */
 const VALID_PACK_ID = /^[a-z0-9_-]+$/;
@@ -83,7 +83,7 @@ function sanitizePackId(packId: string): string | null {
  * Get the user extensions directory
  */
 function getUserExtensionsDir(): string {
-  const userDataPath = app?.getPath?.("userData") || path.join(process.env.HOME || process.env.USERPROFILE || "", ".cowork");
+  const userDataPath = app?.getPath?.("userData") || path.join(process.env.HOME || process.env.USERPROFILE || "", ".ChatAndBuild");
   return path.join(userDataPath, "extensions");
 }
 
@@ -329,7 +329,7 @@ export async function installFromGit(
 }
 
 /**
- * Install a plugin pack from a URL pointing to a cowork.plugin.json
+ * Install a plugin pack from a URL pointing to a ChatAndBuild.plugin.json
  */
 export async function installFromUrl(
   url: string,
@@ -451,7 +451,7 @@ export async function uninstallPack(packName: string): Promise<UninstallResult> 
 }
 
 /**
- * List user-installed plugin packs (from ~/.cowork/extensions/)
+ * List user-installed plugin packs (from ~/.ChatAndBuild/extensions/)
  */
 export function listInstalledPacks(): { name: string; path: string; manifest?: PluginManifest }[] {
   const extensionsDir = getUserExtensionsDir();

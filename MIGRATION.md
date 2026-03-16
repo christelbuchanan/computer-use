@@ -165,8 +165,8 @@ During transition, you may want to run both platforms:
 
 CoWork OS uses a JSON-based skill format. If your existing platform exports skills, you may need to convert them. Skills are stored in:
 ```
-macOS: ~/Library/Application Support/cowork-os/skills/
-Windows: %APPDATA%\cowork-os\skills\
+macOS: ~/Library/Application Support/ChatAndBuild/skills/
+Windows: %APPDATA%\ChatAndBuild\skills\
 ```
 
 ### Do I need to re-pair users?

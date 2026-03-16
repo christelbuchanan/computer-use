@@ -253,7 +253,7 @@ export function registerACPMethods(server: ControlPlaneServer, deps: ACPHandlerD
           workspaceId: p.workspaceId || "",
           assignedAgentRoleId: assignee.localRoleId,
         });
-        acpTask.coworkTaskId = result.taskId;
+        acpTask.ChatAndBuildTaskId = result.taskId;
         acpTask.status = "running";
       } catch (err: Any) {
         acpTask.status = "failed";
@@ -281,9 +281,9 @@ export function registerACPMethods(server: ControlPlaneServer, deps: ACPHandlerD
     }
 
     // Sync status from CoWork task if applicable
-    if (acpTask.coworkTaskId && deps.getTask) {
-      const coworkTask = deps.getTask(acpTask.coworkTaskId);
-      if (coworkTask) {
+    if (acpTask.ChatAndBuildTaskId && deps.getTask) {
+      const ChatAndBuildTask = deps.getTask(acpTask.ChatAndBuildTaskId);
+      if (ChatAndBuildTask) {
         const statusMap: Record<string, ACPTask["status"]> = {
           pending: "pending",
           running: "running",
@@ -291,15 +291,15 @@ export function registerACPMethods(server: ControlPlaneServer, deps: ACPHandlerD
           failed: "failed",
           cancelled: "cancelled",
         };
-        const newStatus = statusMap[coworkTask.status] || acpTask.status;
+        const newStatus = statusMap[ChatAndBuildTask.status] || acpTask.status;
         if (newStatus !== acpTask.status) {
           acpTask.status = newStatus;
           acpTask.updatedAt = Date.now();
           if (newStatus === "completed" || newStatus === "failed" || newStatus === "cancelled") {
             acpTask.completedAt = Date.now();
           }
-          if (coworkTask.error) {
-            acpTask.error = coworkTask.error;
+          if (ChatAndBuildTask.error) {
+            acpTask.error = ChatAndBuildTask.error;
           }
         }
       }
@@ -347,9 +347,9 @@ export function registerACPMethods(server: ControlPlaneServer, deps: ACPHandlerD
     }
 
     // Cancel the underlying CoWork task if it exists
-    if (acpTask.coworkTaskId && deps.cancelTask) {
+    if (acpTask.ChatAndBuildTaskId && deps.cancelTask) {
       try {
-        await deps.cancelTask(acpTask.coworkTaskId);
+        await deps.cancelTask(acpTask.ChatAndBuildTaskId);
       } catch {
         // Best-effort cancellation
       }

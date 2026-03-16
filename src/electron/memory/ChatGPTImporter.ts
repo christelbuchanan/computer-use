@@ -264,7 +264,7 @@ export class ChatGPTImporter {
              WHERE workspace_id = ?
                AND (
                  content LIKE '[Imported from ChatGPT %'
-                 OR content LIKE '[cowork:prompt_recall=ignore]%[Imported from ChatGPT %'
+                 OR content LIKE '[ChatAndBuild:prompt_recall=ignore]%[Imported from ChatGPT %'
                )
              LIMIT 100000`,
           )

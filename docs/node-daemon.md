@@ -10,7 +10,7 @@ This is an alternative to the Linux “headless Electron” mode. It’s designe
 
 ## What It Runs
 
-The Node daemon (`coworkd-node`) wires up:
+The Node daemon (`ChatAndBuildd-node`) wires up:
 
 - SQLite database + secure settings storage
 - provider factories (LLM/search) + env import (optional)
@@ -27,12 +27,12 @@ npm run build:daemon
 npm run build:connectors
 
 # Start the daemon (Control Plane on 127.0.0.1:18789 by default)
-node bin/coworkd-node.js --print-control-plane-token
+node bin/ChatAndBuildd-node.js --print-control-plane-token
 ```
 
 Notes:
 
-- `bin/coworkd-node.js` will rebuild `better-sqlite3` for the current Node ABI if needed.
+- `bin/ChatAndBuildd-node.js` will rebuild `better-sqlite3` for the current Node ABI if needed.
 - By default the Control Plane binds to loopback (`127.0.0.1`) for safety. Use SSH tunnel/Tailscale for remote access.
 
 ## Remote Use (No Desktop Required)
@@ -55,11 +55,11 @@ http://127.0.0.1:18789/
 export COWORK_CONTROL_PLANE_URL=ws://127.0.0.1:18789
 export COWORK_CONTROL_PLANE_TOKEN=... # printed on first token generation or via --print-control-plane-token
 
-node bin/coworkctl.js call config.get
-node bin/coworkctl.js call llm.configure '{"providerType":"openai","apiKey":"sk-...","model":"gpt-4o-mini"}'
-node bin/coworkctl.js call workspace.create '{"name":"main","path":"/srv/cowork/workspace"}'
-node bin/coworkctl.js call task.create '{"workspaceId":"...","title":"Test","prompt":"Say hi"}'
-node bin/coworkctl.js watch --event task.event
+node bin/ChatAndBuildctl.js call config.get
+node bin/ChatAndBuildctl.js call llm.configure '{"providerType":"openai","apiKey":"sk-...","model":"gpt-4o-mini"}'
+node bin/ChatAndBuildctl.js call workspace.create '{"name":"main","path":"/srv/ChatAndBuild/workspace"}'
+node bin/ChatAndBuildctl.js call task.create '{"workspaceId":"...","title":"Test","prompt":"Say hi"}'
+node bin/ChatAndBuildctl.js watch --event task.event
 ```
 
 ## Headless Limitations (Expected)

@@ -97,8 +97,8 @@ function parseImportTag(content: string): {
   ignoredForPromptRecall: boolean;
   isImported: boolean;
 } {
-  const ignoredForPromptRecall = /^\s*\[cowork:prompt_recall=ignore\]/.test(content);
-  const normalizedContent = content.replace(/^\s*\[cowork:prompt_recall=ignore\]\s*(?:\r?\n)?/, "");
+  const ignoredForPromptRecall = /^\s*\[ChatAndBuild:prompt_recall=ignore\]/.test(content);
+  const normalizedContent = content.replace(/^\s*\[ChatAndBuild:prompt_recall=ignore\]\s*(?:\r?\n)?/, "");
 
   const match = normalizedContent.match(
     /^\[Imported from\s+(.+?)\s*[-—]\s*"(.+?)"\s*(?:\([^)]+\))?\]\n?([\s\S]*)/,

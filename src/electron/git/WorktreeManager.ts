@@ -11,7 +11,7 @@ import {
   PullRequestResult,
 } from "../../shared/types";
 
-const WORKTREES_DIR = ".cowork-worktrees";
+const WORKTREES_DIR = ".ChatAndBuild-worktrees";
 const SETTINGS_KEY = "worktree_settings";
 
 /**
@@ -75,7 +75,7 @@ export class WorktreeManager {
 
   /**
    * Create a worktree for a task.
-   * The worktree is placed at: <repo-root>/.cowork-worktrees/<taskId-short>/
+   * The worktree is placed at: <repo-root>/.ChatAndBuild-worktrees/<taskId-short>/
    */
   async createForTask(
     taskId: string,
@@ -109,7 +109,7 @@ export class WorktreeManager {
       fs.rmSync(worktreePath, { recursive: true, force: true });
     }
 
-    // Ensure .cowork-worktrees is in .gitignore
+    // Ensure .ChatAndBuild-worktrees is in .gitignore
     await this.ensureGitignore(repoPath);
 
     // Create the worktree
@@ -319,7 +319,7 @@ export class WorktreeManager {
   }
 
   /**
-   * Ensure .cowork-worktrees is in the .gitignore file.
+   * Ensure .ChatAndBuild-worktrees is in the .gitignore file.
    * Uses a session-level cache to avoid redundant file I/O, and writes the
    * full file content atomically to prevent partial writes from concurrent calls.
    */

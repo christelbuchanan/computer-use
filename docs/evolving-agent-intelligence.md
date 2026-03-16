@@ -22,7 +22,7 @@ Before this change, the system prompt was assembled by concatenating 6 independe
 2. **Ranks** by a composite score: `relevance × 0.45 + confidence × 0.3 + recency × 0.25` (recency uses exponential decay over 30 days).
 3. **Respects a token budget** — fragments are included in score order until the budget is exhausted.
 4. **Groups by source** for readability (You & the User, Past Task Patterns, Recalled Memories, Known Entities).
-5. Wraps output in `<cowork_synthesized_memory>` XML tags with source attribution.
+5. Wraps output in `<ChatAndBuild_synthesized_memory>` XML tags with source attribution.
 
 Falls back gracefully to legacy per-source injection if the synthesizer throws.
 
@@ -44,12 +44,12 @@ Seven sources are now collected (in insertion order):
 | `workspace_kit` | `WorkspaceKitContext` (separate budget) | — |
 | `daily_summary` | `DailyLogSummarizer` | 0.55 × recency |
 
-`daily_summary` fragments come from `.cowork/memory/summaries/<YYYY-MM-DD>.md` files produced by `DailyLogSummarizer`. Raw daily log files (`.cowork/memory/daily/`) are **never** injected into prompts.
+`daily_summary` fragments come from `.ChatAndBuild/memory/summaries/<YYYY-MM-DD>.md` files produced by `DailyLogSummarizer`. Raw daily log files (`.ChatAndBuild/memory/daily/`) are **never** injected into prompts.
 
 ### Output format
 
 ```xml
-<cowork_synthesized_memory>
+<ChatAndBuild_synthesized_memory>
 ## You & the User
 - [UserProfile fact]
 - [RelationshipMemory item]
@@ -66,7 +66,7 @@ Seven sources are now collected (in insertion order):
 ## Daily Summaries
 [Daily Summary 2026-03-14]
 ...
-</cowork_synthesized_memory>
+</ChatAndBuild_synthesized_memory>
 ```
 
 ---
@@ -260,7 +260,7 @@ Agent Evolution (Day 45, 123 tasks completed):
 
 ### Purpose
 
-Provides structured per-day journaling as input for the summary-first memory pipeline. Entries are written to `.cowork/memory/daily/<YYYY-MM-DD>.md`.
+Provides structured per-day journaling as input for the summary-first memory pipeline. Entries are written to `.ChatAndBuild/memory/daily/<YYYY-MM-DD>.md`.
 
 ### When to write entries
 
@@ -306,12 +306,12 @@ await DailyLogService.appendEntry(workspacePath, {
 
 ### Purpose
 
-Produces ranked `MemoryFragment` objects from pre-written daily summary files (`.cowork/memory/summaries/<YYYY-MM-DD>.md`). This completes the summary-first retrieval pipeline: summaries rank higher than raw log snippets but lower than user profile and relationship memory.
+Produces ranked `MemoryFragment` objects from pre-written daily summary files (`.ChatAndBuild/memory/summaries/<YYYY-MM-DD>.md`). This completes the summary-first retrieval pipeline: summaries rank higher than raw log snippets but lower than user profile and relationship memory.
 
 ### Directory layout
 
 ```
-.cowork/
+.ChatAndBuild/
   memory/
     daily/
       2026-03-14.md    ← raw operational log (DailyLogService writes)
@@ -414,7 +414,7 @@ All improvements respect CoWork OS's security-first positioning:
 | Channel Persona | `channelPersonaEnabled` | Off | — | Visible in system prompt |
 | Evolution Metrics | — | Computed on-demand | — | Read-only, no mutations |
 | Daily Log | — | Off by default (no writer wired yet) | IPC: `limited` tier | Per-day markdown files |
-| Daily Summaries | — | Active when summary files exist | Token budget (ranked) | Summary files in `.cowork/memory/summaries/` |
+| Daily Summaries | — | Active when summary files exist | Token budget (ranked) | Summary files in `.ChatAndBuild/memory/summaries/` |
 | Message Feedback | — | Always visible on completed messages | IPC: `limited` tier | Routed to UserProfileService |
 
 ---

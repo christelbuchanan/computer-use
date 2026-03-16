@@ -113,7 +113,7 @@ export interface ACPTask {
   /** Error message (when failed) */
   error?: string;
   /** Associated CoWork task ID (if delegated to a local agent) */
-  coworkTaskId?: string;
+  ChatAndBuildTaskId?: string;
   /** Associated workspace ID */
   workspaceId?: string;
   /** Creation timestamp */

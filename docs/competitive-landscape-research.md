@@ -79,7 +79,7 @@
 | **Apple Calendar/Reminders** | ✅ Native AppleScript | ❌ | ❌ | ❌ | ❌ |
 | **Cloud integrations** | ✅ Google Workspace, Dropbox, OneDrive, SharePoint, Notion, Box | ✅ Google, Notion, etc. | ❌ | ❌ | ✅ 1,200+ |
 | **Phone calls** | ✅ ElevenLabs voice calls | ❌ | ❌ | ✅ Voice mode | ❌ |
-| **VPS/headless deployment** | ✅ coworkd + coworkd-node | ✅ Node daemon | ❌ | ❌ | ✅ Docker |
+| **VPS/headless deployment** | ✅ ChatAndBuildd + ChatAndBuildd-node | ✅ Node daemon | ❌ | ❌ | ✅ Docker |
 | **Pricing** | Free / BYOK (bring your own API keys) | Free / BYOK | $20–200/mo subscription | $20/mo+ subscription | Free (self-hosted) / €24–800/mo (cloud) |
 | **Open source** | ✅ (license per repo) | ✅ MIT | ❌ Proprietary | ❌ Proprietary | ✅ Source-available |
 
@@ -112,7 +112,7 @@
 
 ### Secondary Differentiators:
 
-6. **VPS/Headless Deployment** — coworkd and coworkd-node for server installs
+6. **VPS/Headless Deployment** — ChatAndBuildd and ChatAndBuildd-node for server installs
 7. **Workspace-scoped memory** — persistent knowledge graph + session memories across tasks
 8. **Personality/persona system** — customizable communication style (unique UX differentiation)
 9. **Multi-provider model support** — not locked to any single AI provider

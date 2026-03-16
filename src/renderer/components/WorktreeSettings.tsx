@@ -12,8 +12,8 @@ const DEFAULT_SETTINGS: WorktreeSettingsData = {
   enabled: false,
   autoCommitOnComplete: true,
   autoCleanOnMerge: true,
-  branchPrefix: "cowork/",
-  commitMessagePrefix: "[cowork] ",
+  branchPrefix: "ChatAndBuild/",
+  commitMessagePrefix: "[ChatAndBuild] ",
 };
 
 export function WorktreeSettings() {
@@ -122,8 +122,8 @@ export function WorktreeSettings() {
           <div className="settings-field-header">
             <label>Branch Prefix</label>
             <p className="settings-field-description">
-              Prefix for auto-generated branch names (e.g., "cowork/" creates branches like
-              "cowork/fix-login-abc123").
+              Prefix for auto-generated branch names (e.g., "ChatAndBuild/" creates branches like
+              "ChatAndBuild/fix-login-abc123").
             </p>
           </div>
           <input
@@ -132,7 +132,7 @@ export function WorktreeSettings() {
             value={settings.branchPrefix}
             onChange={(e) => updateField("branchPrefix", e.target.value)}
             disabled={!settings.enabled}
-            placeholder="cowork/"
+            placeholder="ChatAndBuild/"
           />
         </div>
 
@@ -147,7 +147,7 @@ export function WorktreeSettings() {
             value={settings.commitMessagePrefix}
             onChange={(e) => updateField("commitMessagePrefix", e.target.value)}
             disabled={!settings.enabled}
-            placeholder="[cowork] "
+            placeholder="[ChatAndBuild] "
           />
         </div>
       </div>

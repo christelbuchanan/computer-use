@@ -56,27 +56,27 @@ describe("Memory Kit Skill", () => {
       expect(skillData.prompt.length).toBeGreaterThan(200);
     });
 
-    it("should default to .cowork/ location", () => {
+    it("should default to .ChatAndBuild/ location", () => {
       expect(skillData.prompt).toContain("TARGET LOCATION");
-      expect(skillData.prompt).toContain(".cowork/");
+      expect(skillData.prompt).toContain(".ChatAndBuild/");
       expect(skillData.prompt).toContain("Do NOT write these files at repo root");
     });
 
     it("should include all core kit files", () => {
-      expect(skillData.prompt).toContain(".cowork/AGENTS.md");
-      expect(skillData.prompt).toContain(".cowork/SOUL.md");
-      expect(skillData.prompt).toContain(".cowork/USER.md");
-      expect(skillData.prompt).toContain(".cowork/MEMORY.md");
-      expect(skillData.prompt).toContain(".cowork/HEARTBEAT.md");
-      expect(skillData.prompt).toContain(".cowork/PRIORITIES.md");
-      expect(skillData.prompt).toContain(".cowork/CROSS_SIGNALS.md");
-      expect(skillData.prompt).toContain(".cowork/TOOLS.md");
-      expect(skillData.prompt).toContain(".cowork/IDENTITY.md");
-      expect(skillData.prompt).toContain(".cowork/BOOTSTRAP.md");
+      expect(skillData.prompt).toContain(".ChatAndBuild/AGENTS.md");
+      expect(skillData.prompt).toContain(".ChatAndBuild/SOUL.md");
+      expect(skillData.prompt).toContain(".ChatAndBuild/USER.md");
+      expect(skillData.prompt).toContain(".ChatAndBuild/MEMORY.md");
+      expect(skillData.prompt).toContain(".ChatAndBuild/HEARTBEAT.md");
+      expect(skillData.prompt).toContain(".ChatAndBuild/PRIORITIES.md");
+      expect(skillData.prompt).toContain(".ChatAndBuild/CROSS_SIGNALS.md");
+      expect(skillData.prompt).toContain(".ChatAndBuild/TOOLS.md");
+      expect(skillData.prompt).toContain(".ChatAndBuild/IDENTITY.md");
+      expect(skillData.prompt).toContain(".ChatAndBuild/BOOTSTRAP.md");
     });
 
     it("should include daily log template", () => {
-      expect(skillData.prompt).toContain(".cowork/memory/YYYY-MM-DD.md");
+      expect(skillData.prompt).toContain(".ChatAndBuild/memory/YYYY-MM-DD.md");
       expect(skillData.prompt).toContain("# Daily Log (YYYY-MM-DD)");
       expect(skillData.prompt).toContain("## Open Loops");
     });

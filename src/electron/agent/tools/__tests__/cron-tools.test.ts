@@ -29,7 +29,7 @@ describe("CronTools.schedule_create workspace behavior", () => {
     });
 
   beforeEach(async () => {
-    tmpUserDataDir = fs.mkdtempSync(path.join(os.tmpdir(), "cowork-cron-tools-test-"));
+    tmpUserDataDir = fs.mkdtempSync(path.join(os.tmpdir(), "ChatAndBuild-cron-tools-test-"));
     service = createService();
     setCronService(service);
     await service.start();
@@ -60,7 +60,7 @@ describe("CronTools.schedule_create workspace behavior", () => {
     const tempWorkspace: Workspace = {
       id: TEMP_WORKSPACE_ID,
       name: "Temporary Workspace",
-      path: path.join(os.tmpdir(), "cowork-os-temp"),
+      path: path.join(os.tmpdir(), "ChatAndBuild-temp"),
       createdAt: 0,
       permissions: {
         read: true,

@@ -9,8 +9,8 @@ import { getUserDataDir } from "../utils/user-data-dir";
 const OWNER_SIGNATURE_ENV = "COWORK_SELF_IMPROVEMENT_OWNER_SIGNATURE";
 const OWNER_REPO_REMOTE = "github.com/CoWork-OS/CoWork-OS";
 const OWNER_SETTINGS_CATEGORY = "improvement-owner";
-const OWNER_MACHINE_ID_FILE = ".cowork-machine-id";
-const OWNER_ENROLLMENT_SCOPE = "cowork-self-improvement-owner";
+const OWNER_MACHINE_ID_FILE = ".ChatAndBuild-machine-id";
+const OWNER_ENROLLMENT_SCOPE = "ChatAndBuild-self-improvement-owner";
 const OWNER_ENROLLMENT_VERSION = 1;
 const OWNER_PUBLIC_KEY_PEM = `-----BEGIN PUBLIC KEY-----
 MCowBQYDK2VwAyEAU31JMjkwh/AwbrG24EKz1XLJqT0IYlyfkP9jFUIhGFk=

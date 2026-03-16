@@ -6,7 +6,7 @@ CoWork OS supports 15 messaging channels. All channels share these common featur
 - Brute-force protection
 - Session management
 - Rate limiting
-- Inbound attachment persistence (files saved to `.cowork/inbox/attachments/`)
+- Inbound attachment persistence (files saved to `.ChatAndBuild/inbox/attachments/`)
 - Chat commands: `/simplify`, `/batch`, `/schedule`, `/digest`, `/followups`, `/brief`
 - **Ambient mode**: Passively ingest all messages without responding; enable per-channel in settings
 - **Self-message capture**: Capture your own outgoing messages as context (`captureSelfMessages` on WhatsApp, iMessage, BlueBubbles)

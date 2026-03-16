@@ -531,8 +531,8 @@ describe("CronService", () => {
             ? {
                 workspaceId: "ws-managed",
                 workspacePath: "/managed/workspace",
-                runWorkspacePath: "/managed/workspace/.cowork/scheduled-runs/run-1",
-                runWorkspaceRelativePath: ".cowork/scheduled-runs/run-1",
+                runWorkspacePath: "/managed/workspace/.ChatAndBuild/scheduled-runs/run-1",
+                runWorkspaceRelativePath: ".ChatAndBuild/scheduled-runs/run-1",
               }
             : null,
       });
@@ -556,7 +556,7 @@ describe("CronService", () => {
       );
       expect(mockCreateTask).toHaveBeenCalledWith(
         expect.objectContaining({
-          prompt: expect.stringContaining("/managed/workspace/.cowork/scheduled-runs/run-1"),
+          prompt: expect.stringContaining("/managed/workspace/.ChatAndBuild/scheduled-runs/run-1"),
         }),
       );
 
@@ -566,7 +566,7 @@ describe("CronService", () => {
       const history = await service.getRunHistory("job-1");
       expect(history?.entries[0].workspaceId).toBe("ws-managed");
       expect(history?.entries[0].runWorkspacePath).toBe(
-        "/managed/workspace/.cowork/scheduled-runs/run-1",
+        "/managed/workspace/.ChatAndBuild/scheduled-runs/run-1",
       );
     });
 

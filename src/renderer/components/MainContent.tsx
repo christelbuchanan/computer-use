@@ -58,7 +58,7 @@ import { formatProviderErrorForDisplay } from "../../shared/provider-error-forma
 import { Check as CheckIcon } from "lucide-react";
 import { InlineVideoPreview } from "./InlineVideoPreview";
 
-const CODE_PREVIEWS_EXPANDED_KEY = "cowork:codePreviewsExpanded";
+const CODE_PREVIEWS_EXPANDED_KEY = "ChatAndBuild:codePreviewsExpanded";
 const TASK_TITLE_MAX_LENGTH = 50;
 const TITLE_ELLIPSIS_REGEX = /(\.\.\.|\u2026)$/u;
 const MAX_ATTACHMENTS = 10;
@@ -5196,12 +5196,12 @@ export function MainContent({
             {uiDensity === "focused" ? (
               <div className="welcome-header-focused modern-only">
                 <img
-                  src="./cowork-os-logo-text-dark.png"
+                  src="./ChatAndBuild-logo-text-dark.png"
                   alt="CoWork OS"
                   className="modern-logo-text logo-for-dark"
                 />
                 <img
-                  src="./cowork-os-logo-text.png"
+                  src="./ChatAndBuild-logo-text.png"
                   alt="CoWork OS"
                   className="modern-logo-text logo-for-light"
                 />
@@ -5211,12 +5211,12 @@ export function MainContent({
               <div className="welcome-header-modern modern-only">
                 <div className="modern-logo-container">
                   <img
-                    src="./cowork-os-logo-text-dark.png"
+                    src="./ChatAndBuild-logo-text-dark.png"
                     alt="CoWork OS"
                     className="modern-logo-text logo-for-dark"
                   />
                   <img
-                    src="./cowork-os-logo-text.png"
+                    src="./ChatAndBuild-logo-text.png"
                     alt="CoWork OS"
                     className="modern-logo-text logo-for-light"
                   />
@@ -5228,7 +5228,7 @@ export function MainContent({
 
             <div className="terminal-only">
               <div className="welcome-logo">
-                <img src="./cowork-os-logo.png" alt="CoWork OS" className="welcome-logo-img" />
+                <img src="./ChatAndBuild-logo.png" alt="CoWork OS" className="welcome-logo-img" />
               </div>
 
               {/* ASCII Terminal Header */}

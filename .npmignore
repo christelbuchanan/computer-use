@@ -6,7 +6,7 @@
 .claude/
 
 # iOS companion project (contains Xcode user data)
-cowork-oss/
+ChatAndBuilds/
 
 # Misc files not needed
 *.docx

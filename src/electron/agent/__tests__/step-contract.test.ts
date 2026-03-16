@@ -52,7 +52,7 @@ describe("step-contract write intent", () => {
   it("treats lock/define/set style artifact directives as write intent", () => {
     expect(
       descriptionHasWriteIntent(
-        "Lock requirements in /Users/mesut/Desktop/linux/coworkos/requirements.md with distro defaults.",
+        "Lock requirements in /Users/mesut/Desktop/linux/ChatAndBuildos/requirements.md with distro defaults.",
       ),
     ).toBe(true);
   });

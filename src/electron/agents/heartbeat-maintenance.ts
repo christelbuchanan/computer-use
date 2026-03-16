@@ -4,7 +4,7 @@ import { createHash } from "crypto";
 import { buildWorkspaceKitSections, parseHeartbeatChecklist, renderHeartbeatPrompt } from "../context/kit-injection";
 import { getUserDataDir } from "../utils/user-data-dir";
 
-const KIT_DIRNAME = ".cowork";
+const KIT_DIRNAME = ".ChatAndBuild";
 const STATE_FILENAME = "heartbeat-maintenance-state.json";
 
 export type HeartbeatChecklistCadence = "heartbeat" | "hourly" | "daily" | "weekly" | "monthly";

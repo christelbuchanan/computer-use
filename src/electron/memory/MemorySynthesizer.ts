@@ -12,7 +12,7 @@
  *  3. PlaybookService          — past task patterns & lessons
  *  4. MemoryService            — cross-session memories (observations, insights)
  *  5. KnowledgeGraphService    — known entities & relationships
- *  6. buildWorkspaceKitContext  — .cowork/ workspace notes
+ *  6. buildWorkspaceKitContext  — .ChatAndBuild/ workspace notes
  *
  * Enterprise value:
  *  - 2-3× more efficient token utilisation (dedup + relevance scoring)
@@ -303,7 +303,7 @@ export class MemorySynthesizer {
     }
 
     // Daily summaries: ranked below user_profile/relationship but above raw logs.
-    // Raw daily log files (.cowork/memory/daily/*.md) are never injected.
+    // Raw daily log files (.ChatAndBuild/memory/daily/*.md) are never injected.
     try {
       const summaryFragments = DailyLogSummarizer.getRecentSummaryFragments(
         workspacePath,
@@ -427,7 +427,7 @@ export class MemorySynthesizer {
     }
 
     let fragmentText = parts.length
-      ? `<cowork_synthesized_memory>\n${parts.join("\n")}\n</cowork_synthesized_memory>`
+      ? `<ChatAndBuild_synthesized_memory>\n${parts.join("\n")}\n</ChatAndBuild_synthesized_memory>`
       : "";
 
     // ── 7. Workspace Kit context (handled separately, kept intact) ─

@@ -1,4 +1,4 @@
-package com.coworkos.companion
+package com.ChatAndBuildos.companion
 
 import android.Manifest
 import android.content.Context
@@ -46,7 +46,7 @@ class CoWorkConnection(private val context: Context) {
     val errorMessage = _errorMessage.asStateFlow()
 
     // Settings
-    private val prefs = context.getSharedPreferences("cowork", Context.MODE_PRIVATE)
+    private val prefs = context.getSharedPreferences("ChatAndBuild", Context.MODE_PRIVATE)
     var serverHost: String
         get() = prefs.getString("host", "") ?: ""
         set(value) = prefs.edit().putString("host", value).apply()
@@ -341,7 +341,7 @@ class CoWorkConnection(private val context: Context) {
 
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
             val channel = android.app.NotificationChannel(
-                "cowork_commands",
+                "ChatAndBuild_commands",
                 "CoWork Commands",
                 android.app.NotificationManager.IMPORTANCE_DEFAULT
             )
@@ -349,7 +349,7 @@ class CoWorkConnection(private val context: Context) {
         }
 
         val notification = if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
-            android.app.Notification.Builder(context, "cowork_commands")
+            android.app.Notification.Builder(context, "ChatAndBuild_commands")
         } else {
             @Suppress("DEPRECATION")
             android.app.Notification.Builder(context)

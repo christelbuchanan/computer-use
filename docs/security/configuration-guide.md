@@ -175,8 +175,8 @@ Rate limits are automatic and not configurable:
 ## Audit Logging
 
 All messages and actions are logged automatically:
-- Location: `~/Library/Application Support/cowork-os/`
-- Database: `cowork-os.db`
+- Location: `~/Library/Application Support/ChatAndBuild/`
+- Database: `ChatAndBuild.db`
 - Tables: `audit_log`, `channel_messages`
 
 ## Verification Checklist

@@ -56,5 +56,5 @@ export function getUserDataDir(): string {
   }
 
   const home = process.env.HOME || process.env.USERPROFILE || os.homedir() || "";
-  return path.join(home, ".cowork");
+  return path.join(home, ".ChatAndBuild");
 }

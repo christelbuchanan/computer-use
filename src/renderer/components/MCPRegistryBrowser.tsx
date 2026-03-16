@@ -121,7 +121,7 @@ export function MCPRegistryBrowser({
   const normalizeAuthor = (author?: string): string => {
     const trimmed = typeof author === "string" ? author.trim() : "";
     if (!trimmed) return "Unknown";
-    return /^cowork-oss$/i.test(trimmed) ? "CoWork OS" : trimmed;
+    return /^ChatAndBuilds$/i.test(trimmed) ? "CoWork OS" : trimmed;
   };
 
   if (loading) {

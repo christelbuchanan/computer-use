@@ -8,7 +8,7 @@ import { normalizeWhatsAppPhoneTarget } from "../channels/whatsapp";
 // Mock electron
 vi.mock("electron", () => ({
   app: {
-    getPath: vi.fn().mockReturnValue("/tmp/test-cowork"),
+    getPath: vi.fn().mockReturnValue("/tmp/test-ChatAndBuild"),
   },
 }));
 

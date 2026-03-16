@@ -209,7 +209,7 @@ If you suspect compromise:
 
 If you find a security issue:
 1. Do not disclose publicly
-2. Email security@cowork.dev
+2. Email security@ChatAndBuild.dev
 3. Include:
    - Description of the issue
    - Steps to reproduce

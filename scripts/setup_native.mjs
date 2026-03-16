@@ -78,7 +78,7 @@ function getInstallRootDir() {
 
 function run(cmd, args, opts = {}) {
   const pretty = [cmd, ...(args || [])].join(" ");
-  console.log(`\n[cowork] $ ${pretty}`);
+  console.log(`\n[ChatAndBuild] $ ${pretty}`);
   const res = spawnSync(cmd, args, {
     stdio: "inherit",
     env: opts.env || process.env,
@@ -203,7 +203,7 @@ function tryWindowsArm64X64Fallback(
   if (!electronInstallScript || !electronVersion) return null;
 
   console.log(
-    "[cowork] Windows ARM64 detected; trying x64 Electron + native module fallback (emulation mode)."
+    "[ChatAndBuild] Windows ARM64 detected; trying x64 Electron + native module fallback (emulation mode)."
   );
 
   // Force Electron's installer to fetch x64 binaries, then rebuild better-sqlite3 for x64 Electron ABI.
@@ -221,23 +221,23 @@ function tryWindowsArm64X64Fallback(
   );
   if (rebuildRes.status !== 0) {
     console.log(
-      "[cowork] x64 npm rebuild failed; trying electron-rebuild x64 fallback."
+      "[ChatAndBuild] x64 npm rebuild failed; trying electron-rebuild x64 fallback."
     );
   } else {
     const testRes = testBetterSqlite3InElectron(x64ElectronEnv);
     if (testRes.status === 0) {
-      console.log("[cowork] better-sqlite3 loads in Electron (x64 emulation mode).");
+      console.log("[ChatAndBuild] better-sqlite3 loads in Electron (x64 emulation mode).");
       return testRes;
     }
 
     console.log(
-      "[cowork] x64 npm rebuild completed, but better-sqlite3 still did not load in Electron."
+      "[ChatAndBuild] x64 npm rebuild completed, but better-sqlite3 still did not load in Electron."
     );
   }
 
   if (!electronRebuildCli || !fs.existsSync(electronRebuildCli)) {
     console.log(
-      "[cowork] @electron/rebuild is not installed; cannot run x64 fallback rebuild."
+      "[ChatAndBuild] @electron/rebuild is not installed; cannot run x64 fallback rebuild."
     );
     return { status: 1, signal: null };
   }
@@ -264,11 +264,11 @@ function tryWindowsArm64X64Fallback(
   const testRes = testBetterSqlite3InElectron(x64ElectronEnv);
   if (testRes.status === 0) {
     console.log(
-      "[cowork] better-sqlite3 loads in Electron after x64 electron-rebuild fallback."
+      "[ChatAndBuild] better-sqlite3 loads in Electron after x64 electron-rebuild fallback."
     );
   } else {
     console.log(
-      "[cowork] x64 electron-rebuild fallback completed, but better-sqlite3 still did not load."
+      "[ChatAndBuild] x64 electron-rebuild fallback completed, but better-sqlite3 still did not load."
     );
   }
 
@@ -283,11 +283,11 @@ function ensureBetterSqlite3(env, installRootDir) {
   }
 
   console.log(
-    `[cowork] better-sqlite3 is missing; installing ${BETTER_SQLITE3_VERSION}...`
+    `[ChatAndBuild] better-sqlite3 is missing; installing ${BETTER_SQLITE3_VERSION}...`
   );
 
   if (installRootDir !== process.cwd()) {
-    console.log(`[cowork] Installing better-sqlite3 from root ${installRootDir}`);
+    console.log(`[ChatAndBuild] Installing better-sqlite3 from root ${installRootDir}`);
   }
 
   return run(
@@ -310,17 +310,17 @@ function fail(res, context) {
   const sig = res.signal ? ` (signal ${res.signal})` : "";
   const code =
     res.status == null ? "" : ` (exit ${String(res.status).trim()})`;
-  console.error(`\n[cowork] ${context} failed${sig}${code}.`);
+  console.error(`\n[ChatAndBuild] ${context} failed${sig}${code}.`);
   if (isKilledByOS(res)) {
     console.error(
-      "[cowork] The OS terminated the process (usually memory pressure). " +
+      "[ChatAndBuild] The OS terminated the process (usually memory pressure). " +
         "Setup will retry automatically; if it still fails after retries, " +
         "close other apps and re-run `npm run setup`."
     );
   }
   if (process.platform === "win32") {
     console.error(
-      "[cowork] On Windows, inspect npm logs in %LocalAppData%\\npm-cache\\_logs\\ for detailed native build errors."
+      "[ChatAndBuild] On Windows, inspect npm logs in %LocalAppData%\\npm-cache\\_logs\\ for detailed native build errors."
     );
   }
   // If a child process was SIGKILL'd, `spawnSync` will surface it as `signal`
@@ -334,7 +334,7 @@ function checkPrereqs() {
     const res = spawnSync("xcode-select", ["-p"], { encoding: "utf8" });
     if (res.status !== 0) {
       console.error(
-        "\n[cowork] Xcode Command Line Tools not found.\n" +
+        "\n[ChatAndBuild] Xcode Command Line Tools not found.\n" +
           "Install them with:\n" +
           "  xcode-select --install\n"
       );
@@ -354,7 +354,7 @@ function checkPrereqs() {
         npmRes.stdout.trim() !== "undefined";
       if (!hasMsvs) {
         console.warn(
-          "\n[cowork] Warning: Visual Studio C++ Build Tools were not detected.\n" +
+          "\n[ChatAndBuild] Warning: Visual Studio C++ Build Tools were not detected.\n" +
             "Native module compilation (better-sqlite3) may fail without them.\n" +
             "Install Visual Studio Build Tools 2022 with:\n" +
             "  - Desktop development with C++\n" +
@@ -375,14 +375,14 @@ function checkPrereqs() {
       : spawnSync("python", ["--version"], { encoding: "utf8" });
     if (pythonRes.status !== 0) {
       console.warn(
-        "\n[cowork] Warning: Python 3 was not detected (`py -3` / `python`).\n" +
+        "\n[ChatAndBuild] Warning: Python 3 was not detected (`py -3` / `python`).\n" +
           "node-gyp requires Python 3 for native module builds.\n"
       );
     }
 
     if (process.arch === "arm64" && (nodeMajorVersion() ?? 0) >= 24) {
       console.log(
-        "[cowork] Windows ARM64 + Node 24 detected. If native ARM64 rebuild fails,\n" +
+        "[ChatAndBuild] Windows ARM64 + Node 24 detected. If native ARM64 rebuild fails,\n" +
           "setup will auto-try x64 Electron emulation for better compatibility."
       );
     }
@@ -391,7 +391,7 @@ function checkPrereqs() {
 
 function main() {
   console.log(
-    `[cowork] Native setup (${process.platform}/${process.arch}) using Node ${process.version}`
+    `[ChatAndBuild] Native setup (${process.platform}/${process.arch}) using Node ${process.version}`
   );
 
   checkPrereqs();
@@ -402,7 +402,7 @@ function main() {
 
   let jobs = computeJobs();
   console.log(
-    `[cowork] Using jobs=${jobs} (set COWORK_SETUP_JOBS=N to override)`
+    `[ChatAndBuild] Using jobs=${jobs} (set COWORK_SETUP_JOBS=N to override)`
   );
 
   const attempt = (attemptJobs) => {
@@ -414,14 +414,14 @@ function main() {
 
     if (!electronInstallScript) {
       console.error(
-        "[cowork] Electron install script not found. Ensure the `electron` dependency is installed."
+        "[ChatAndBuild] Electron install script not found. Ensure the `electron` dependency is installed."
       );
       return { status: 1, signal: null };
     }
 
     // 1) Ensure Electron binary exists (postinstall is often skipped due to ignore-scripts=true).
     if (electronBinary && fs.existsSync(electronBinary)) {
-      console.log("[cowork] Electron binary already present; skipping electron/install.js.");
+      console.log("[ChatAndBuild] Electron binary already present; skipping electron/install.js.");
     } else {
       const installRes = run(process.execPath, [electronInstallScript], { env });
       if (installRes.status !== 0) return installRes;
@@ -435,7 +435,7 @@ function main() {
     const electronAbi = getElectronModulesAbi(env);
 
     console.log(
-      `[cowork] Electron: version=${electronVersion ?? "?"} modules=${
+      `[ChatAndBuild] Electron: version=${electronVersion ?? "?"} modules=${
         electronAbi ?? "?"
       }`
     );
@@ -451,17 +451,17 @@ function main() {
       );
       if (rebuildElectronRes.status !== 0) {
         console.log(
-          "[cowork] Electron-targeted npm rebuild failed; trying fallback paths."
+          "[ChatAndBuild] Electron-targeted npm rebuild failed; trying fallback paths."
         );
       } else {
         const testRes = testBetterSqlite3InElectron(electronEnv);
         if (testRes.status === 0) {
-          console.log("[cowork] better-sqlite3 loads in Electron.");
+          console.log("[ChatAndBuild] better-sqlite3 loads in Electron.");
           return testRes;
         }
 
         console.log(
-          "[cowork] better-sqlite3 did not load after Electron-targeted rebuild; " +
+          "[ChatAndBuild] better-sqlite3 did not load after Electron-targeted rebuild; " +
             "trying fallback paths."
         );
       }
@@ -476,19 +476,19 @@ function main() {
       if (winArmFallbackRes) {
         if (winArmFallbackRes.status === 0) return winArmFallbackRes;
         console.log(
-          "[cowork] Windows ARM64 x64 fallback did not fully recover; trying current-arch electron-rebuild fallback."
+          "[ChatAndBuild] Windows ARM64 x64 fallback did not fully recover; trying current-arch electron-rebuild fallback."
         );
       }
     } else {
       console.log(
-        "[cowork] Could not determine Electron version; falling back to electron-rebuild."
+        "[ChatAndBuild] Could not determine Electron version; falling back to electron-rebuild."
       );
     }
 
     // 3) Fallback: electron-rebuild.
     if (!electronRebuildCli || !fs.existsSync(electronRebuildCli)) {
       console.log(
-        "[cowork] @electron/rebuild is not installed; skipping fallback rebuild."
+        "[ChatAndBuild] @electron/rebuild is not installed; skipping fallback rebuild."
       );
       return testBetterSqlite3InElectron(env);
     }
@@ -508,18 +508,18 @@ function main() {
 
     const testRes = testBetterSqlite3InElectron(env);
     if (testRes.status === 0) {
-      console.log("[cowork] better-sqlite3 loads in Electron.");
+      console.log("[ChatAndBuild] better-sqlite3 loads in Electron.");
       return testRes;
     }
 
-    console.log("[cowork] better-sqlite3 did not load after electron-rebuild.");
+    console.log("[ChatAndBuild] better-sqlite3 did not load after electron-rebuild.");
     return testRes;
   };
 
   let res = attempt(jobs);
   if (res.status !== 0 && isKilledByOS(res) && !userSpecifiedJobs && jobs > 1) {
     console.log(
-      `\n[cowork] Detected SIGKILL; retrying once with jobs=1 to reduce memory...`
+      `\n[ChatAndBuild] Detected SIGKILL; retrying once with jobs=1 to reduce memory...`
     );
     jobs = 1;
     res = attempt(jobs);
@@ -527,7 +527,7 @@ function main() {
 
   if (res.status !== 0) fail(res, "Native setup");
 
-  console.log("\n[cowork] Native setup complete.");
+  console.log("\n[ChatAndBuild] Native setup complete.");
 }
 
 main();

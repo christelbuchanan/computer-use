@@ -31,7 +31,7 @@
 - **Document Creation**: Excel, Word, PDF, PowerPoint with professional formatting
 - **Persistent Memory**: Cross-session context with privacy-aware observation capture
 - **Knowledge Graph**: SQLite-backed entity/relationship memory with FTS5 search, graph traversal, and auto-extraction
-- **Workspace Kit**: `.cowork/` project kit + markdown indexing with context injection
+- **Workspace Kit**: `.ChatAndBuild/` project kit + markdown indexing with context injection
 - **Agent Teams**: Multi-agent collaboration with shared checklists, coordinated runs, and team management UI
 - **Collaborative Mode**: Auto-create ephemeral teams where multiple agents work on the same task, sharing thoughts in real-time
 - **Multi-LLM Mode**: Send the same task to multiple LLM providers/models simultaneously, with a judge agent synthesizing the best result
@@ -91,7 +91,7 @@ The home dashboard also surfaces recent automation runs so background work is vi
 
 CoWork OS can also be configured as a founder-directed autonomous company shell by composing several existing systems into one operating loop:
 
-- **Venture operator workspace kit**: initializes `.cowork/` with `COMPANY.md`, `OPERATIONS.md`, `KPIS.md`, `PRIORITIES.md`, and `HEARTBEAT.md`
+- **Venture operator workspace kit**: initializes `.ChatAndBuild/` with `COMPANY.md`, `OPERATIONS.md`, `KPIS.md`, `PRIORITIES.md`, and `HEARTBEAT.md`
 - **Companies control surface**: `Settings > Companies` centralizes company creation, company-graph editing, linked operators, and direct handoff into Digital Twins or Mission Control
 - **Operator twins**: venture-oriented personas such as `Founder Office Operator`, `Company Planner`, `Growth Operator`, and `Customer Ops Lead`
 - **Heartbeat-driven follow-up**: lead operators can proactively run recurring checks defined in `HEARTBEAT.md`
@@ -203,7 +203,7 @@ Role-specific bundles that group skills, agent roles, connectors, and slash comm
 - **"Try asking" in chat**: Empty chat state shows randomized prompt suggestions from enabled packs for one-click task creation
 - **Plugin Store**: In-app marketplace for discovering, installing, and creating packs (from Git repos, URLs, or scaffold)
 - **Remote Pack Registry**: Community-contributed packs catalog with search and category filtering
-- **Extensible**: Create custom packs with JSON manifests in `~/.cowork/extensions/`
+- **Extensible**: Create custom packs with JSON manifests in `~/.ChatAndBuild/extensions/`
 - **Active Context sidebar**: Always-visible right-panel section showing connected MCP connectors with branded Lucide icons (36 known services mapped) and enabled skills, with scrollable sub-sections and 30-second auto-refresh
 - **Skill conflict detection**: Warns when multiple packs register the same skill ID, preventing silent overwrites
 - **Admin Policies**: Organization-level controls for allowed/blocked/required packs, installation permissions, and agent limits
@@ -262,7 +262,7 @@ Configure in **Settings** > **Voice**.
 | **Auto-Capture** | Observations, decisions, and errors captured during task execution |
 | **Agent-Initiated Save** | Agents can explicitly save insights, decisions, observations, and errors via `memory_save` tool for cross-session recall |
 | **Privacy Protection** | Auto-detects sensitive patterns (API keys, passwords, tokens) |
-| **Unified Search** | `search_memories` searches both the memory DB and `.cowork/` workspace markdown files with hybrid semantic + BM25 ranking |
+| **Unified Search** | `search_memories` searches both the memory DB and `.ChatAndBuild/` workspace markdown files with hybrid semantic + BM25 ranking |
 | **LLM Compression** | Summarizes observations for ~10x token efficiency |
 | **Progressive Retrieval** | 3-layer approach: snippets → timeline → full details |
 | **ChatGPT History Import** | Import your full ChatGPT conversation history — eliminates cold start. All data stored locally and encrypted. [Details below](#chatgpt-history-import) |
@@ -334,13 +334,13 @@ A set of connected subsystems that make improvement visible and measurable over 
 
 | Subsystem | Purpose |
 |-----------|---------|
-| **Unified Memory Synthesizer** | Collects 7 memory sources (user profile, relationship, playbook, memory, knowledge graph, workspace kit, daily summaries), deduplicates by 120-char fingerprint, ranks by `relevance × 0.45 + confidence × 0.3 + recency × 0.25`, and assembles a single token-budgeted `<cowork_synthesized_memory>` block injected into every task. |
+| **Unified Memory Synthesizer** | Collects 7 memory sources (user profile, relationship, playbook, memory, knowledge graph, workspace kit, daily summaries), deduplicates by 120-char fingerprint, ranks by `relevance × 0.45 + confidence × 0.3 + recency × 0.25`, and assembles a single token-budgeted `<ChatAndBuild_synthesized_memory>` block injected into every task. |
 | **Adaptive Style Engine** | Observes message length, emoji usage, technical vocabulary, and structured feedback to gradually shift personality settings (response length, emoji usage, explanation depth). Rate-limited to a configurable number of level-shifts per week. |
 | **Playbook-to-Skill Promotion** | When a playbook pattern is reinforced 3+ times, auto-generates a `skill_proposal` for admin review. No skill is created until explicitly approved. |
 | **Channel Persona Adapter** | Applies channel-appropriate communication directives (Slack = terse/structured, email = formal/greeting+sign-off, WhatsApp = short/emoji, etc.) on top of the core persona without replacing it. |
 | **Evolution Metrics** | Computes 5 on-demand metrics: Correction Rate, Style Adaptations, Knowledge Graph growth, Task Success Rate, and Style Alignment. Produces an overall 0–100 Evolution Score. Surfaced in the Daily Briefing. |
-| **Daily Operational Log** | `DailyLogService` writes structured per-day entries (task, feedback, decision, observation) to `.cowork/memory/daily/<YYYY-MM-DD>.md` for use by the summarizer. Raw logs are never injected into prompts. |
-| **Daily Log Summarizer** | Reads pre-written daily summary files from `.cowork/memory/summaries/<YYYY-MM-DD>.md`, applies recency decay (half-life: 7 days), and returns ranked `MemoryFragment` objects that enter the Memory Synthesizer pipeline. |
+| **Daily Operational Log** | `DailyLogService` writes structured per-day entries (task, feedback, decision, observation) to `.ChatAndBuild/memory/daily/<YYYY-MM-DD>.md` for use by the summarizer. Raw logs are never injected into prompts. |
+| **Daily Log Summarizer** | Reads pre-written daily summary files from `.ChatAndBuild/memory/summaries/<YYYY-MM-DD>.md`, applies recency decay (half-life: 7 days), and returns ranked `MemoryFragment` objects that enter the Memory Synthesizer pipeline. |
 
 **Behavior Adaptation controls** (Settings > Guardrails > Behavior Adaptation):
 - **Adaptive Style** toggle — enable/disable style learning (off by default)
@@ -372,9 +372,9 @@ See [Knowledge Graph](knowledge-graph.md) for the full architecture guide.
 
 ---
 
-## Workspace Kit (.cowork)
+## Workspace Kit (.ChatAndBuild)
 
-Initialize and maintain a `.cowork/` directory inside each workspace for durable, human-edited context, scoped prompt injection, project scaffolding, and workspace health checks.
+Initialize and maintain a `.ChatAndBuild/` directory inside each workspace for durable, human-edited context, scoped prompt injection, project scaffolding, and workspace health checks.
 
 The workspace kit is contract-driven: every tracked markdown file has a declared title, scope, parser, prompt budget, freshness window, mutability model, and optional special handling.
 
@@ -402,11 +402,11 @@ The workspace kit is contract-driven: every tracked markdown file has a declared
 
 ### Project and role subdirectories
 
-- Project-specific context lives under `.cowork/projects/<projectId>/`
+- Project-specific context lives under `.ChatAndBuild/projects/<projectId>/`
 - `CONTEXT.md` is the project-scoped task brief, decisions, and notes file
 - `ACCESS.md` is the project-scoped access and boundary file for task and role usage
-- Per-role persona files live under `.cowork/agents/<roleId>/`
-- The health model also tracks supporting directories such as `.cowork/memory/`, `.cowork/memory/hourly/`, `.cowork/memory/weekly/`, `.cowork/projects/`, and `.cowork/agents/`
+- Per-role persona files live under `.ChatAndBuild/agents/<roleId>/`
+- The health model also tracks supporting directories such as `.ChatAndBuild/memory/`, `.ChatAndBuild/memory/hourly/`, `.ChatAndBuild/memory/weekly/`, `.ChatAndBuild/projects/`, and `.ChatAndBuild/agents/`
 
 ### Frontmatter, parsing, and injection
 
@@ -426,7 +426,7 @@ updated: 2026-03-14
 ### Special handling
 
 - `BOOTSTRAP.md` is onboarding-only context, not a durable memory file
-- When `BOOTSTRAP.md` is first present, CoWork OS records `bootstrapSeededAt` in `.cowork/workspace-state.json`
+- When `BOOTSTRAP.md` is first present, CoWork OS records `bootstrapSeededAt` in `.ChatAndBuild/workspace-state.json`
 - When `BOOTSTRAP.md` is later removed, CoWork OS records `onboardingCompletedAt` and does not recreate it during missing-only init flows
 - `HEARTBEAT.md` is reserved for recurring heartbeat work and is intentionally separate from general task/session context
 
@@ -434,15 +434,15 @@ updated: 2026-03-14
 
 - The app surfaces workspace-kit health with missing tracked entries, stale files, warning/error counts, revision counts, and onboarding metadata
 - `ACCESS.md` and `TOOLS.md` receive additional secret detection to catch likely credentials or copied tokens
-- Tracked writes keep snapshots under `.cowork/**/.history/<file>/` together with revision metadata
-- `search_memories` indexes `.cowork/` markdown alongside the main memory system
+- Tracked writes keep snapshots under `.ChatAndBuild/**/.history/<file>/` together with revision metadata
+- `search_memories` indexes `.ChatAndBuild/` markdown alongside the main memory system
 - `npm run kit:lint` validates the current workspace kit from the command line
 - `npm run kit:lint -- --json` emits raw status JSON
 - `npm run kit:lint -- --strict` exits non-zero on warnings or missing tracked entries
 
 ### Quick-open kit files
 
-The Memory Hub exposes **Open USER.md** and **Open MEMORY.md** buttons that open the corresponding `.cowork/` file directly in the system editor. If the file does not exist it is created from a default template (with full frontmatter and section scaffolding) before opening.
+The Memory Hub exposes **Open USER.md** and **Open MEMORY.md** buttons that open the corresponding `.ChatAndBuild/` file directly in the system editor. If the file does not exist it is created from a default template (with full frontmatter and section scaffolding) before opening.
 
 Configure in **Settings** > **Memory Hub**.
 
@@ -450,7 +450,7 @@ Configure in **Settings** > **Memory Hub**.
 
 ## Role Profile Files
 
-Define per-role personality and operating guidelines in `.cowork/agents/<role-id>/`. These files reuse the same contracts, parser rules, and titles as the root workspace kit, and role/task prompts can combine role files with root workspace files when scopes match.
+Define per-role personality and operating guidelines in `.ChatAndBuild/agents/<role-id>/`. These files reuse the same contracts, parser rules, and titles as the root workspace kit, and role/task prompts can combine role files with root workspace files when scopes match.
 
 | File | Title | Purpose |
 |---|---|---|
@@ -648,7 +648,7 @@ Session-scoped note-taking system for agents during long-running tasks.
 | `scratchpad_write` | Write or update notes with key-value pairs (max 100-char keys, 10,000-char values) |
 | `scratchpad_read` | Retrieve all notes or a specific note by key |
 
-Notes persist to `.cowork/scratchpad-{taskId}.json` for crash recovery. The scratchpad is ephemeral per task — useful for agents to track intermediate findings, partial results, and working state during complex multi-step tasks.
+Notes persist to `.ChatAndBuild/scratchpad-{taskId}.json` for crash recovery. The scratchpad is ephemeral per task — useful for agents to track intermediate findings, partial results, and working state during complex multi-step tasks.
 
 ---
 
@@ -906,7 +906,7 @@ See [Chrome Remote Debugging](https://developer.chrome.com/docs/devtools/remote-
 |---------|-------------|
 | **Multi-Browser** | Chromium (bundled), Chrome (system), Brave (auto-discovered) |
 | **Profile Presets** | `user` (launch new Chrome with system profile — fails if Chrome is already running), `chrome-relay` (extension relay), `workspace` (workspace default). For existing signed-in sessions, use `browser_attach` instead. |
-| **Persistent Profiles** | Cookies and storage persist across tasks in `.cowork/browser-profiles/` |
+| **Persistent Profiles** | Cookies and storage persist across tasks in `.ChatAndBuild/browser-profiles/` |
 | **Consent Auto-Dismiss** | 40+ pattern detectors for cookie/GDPR consent popups |
 | **Retry Logic** | 2-attempt retry with per-attempt timeout calculation |
 | **Failure Diagnostics** | Screenshot + page content + URL captured on failure |
@@ -1234,7 +1234,7 @@ Access CoWork OS from any web browser — no Electron desktop app required.
 
 | Aspect | Details |
 |--------|---------|
-| **How** | `cowork-os --serve --port 3000` starts a Node.js server exposing the full React UI over HTTP/WebSocket |
+| **How** | `ChatAndBuild --serve --port 3000` starts a Node.js server exposing the full React UI over HTTP/WebSocket |
 | **Approach** | Reuses all existing main-process logic (agent, tools, database, gateways). IPC calls are mapped to HTTP/WebSocket endpoints |
 | **Desktop features** | System tray, desktop screenshots, and AppleScript degrade gracefully. File dialogs use browser-native pickers |
 | **Security** | Challenge-response authentication (extends existing control plane auth). HTTPS recommended for production |

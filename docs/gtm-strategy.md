@@ -101,5 +101,5 @@ For the full workflow narrative, see [Best-Fit Operational Workflows](best-fit-w
 ## GTM Assets in This Repo
 
 - [OpenClaw Alternative Guide](openclaw-comparison.md)
-- [Migration Guide](migration.md#from-openclaw-to-cowork-os)
+- [Migration Guide](migration.md#from-openclaw-to-ChatAndBuild)
 - [Competitive Landscape Research](competitive-landscape-research.md)

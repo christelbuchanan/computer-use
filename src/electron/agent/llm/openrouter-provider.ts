@@ -43,7 +43,7 @@ export class OpenRouterProvider implements LLMProvider {
         headers: {
           Authorization: `Bearer ${this.apiKey}`,
           "Content-Type": "application/json",
-          "HTTP-Referer": "https://github.com/CoWork-OS/cowork-os",
+          "HTTP-Referer": "https://github.com/CoWork-OS/ChatAndBuild",
           "X-Title": "CoWork-OS",
         },
         body: JSON.stringify({
@@ -95,7 +95,7 @@ export class OpenRouterProvider implements LLMProvider {
         headers: {
           Authorization: `Bearer ${this.apiKey}`,
           "Content-Type": "application/json",
-          "HTTP-Referer": "https://github.com/CoWork-OS/cowork-os",
+          "HTTP-Referer": "https://github.com/CoWork-OS/ChatAndBuild",
           "X-Title": "CoWork-OS",
         },
         body: JSON.stringify({

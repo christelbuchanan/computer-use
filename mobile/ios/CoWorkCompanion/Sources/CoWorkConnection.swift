@@ -27,16 +27,16 @@ class CoWorkConnection: NSObject, ObservableObject, URLSessionWebSocketDelegate,
     // MARK: - Settings (persisted via UserDefaults)
 
     @Published var serverHost: String {
-        didSet { UserDefaults.standard.set(serverHost, forKey: "cowork_host") }
+        didSet { UserDefaults.standard.set(serverHost, forKey: "ChatAndBuild_host") }
     }
     @Published var serverPort: Int {
-        didSet { UserDefaults.standard.set(serverPort, forKey: "cowork_port") }
+        didSet { UserDefaults.standard.set(serverPort, forKey: "ChatAndBuild_port") }
     }
     @Published var token: String {
-        didSet { UserDefaults.standard.set(token, forKey: "cowork_token") }
+        didSet { UserDefaults.standard.set(token, forKey: "ChatAndBuild_token") }
     }
     @Published var autoReconnect: Bool {
-        didSet { UserDefaults.standard.set(autoReconnect, forKey: "cowork_auto_reconnect") }
+        didSet { UserDefaults.standard.set(autoReconnect, forKey: "ChatAndBuild_auto_reconnect") }
     }
 
     // MARK: - Private
@@ -53,10 +53,10 @@ class CoWorkConnection: NSObject, ObservableObject, URLSessionWebSocketDelegate,
     // MARK: - Init
 
     override init() {
-        self.serverHost = UserDefaults.standard.string(forKey: "cowork_host") ?? ""
-        self.serverPort = UserDefaults.standard.integer(forKey: "cowork_port").nonZero ?? 18789
-        self.token = UserDefaults.standard.string(forKey: "cowork_token") ?? ""
-        self.autoReconnect = UserDefaults.standard.bool(forKey: "cowork_auto_reconnect")
+        self.serverHost = UserDefaults.standard.string(forKey: "ChatAndBuild_host") ?? ""
+        self.serverPort = UserDefaults.standard.integer(forKey: "ChatAndBuild_port").nonZero ?? 18789
+        self.token = UserDefaults.standard.string(forKey: "ChatAndBuild_token") ?? ""
+        self.autoReconnect = UserDefaults.standard.bool(forKey: "ChatAndBuild_auto_reconnect")
 
         super.init()
 

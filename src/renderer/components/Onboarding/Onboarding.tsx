@@ -126,7 +126,7 @@ interface OnboardingUiDraft {
   confidenceResponse: string;
 }
 
-const ONBOARDING_UI_DRAFT_KEY = "cowork:onboarding:ui:v1";
+const ONBOARDING_UI_DRAFT_KEY = "ChatAndBuild:onboarding:ui:v1";
 const ONBOARDING_UI_DRAFT_VERSION = 1;
 const ONBOARDING_UI_DRAFT_MAX_AGE_MS = 1000 * 60 * 60 * 24 * 14;
 

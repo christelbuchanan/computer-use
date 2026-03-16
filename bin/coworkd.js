@@ -8,15 +8,15 @@ if (process.env.COWORK_TZ) {
     if (test && test !== "Invalid Date") {
       process.env.TZ = process.env.COWORK_TZ;
     } else {
-      console.warn(`[coworkd] Invalid COWORK_TZ='${process.env.COWORK_TZ}', using default`);
+      console.warn(`[ChatAndBuildd] Invalid COWORK_TZ='${process.env.COWORK_TZ}', using default`);
     }
   } catch {
-    console.warn(`[coworkd] Invalid COWORK_TZ='${process.env.COWORK_TZ}', using default`);
+    console.warn(`[ChatAndBuildd] Invalid COWORK_TZ='${process.env.COWORK_TZ}', using default`);
   }
 }
 
 /**
- * coworkd: Headless daemon entrypoint.
+ * ChatAndBuildd: Headless daemon entrypoint.
  *
  * Defaults:
  * - headless (no UI)
@@ -72,7 +72,7 @@ async function main() {
       'CoWork OS daemon (headless)',
       '',
       'Usage:',
-      '  node bin/coworkd.js [electronArgs...]',
+      '  node bin/ChatAndBuildd.js [electronArgs...]',
       '',
       'Defaults (can be overridden by passing flags explicitly):',
       '  --headless',
@@ -81,14 +81,14 @@ async function main() {
       '  --user-data-dir <path>',
       '',
       'Common env vars:',
-      '  COWORK_USER_DATA_DIR=/var/lib/cowork-os',
+      '  COWORK_USER_DATA_DIR=/var/lib/ChatAndBuild',
       '  COWORK_CONTROL_PLANE_HOST=127.0.0.1',
       '  COWORK_CONTROL_PLANE_PORT=18789',
       '  COWORK_LLM_PROVIDER=openai',
       '  OPENAI_API_KEY=...',
       '',
       'Examples:',
-      '  node bin/coworkd.js --print-control-plane-token',
+      '  node bin/ChatAndBuildd.js --print-control-plane-token',
     ].join('\n'));
     return;
   }

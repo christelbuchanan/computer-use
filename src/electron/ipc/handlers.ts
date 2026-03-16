@@ -642,15 +642,15 @@ export async function setupIpcHandlers(
       if (hasWorkspace) {
         if (basename && basename !== "." && basename !== "..") {
           addCandidate(path.join(normalizedWorkspace, basename));
-          addCandidate(path.join(normalizedWorkspace, ".cowork", basename));
+          addCandidate(path.join(normalizedWorkspace, ".ChatAndBuild", basename));
           addCandidate(path.join(normalizedWorkspace, "artifacts", basename));
         }
 
-        // If a legacy absolute path points into ".cowork/" or "artifacts/", remap to active workspace.
+        // If a legacy absolute path points into ".ChatAndBuild/" or "artifacts/", remap to active workspace.
         const segments = normalizedInput.split(/[\\/]+/).filter(Boolean);
-        const coworkIdx = segments.lastIndexOf(".cowork");
-        if (coworkIdx >= 0 && coworkIdx < segments.length - 1) {
-          addCandidate(path.join(normalizedWorkspace, ".cowork", ...segments.slice(coworkIdx + 1)));
+        const ChatAndBuildIdx = segments.lastIndexOf(".ChatAndBuild");
+        if (ChatAndBuildIdx >= 0 && ChatAndBuildIdx < segments.length - 1) {
+          addCandidate(path.join(normalizedWorkspace, ".ChatAndBuild", ...segments.slice(ChatAndBuildIdx + 1)));
         }
         const artifactsIdx = segments.lastIndexOf("artifacts");
         if (artifactsIdx >= 0 && artifactsIdx < segments.length - 1) {
@@ -666,12 +666,12 @@ export async function setupIpcHandlers(
       addCandidate(path.join(normalizedWorkspace, normalizedInput));
 
       if (!hasParentTraversal) {
-        addCandidate(path.join(normalizedWorkspace, ".cowork", normalizedRelativeInput));
+        addCandidate(path.join(normalizedWorkspace, ".ChatAndBuild", normalizedRelativeInput));
         addCandidate(path.join(normalizedWorkspace, "artifacts", normalizedRelativeInput));
 
         if (basename && basename !== normalizedRelativeInput) {
           addCandidate(path.join(normalizedWorkspace, basename));
-          addCandidate(path.join(normalizedWorkspace, ".cowork", basename));
+          addCandidate(path.join(normalizedWorkspace, ".ChatAndBuild", basename));
           addCandidate(path.join(normalizedWorkspace, "artifacts", basename));
         }
       }
@@ -722,7 +722,7 @@ export async function setupIpcHandlers(
   const renderPdfFirstPageThumbnail = async (pdfPath: string): Promise<string | undefined> => {
     let tempDir: string | undefined;
     try {
-      tempDir = await fs.mkdtemp(path.join(os.tmpdir(), "cowork-pdf-thumb-"));
+      tempDir = await fs.mkdtemp(path.join(os.tmpdir(), "ChatAndBuild-pdf-thumb-"));
       const outputPrefix = path.join(tempDir, "page-1");
       await execFileAsync(
         "pdftoppm",
@@ -755,7 +755,7 @@ export async function setupIpcHandlers(
     }
   };
 
-  const MANAGED_IMAGE_TEMP_PREFIX = "cowork-image-";
+  const MANAGED_IMAGE_TEMP_PREFIX = "ChatAndBuild-image-";
 
   const isManagedImageTempFile = (filePath: string): boolean => {
     if (!path.isAbsolute(filePath)) {
@@ -1296,7 +1296,7 @@ export async function setupIpcHandlers(
 
       const ensureUploadRoot = async (): Promise<string> => {
         if (uploadRoot) return uploadRoot;
-        uploadRoot = path.join(workspace.path, ".cowork", "uploads", `${Date.now()}`);
+        uploadRoot = path.join(workspace.path, ".ChatAndBuild", "uploads", `${Date.now()}`);
         await fs.mkdir(uploadRoot, { recursive: true });
         return uploadRoot;
       };
@@ -1399,7 +1399,7 @@ export async function setupIpcHandlers(
         return candidate;
       };
 
-      const uploadRoot = path.join(workspace.path, ".cowork", "uploads", `${Date.now()}`);
+      const uploadRoot = path.join(workspace.path, ".ChatAndBuild", "uploads", `${Date.now()}`);
       await fs.mkdir(uploadRoot, { recursive: true });
       const usedNames = new Set<string>();
 
@@ -4475,7 +4475,7 @@ export async function setupIpcHandlers(
   // Hooks (Webhooks & Gmail Pub/Sub) handlers
   await setupHooksHandlers(agentDaemon);
 
-  // Workspace kit (.cowork) handlers
+  // Workspace kit (.ChatAndBuild) handlers
   setupKitHandlers(workspaceRepo, agentDaemon);
 
   // Memory system handlers
@@ -5526,13 +5526,13 @@ function broadcastPersonalitySettingsChanged(settings: Any): void {
 }
 
 /**
- * Set up Workspace Kit (.cowork) IPC handlers
+ * Set up Workspace Kit (.ChatAndBuild) IPC handlers
  */
 function setupKitHandlers(
   workspaceRepo: WorkspaceRepository,
   agentDaemon: AgentDaemon,
 ): void {
-  const kitDirName = ".cowork";
+  const kitDirName = ".ChatAndBuild";
 
   const getLocalDateStamp = (now: Date): string => {
     const yyyy = String(now.getFullYear());
@@ -5598,8 +5598,8 @@ function setupKitHandlers(
         content:
           `# Workspace Rules\n\n` +
           `## Coordination\n` +
-          `- Keep durable context in .cowork/MEMORY.md\n` +
-          `- For project work, log in .cowork/projects/<project>/CONTEXT.md\n` +
+          `- Keep durable context in .ChatAndBuild/MEMORY.md\n` +
+          `- For project work, log in .ChatAndBuild/projects/<project>/CONTEXT.md\n` +
           `- Prefer small, well-scoped changes and leave clear notes\n\n` +
           `## Quality Bar\n` +
           `- Be explicit about assumptions and constraints\n` +
@@ -5729,7 +5729,7 @@ function setupKitHandlers(
           `# Operational Rules\n\n` +
           `- [ ] Requires approval for irreversible actions, external spend, and production-impacting changes\n` +
           `- [ ] Confirm ambiguous destructive actions before proceeding\n` +
-          `- [ ] Record durable decisions in .cowork/MEMORY.md or project CONTEXT.md\n` +
+          `- [ ] Record durable decisions in .ChatAndBuild/MEMORY.md or project CONTEXT.md\n` +
           `- [ ] Surface blockers, assumptions, and risks explicitly\n`,
       },
       {
@@ -5749,11 +5749,11 @@ function setupKitHandlers(
           `# Vibes\n\n` +
           `Current energy and mode for this workspace. Updated by the agent based on cues.\n\n` +
           `## Current\n` +
-          `<!-- cowork:auto:vibes:start -->\n` +
+          `<!-- ChatAndBuild:auto:vibes:start -->\n` +
           `- Mode: default\n` +
           `- Energy: balanced\n` +
           `- Notes: Ready to work\n` +
-          `<!-- cowork:auto:vibes:end -->\n\n` +
+          `<!-- ChatAndBuild:auto:vibes:end -->\n\n` +
           `## User Preferences\n` +
           `- \n`,
       },
@@ -5764,9 +5764,9 @@ function setupKitHandlers(
           `This file is workspace-local and can be auto-updated by the system.\n` +
           `It captures shared history between the human and the assistant.\n\n` +
           `## Milestones\n` +
-          `<!-- cowork:auto:lore:start -->\n` +
+          `<!-- ChatAndBuild:auto:lore:start -->\n` +
           `- (none)\n` +
-          `<!-- cowork:auto:lore:end -->\n\n` +
+          `<!-- ChatAndBuild:auto:lore:end -->\n\n` +
           `## Notes\n` +
           `- \n`,
       },
@@ -5774,12 +5774,12 @@ function setupKitHandlers(
         relPath: path.join(kitDirName, "BOOTSTRAP.md"),
         content:
           `# First-Run Guide\n\n` +
-          `1. Fill in \`.cowork/USER.md\` (who you are, preferences).\n` +
-          `2. Fill in \`.cowork/IDENTITY.md\` and \`.cowork/SOUL.md\` (how the assistant should act).\n` +
-          `3. Add durable rules/constraints to \`.cowork/MEMORY.md\`.\n` +
-          `4. Fill in \`.cowork/COMPANY.md\`, \`.cowork/OPERATIONS.md\`, and \`.cowork/KPIS.md\`.\n` +
-          `5. Add recurring checks to \`.cowork/HEARTBEAT.md\`.\n` +
-          `6. Review \`.cowork/VIBES.md\` and \`.cowork/LORE.md\` over time.\n\n` +
+          `1. Fill in \`.ChatAndBuild/USER.md\` (who you are, preferences).\n` +
+          `2. Fill in \`.ChatAndBuild/IDENTITY.md\` and \`.ChatAndBuild/SOUL.md\` (how the assistant should act).\n` +
+          `3. Add durable rules/constraints to \`.ChatAndBuild/MEMORY.md\`.\n` +
+          `4. Fill in \`.ChatAndBuild/COMPANY.md\`, \`.ChatAndBuild/OPERATIONS.md\`, and \`.ChatAndBuild/KPIS.md\`.\n` +
+          `5. Add recurring checks to \`.ChatAndBuild/HEARTBEAT.md\`.\n` +
+          `6. Review \`.ChatAndBuild/VIBES.md\` and \`.ChatAndBuild/LORE.md\` over time.\n\n` +
           (isVenturePreset
             ? `Suggested next step for venture mode: activate a founder-office or operator twin and link each active project to a workspace.\n\n`
             : ``) +
@@ -5817,7 +5817,7 @@ function setupKitHandlers(
         content:
           `# Gateway Router Rules (Optional)\n\n` +
           `You can add a workspace-local message triage script at:\n` +
-          `- \`.cowork/router/rules.monty\`\n\n` +
+          `- \`.ChatAndBuild/router/rules.monty\`\n\n` +
           `This runs before a message is forwarded to the agent (regular messages only, not slash commands).\n` +
           `It can be used to:\n` +
           `- ignore low-signal messages ("ok", "thanks")\n` +
@@ -5845,7 +5845,7 @@ function setupKitHandlers(
         content:
           `# Tool Policy Hook (Optional)\n\n` +
           `You can add a workspace-local tool policy script at:\n` +
-          `- \`.cowork/policy/tools.monty\`\n\n` +
+          `- \`.ChatAndBuild/policy/tools.monty\`\n\n` +
           `This runs before each tool call.\n\n` +
           `Input is available as \`input\` and includes:\n` +
           `- input['tool'] (tool name)\n` +
@@ -5871,9 +5871,9 @@ function setupKitHandlers(
           `## Preferences\n` +
           `- (add preferred defaults and conventions here)\n\n` +
           `## Auto Learnings\n` +
-          `<!-- cowork:auto:memory:start -->\n` +
+          `<!-- ChatAndBuild:auto:memory:start -->\n` +
           `- (none)\n` +
-          `<!-- cowork:auto:memory:end -->\n\n` +
+          `<!-- ChatAndBuild:auto:memory:end -->\n\n` +
           `## Known Constraints\n` +
           `- (add constraints and guardrails here)\n`,
       },
@@ -5886,10 +5886,10 @@ function setupKitHandlers(
           `## Daily\n` +
           (isVenturePreset
             ? `- Review open loops, priority issues, and due customer commitments\n` +
-              `- Check KPI deltas and write notable changes into .cowork/KPIS.md\n` +
-              `- Summarize key decisions into .cowork/MEMORY.md\n\n`
+              `- Check KPI deltas and write notable changes into .ChatAndBuild/KPIS.md\n` +
+              `- Summarize key decisions into .ChatAndBuild/MEMORY.md\n\n`
             : `- Review open loops and next actions\n` +
-              `- Summarize key decisions into .cowork/MEMORY.md\n\n`) +
+              `- Summarize key decisions into .ChatAndBuild/MEMORY.md\n\n`) +
           `## Weekly\n` +
           (isVenturePreset
             ? `- Review team performance and update autonomy levels if needed\n` +
@@ -5924,9 +5924,9 @@ function setupKitHandlers(
           `This file is workspace-local and can be auto-updated by agents.\n` +
           `Use it to track entities/topics that show up across multiple agents, contradictions, and amplified opportunities.\n\n` +
           `## Signals (Last 24h)\n` +
-          `<!-- cowork:auto:signals:start -->\n` +
+          `<!-- ChatAndBuild:auto:signals:start -->\n` +
           `- (none)\n` +
-          `<!-- cowork:auto:signals:end -->\n\n` +
+          `<!-- ChatAndBuild:auto:signals:end -->\n\n` +
           `## Conflicts / Contradictions\n` +
           `- \n\n` +
           `## Notes\n` +
@@ -5939,9 +5939,9 @@ function setupKitHandlers(
           `This file is workspace-local and can be auto-updated by the system.\n` +
           `Use it to capture rejection reasons and durable preference patterns.\n\n` +
           `## Patterns\n` +
-          `<!-- cowork:auto:mistakes:start -->\n` +
+          `<!-- ChatAndBuild:auto:mistakes:start -->\n` +
           `- (none)\n` +
-          `<!-- cowork:auto:mistakes:end -->\n\n` +
+          `<!-- ChatAndBuild:auto:mistakes:end -->\n\n` +
           `## Notes\n` +
           `- \n`,
       },
@@ -5976,12 +5976,12 @@ function setupKitHandlers(
         relPath: path.join(kitDirName, "memory", `${stamp}.md`),
         content:
           `# Daily Log (${stamp})\n\n` +
-          `<!-- cowork:auto:daily:start -->\n` +
+          `<!-- ChatAndBuild:auto:daily:start -->\n` +
           `## Open Loops\n\n` +
           `## Next Actions\n\n` +
           `## Decisions\n\n` +
           `## Summary\n\n` +
-          `<!-- cowork:auto:daily:end -->\n\n` +
+          `<!-- ChatAndBuild:auto:daily:end -->\n\n` +
           `## Notes\n` +
           `- \n`,
       },
@@ -6035,16 +6035,16 @@ function setupKitHandlers(
     if (!cron) return;
 
     const markers = {
-      hourly: "cowork:kit:memory:hourly:v1",
-      daily: "cowork:kit:memory:daily:v1",
-      weekly: "cowork:kit:memory:weekly:v1",
+      hourly: "ChatAndBuild:kit:memory:hourly:v1",
+      daily: "ChatAndBuild:kit:memory:daily:v1",
+      weekly: "ChatAndBuild:kit:memory:weekly:v1",
     } as const;
 
     const buildHourlyPrompt = () =>
       [
         "You are the scheduled hourly memory digest for this workspace.",
         "",
-        "Goal: preserve continuity by writing a structured hourly summary to `.cowork/memory/hourly/{{date}}.md`.",
+        "Goal: preserve continuity by writing a structured hourly summary to `.ChatAndBuild/memory/hourly/{{date}}.md`.",
         "",
         "Steps:",
         "1) Call tool `task_events` with:",
@@ -6059,12 +6059,12 @@ function setupKitHandlers(
         '   - "Kit: Daily Context Sync"',
         '   - "Kit: Weekly Synthesis"',
         "3) Produce a concise structured summary ONLY from the tool output (do not hallucinate).",
-        "4) Ensure `.cowork/memory/hourly/{{date}}.md` exists. If missing, create it with:",
+        "4) Ensure `.ChatAndBuild/memory/hourly/{{date}}.md` exists. If missing, create it with:",
         "   - `# Hourly Log ({{date}})`",
         "   - a blank line",
-        "   - `<!-- cowork:auto:hourly:start -->`",
-        "   - `<!-- cowork:auto:hourly:end -->`",
-        "5) Insert a new entry immediately before `<!-- cowork:auto:hourly:end -->` (do not modify anything outside the markers).",
+        "   - `<!-- ChatAndBuild:auto:hourly:start -->`",
+        "   - `<!-- ChatAndBuild:auto:hourly:end -->`",
+        "5) Insert a new entry immediately before `<!-- ChatAndBuild:auto:hourly:end -->` (do not modify anything outside the markers).",
         "",
         "Entry format (must match):",
         "### <local timestamp YYYY-MM-DD HH:MM> ({{prev_run}} -> {{now}})",
@@ -6089,7 +6089,7 @@ function setupKitHandlers(
       [
         "You are the scheduled daily context sync for this workspace.",
         "",
-        "Goal: consolidate today's work into `.cowork/memory/{{date}}.md` without destroying manual notes.",
+        "Goal: consolidate today's work into `.ChatAndBuild/memory/{{date}}.md` without destroying manual notes.",
         "",
         "Steps:",
         "1) Call tool `task_events` with:",
@@ -6102,9 +6102,9 @@ function setupKitHandlers(
         '   - "Kit: Daily Context Sync"',
         '   - "Kit: Weekly Synthesis"',
         "3) Summarize ONLY from the tool output (do not hallucinate). Focus on: open loops, next actions, decisions, and a short narrative summary.",
-        "4) Update `.cowork/memory/{{date}}.md` by upserting an auto section delimited by these markers:",
-        "   - `<!-- cowork:auto:daily:start -->`",
-        "   - `<!-- cowork:auto:daily:end -->`",
+        "4) Update `.ChatAndBuild/memory/{{date}}.md` by upserting an auto section delimited by these markers:",
+        "   - `<!-- ChatAndBuild:auto:daily:start -->`",
+        "   - `<!-- ChatAndBuild:auto:daily:end -->`",
         "   If the file or markers are missing, create/append them; do not remove or rewrite other content.",
         "",
         "Auto section body format (must match):",
@@ -6127,7 +6127,7 @@ function setupKitHandlers(
       [
         "You are the scheduled weekly synthesis for this workspace.",
         "",
-        "Goal: distill compounding learnings and next-week focus, then update `.cowork/MEMORY.md` (auto section) and write a weekly report file.",
+        "Goal: distill compounding learnings and next-week focus, then update `.ChatAndBuild/MEMORY.md` (auto section) and write a weekly report file.",
         "",
         "Steps:",
         "1) Call tool `task_events` with:",
@@ -6135,20 +6135,20 @@ function setupKitHandlers(
         "   - limit: 500",
         `   - workspace_id: "${workspaceId}"`,
         "   - include_payload: true",
-        "2) Read `.cowork/MISTAKES.md` to ground preference patterns in actual recorded feedback.",
-        "3) Write a weekly report to `.cowork/memory/weekly/{{date}}.md` with:",
+        "2) Read `.ChatAndBuild/MISTAKES.md` to ground preference patterns in actual recorded feedback.",
+        "3) Write a weekly report to `.ChatAndBuild/memory/weekly/{{date}}.md` with:",
         "   - Wins (what shipped / moved forward)",
         "   - Misses (what stalled / why)",
         "   - Patterns (approval/rejection themes)",
         "   - Process updates (what to do differently)",
         "   - Next week focus (top 3)",
-        "4) Update `.cowork/MEMORY.md` by upserting an auto section delimited by:",
-        "   - `<!-- cowork:auto:memory:start -->`",
-        "   - `<!-- cowork:auto:memory:end -->`",
+        "4) Update `.ChatAndBuild/MEMORY.md` by upserting an auto section delimited by:",
+        "   - `<!-- ChatAndBuild:auto:memory:start -->`",
+        "   - `<!-- ChatAndBuild:auto:memory:end -->`",
         "   Keep it to 5-15 bullets, only durable learnings and preferences (no daily noise).",
         "",
         "Constraints:",
-        "- Do not hallucinate; ground everything in tool output and `.cowork/MISTAKES.md`.",
+        "- Do not hallucinate; ground everything in tool output and `.ChatAndBuild/MISTAKES.md`.",
         '- Ignore events from tasks titled "Kit: Hourly Memory Digest" / "Kit: Daily Context Sync" / "Kit: Weekly Synthesis".',
         "",
         "Return 1-3 sentences confirming the write (do not paste the full report).",
@@ -6372,9 +6372,9 @@ function setupKitHandlers(
       checkRateLimit(IPC_CHANNELS.KIT_OPEN_FILE, RATE_LIMIT_CONFIGS.limited);
       const workspacePath = getWorkspacePath(args.workspaceId);
 
-      // Sanitize relPath: must start with .cowork/ and not escape it
+      // Sanitize relPath: must start with .ChatAndBuild/ and not escape it
       const relPath = (args.relPath || "").replace(/\\/g, "/").trim();
-      if (!relPath.startsWith(".cowork/") || relPath.includes("..")) {
+      if (!relPath.startsWith(".ChatAndBuild/") || relPath.includes("..")) {
         throw new Error("Invalid relPath");
       }
 
@@ -6837,10 +6837,10 @@ function setupMemoryHandlers(): void {
   logger.debug("[Memory] Handlers initialized");
 
   // === Migration Status Handlers ===
-  // These handlers help show one-time notifications after app migration (cowork-oss → cowork-os)
+  // These handlers help show one-time notifications after app migration (ChatAndBuilds → ChatAndBuild)
 
   const userDataPath = getUserDataDir();
-  const migrationMarkerPath = path.join(userDataPath, ".migrated-from-cowork-oss");
+  const migrationMarkerPath = path.join(userDataPath, ".migrated-from-ChatAndBuilds");
   const notificationDismissedPath = path.join(userDataPath, ".migration-notification-dismissed");
 
   // Get migration status
@@ -6898,7 +6898,7 @@ function setupMemoryHandlers(): void {
     if (typeof author !== "string") return undefined;
     const trimmed = author.trim();
     if (!trimmed) return undefined;
-    return /^cowork-oss$/i.test(trimmed) ? "CoWork OS" : trimmed;
+    return /^ChatAndBuilds$/i.test(trimmed) ? "CoWork OS" : trimmed;
   };
 
   // List all extensions

@@ -10,7 +10,7 @@ Access from **Settings** > **Customize**.
 
 ### Plugin Pack
 
-A JSON manifest (`cowork.plugin.json`) that bundles related capabilities:
+A JSON manifest (`ChatAndBuild.plugin.json`) that bundles related capabilities:
 
 | Field | Purpose |
 |-------|---------|
@@ -28,7 +28,7 @@ A JSON manifest (`cowork.plugin.json`) that bundles related capabilities:
 | Scope | Source | Managed By |
 |-------|--------|------------|
 | **Bundled** | Ships with CoWork OS in `resources/plugin-packs/` | CoWork OS team |
-| **Personal** | User-created in `~/.cowork/extensions/` | Individual user |
+| **Personal** | User-created in `~/.ChatAndBuild/extensions/` | Individual user |
 | **Organization** | Distributed by org admins | Organization admin |
 
 ### How Packs Differ from Individual Skills
@@ -581,11 +581,11 @@ App Startup
 PluginRegistry.initialize()
     │
     ├── Scan: resources/plugin-packs/     (bundled packs)
-    ├── Scan: ~/.cowork/extensions/        (personal packs)
+    ├── Scan: ~/.ChatAndBuild/extensions/        (personal packs)
     └── Scan: {org-dir}/                   (organization packs)
     │
     ▼
-For each cowork.plugin.json found:
+For each ChatAndBuild.plugin.json found:
     │
     ├── Validate manifest (required fields, semver, platform)
     ├── Register skills → Custom Skill Loader
@@ -616,7 +616,7 @@ For each cowork.plugin.json found:
 
 ### State Persistence
 
-Pack and skill toggle states are persisted in `pack-states.json` in the user data directory (`~/Library/Application Support/cowork-os/`). The file uses the following format:
+Pack and skill toggle states are persisted in `pack-states.json` in the user data directory (`~/Library/Application Support/ChatAndBuild/`). The file uses the following format:
 
 ```json
 {
@@ -705,7 +705,7 @@ window.electronAPI.checkPackUpdates()
 
 // Pack distribution
 window.electronAPI.scaffoldPluginPack(options)
-// Creates a new pack skeleton in ~/.cowork/extensions/
+// Creates a new pack skeleton in ~/.ChatAndBuild/extensions/
 
 window.electronAPI.installPluginPackFromGit(gitUrl)
 // Clones and installs a pack from a Git repository
@@ -714,7 +714,7 @@ window.electronAPI.installPluginPackFromUrl(url)
 // Downloads and installs a pack manifest from a URL
 
 window.electronAPI.uninstallPluginPack(packName)
-// Removes a user-installed pack from ~/.cowork/extensions/
+// Removes a user-installed pack from ~/.ChatAndBuild/extensions/
 
 // Remote registry
 window.electronAPI.searchPackRegistry(query, options?)
@@ -757,12 +757,12 @@ Click the **"+"** button in the Customize panel sidebar header to open the Plugi
 
 **Install from URL/Git**
 - Enter any Git URL (`github:owner/repo`, `https://github.com/...`, `git@github.com:...`)
-- Or enter a direct URL to a `cowork.plugin.json` manifest
+- Or enter a direct URL to a `ChatAndBuild.plugin.json` manifest
 - Progress feedback during installation
 
 **Create New Pack**
 - Fill in pack name, display name, category, and icon
-- Scaffolds a new pack directory in `~/.cowork/extensions/`
+- Scaffolds a new pack directory in `~/.ChatAndBuild/extensions/`
 - Includes example skill and agent role to get started
 - Opens in the Customize panel immediately after creation
 
@@ -770,27 +770,27 @@ Click the **"+"** button in the Customize panel sidebar header to open the Plugi
 
 **From Git:**
 1. Shallow clone the repository to a temp directory
-2. Validate the `cowork.plugin.json` manifest
+2. Validate the `ChatAndBuild.plugin.json` manifest
 3. Remove the `.git` directory
-4. Move to `~/.cowork/extensions/{pack-name}/`
+4. Move to `~/.ChatAndBuild/extensions/{pack-name}/`
 5. Trigger plugin discovery to register the new pack
 
 **From URL:**
 1. Fetch the manifest JSON from the URL
 2. Validate required fields and structure
-3. Write to `~/.cowork/extensions/{pack-name}/cowork.plugin.json`
+3. Write to `~/.ChatAndBuild/extensions/{pack-name}/ChatAndBuild.plugin.json`
 4. Trigger plugin discovery to register the new pack
 
 **From Scaffold:**
 1. Validate pack name (kebab-case, max 64 chars, no path traversal)
-2. Create directory in `~/.cowork/extensions/`
-3. Generate `cowork.plugin.json` with all fields populated
+2. Create directory in `~/.ChatAndBuild/extensions/`
+3. Generate `ChatAndBuild.plugin.json` with all fields populated
 4. Optionally include example skill and agent role
 5. Trigger plugin discovery to register the new pack
 
 ### Uninstallation
 
-Only user-installed packs (in `~/.cowork/extensions/`) can be uninstalled. Bundled packs and organization packs cannot be removed.
+Only user-installed packs (in `~/.ChatAndBuild/extensions/`) can be uninstalled. Bundled packs and organization packs cannot be removed.
 
 To uninstall: right-click a personal pack in the sidebar or use the API:
 ```typescript
@@ -855,7 +855,7 @@ Enterprise administrators can control plugin pack availability across the organi
 
 Packs placed in the organization directory are loaded with `scope: "organization"` and shown in a separate "Organization" section in the Customize sidebar.
 
-**Default org directory:** `~/.cowork/org-plugins/`
+**Default org directory:** `~/.ChatAndBuild/org-plugins/`
 **Custom org directory:** Set via Admin Policies > Organization > Organization Plugin Directory
 
 ### Policy Enforcement
@@ -886,11 +886,11 @@ There are three ways to create a custom pack:
 
 ### 2. Manual Creation
 
-Create a directory in `~/.cowork/extensions/` with a `cowork.plugin.json` manifest:
+Create a directory in `~/.ChatAndBuild/extensions/` with a `ChatAndBuild.plugin.json` manifest:
 
 ```
-~/.cowork/extensions/my-custom-pack/
-└── cowork.plugin.json
+~/.ChatAndBuild/extensions/my-custom-pack/
+└── ChatAndBuild.plugin.json
 ```
 
 ### 3. Via CLI API
@@ -1142,7 +1142,7 @@ CoWork OS plugin packs offer capabilities beyond typical AI assistant plugins:
 ## Troubleshooting
 
 ### Pack not appearing in Customize panel
-- Verify `cowork.plugin.json` exists in the pack directory
+- Verify `ChatAndBuild.plugin.json` exists in the pack directory
 - Check that `"type": "pack"` is set in the manifest
 - Ensure the `name` field is unique across all packs
 - Restart the app to trigger pack discovery
@@ -1176,7 +1176,7 @@ CoWork OS plugin packs offer capabilities beyond typical AI assistant plugins:
 
 ### Git install fails
 - Verify the Git URL is accessible (try cloning manually)
-- Check that the repo contains a valid `cowork.plugin.json` at the root
+- Check that the repo contains a valid `ChatAndBuild.plugin.json` at the root
 - Git-based installation may be disabled by admin policy
 
 ### Skill ID conflict between packs

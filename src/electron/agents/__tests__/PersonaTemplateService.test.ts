@@ -26,7 +26,7 @@ describeWithSqlite("PersonaTemplateService company assignment", () => {
   let controlPlaneService: import("../../control-plane/ControlPlaneCoreService").ControlPlaneCoreService;
 
   beforeEach(async () => {
-    tmpDir = fs.mkdtempSync(path.join(os.tmpdir(), "cowork-persona-template-"));
+    tmpDir = fs.mkdtempSync(path.join(os.tmpdir(), "ChatAndBuild-persona-template-"));
     previousUserDataDir = process.env.COWORK_USER_DATA_DIR;
     process.env.COWORK_USER_DATA_DIR = tmpDir;
 

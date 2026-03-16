@@ -599,7 +599,7 @@ export class HooksServer {
 
     // Check X-CoWork-Token header
     const headerToken =
-      typeof req.headers["x-cowork-token"] === "string" ? req.headers["x-cowork-token"].trim() : "";
+      typeof req.headers["x-ChatAndBuild-token"] === "string" ? req.headers["x-ChatAndBuild-token"].trim() : "";
     if (headerToken) return { token: headerToken, fromQuery: false };
 
     // Check query param (deprecated)

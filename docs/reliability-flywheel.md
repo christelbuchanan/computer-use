@@ -242,12 +242,12 @@ npm run qa:reliability
 
 Optional DB override:
 ```bash
-COWORK_DB_PATH=/tmp/cowork-eval.db npm run qa:eval:run -- --suite reliability-regressions --mode deterministic
+COWORK_DB_PATH=/tmp/ChatAndBuild-eval.db npm run qa:eval:run -- --suite reliability-regressions --mode deterministic
 ```
 
 ## Local-Only Data Policy
 
-- Reliability data is stored in local SQLite (`userData/cowork-os.db`).
+- Reliability data is stored in local SQLite (`userData/ChatAndBuild.db`).
 - Eval corpus entries are sanitized before persistence.
 - No required telemetry upload path is introduced by this reliability system.
 

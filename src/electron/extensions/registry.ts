@@ -249,7 +249,7 @@ export class PluginRegistry extends EventEmitter {
 
     // Check compatibility
     if (!isPluginCompatible(manifest, COWORK_VERSION)) {
-      logger.warn(`Plugin ${pluginName} requires CoWork ${manifest.coworkVersion}, skipping`);
+      logger.warn(`Plugin ${pluginName} requires CoWork ${manifest.ChatAndBuildVersion}, skipping`);
       return;
     }
 
@@ -313,7 +313,7 @@ export class PluginRegistry extends EventEmitter {
     const runtime: PluginRuntime = {
       version: COWORK_VERSION,
       platform: process.platform,
-      appDataPath: app?.getPath?.("userData") || path.join(process.env.HOME || process.env.USERPROFILE || "", ".cowork"),
+      appDataPath: app?.getPath?.("userData") || path.join(process.env.HOME || process.env.USERPROFILE || "", ".ChatAndBuild"),
       pluginDataPath: getPluginDataPath(pluginName),
       isDev: process.env.NODE_ENV === "development",
     };

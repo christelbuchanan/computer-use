@@ -69,7 +69,7 @@ const CLEANUP_INTERVAL_MS = 60 * 60 * 1000;
 const COMPRESSION_DELAY_MS = 200;
 const MAX_TEXT_IMPORT_ENTRIES = 3000;
 const MAX_TEXT_IMPORT_ENTRY_CHARS = 12000;
-const PROMPT_RECALL_IGNORE_MARKER = "[cowork:prompt_recall=ignore]";
+const PROMPT_RECALL_IGNORE_MARKER = "[ChatAndBuild:prompt_recall=ignore]";
 
 export class MemoryService {
   private static memoryRepo: MemoryRepository;
@@ -138,7 +138,7 @@ export class MemoryService {
 
   /**
    * Search indexed markdown within a workspace path (best-effort).
-   * Intended for retrieving durable workspace notes such as `.cowork/` memory files.
+   * Intended for retrieving durable workspace notes such as `.ChatAndBuild/` memory files.
    */
   static searchWorkspaceMarkdown(
     workspaceId: string,

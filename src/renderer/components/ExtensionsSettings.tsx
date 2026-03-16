@@ -186,7 +186,7 @@ export function ExtensionsSettings() {
     if (typeof author !== "string") return undefined;
     const trimmed = author.trim();
     if (!trimmed) return undefined;
-    return /^cowork-oss$/i.test(trimmed) ? "CoWork OS" : trimmed;
+    return /^ChatAndBuilds$/i.test(trimmed) ? "CoWork OS" : trimmed;
   };
 
   if (loading) {
@@ -216,14 +216,14 @@ export function ExtensionsSettings() {
             <p style={{ marginTop: "8px" }}>Extensions can be installed in:</p>
             <ul style={{ margin: "8px 0 0 20px", padding: 0 }}>
               <li>
-                <code>~/.cowork/extensions/</code>
+                <code>~/.ChatAndBuild/extensions/</code>
               </li>
               <li>
-                <code>~/Library/Application Support/cowork-os/extensions/</code>
+                <code>~/Library/Application Support/ChatAndBuild/extensions/</code>
               </li>
             </ul>
             <p style={{ marginTop: "8px", fontSize: "13px" }}>
-              Each extension should have a <code>cowork.plugin.json</code> manifest file.
+              Each extension should have a <code>ChatAndBuild.plugin.json</code> manifest file.
             </p>
           </div>
         ) : (

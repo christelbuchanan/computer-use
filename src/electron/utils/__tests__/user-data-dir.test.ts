@@ -3,7 +3,7 @@ import path from "path";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 
 // Don't mock electron globally - the module uses try/catch for require('electron')
-// so it will naturally fall through to the $HOME/.cowork fallback in test env.
+// so it will naturally fall through to the $HOME/.ChatAndBuild fallback in test env.
 
 describe("getUserDataDir", () => {
   let originalArgv: string[];
@@ -32,10 +32,10 @@ describe("getUserDataDir", () => {
   });
 
   it("expands tilde in COWORK_USER_DATA_DIR", async () => {
-    process.env.COWORK_USER_DATA_DIR = "~/cowork-data";
+    process.env.COWORK_USER_DATA_DIR = "~/ChatAndBuild-data";
     process.argv = ["node", "app"];
     const { getUserDataDir } = await import("../user-data-dir");
-    expect(getUserDataDir()).toBe(path.join(os.homedir(), "cowork-data"));
+    expect(getUserDataDir()).toBe(path.join(os.homedir(), "ChatAndBuild-data"));
   });
 
   it("expands bare tilde in COWORK_USER_DATA_DIR", async () => {
@@ -74,13 +74,13 @@ describe("getUserDataDir", () => {
     expect(getUserDataDir()).toBe(path.join(os.homedir(), "my-data"));
   });
 
-  it("falls back to $HOME/.cowork when no overrides and no Electron", async () => {
+  it("falls back to $HOME/.ChatAndBuild when no overrides and no Electron", async () => {
     delete process.env.COWORK_USER_DATA_DIR;
     process.argv = ["node", "app"];
     const { getUserDataDir } = await import("../user-data-dir");
     const result = getUserDataDir();
-    // In test env (no Electron runtime), it should fall through to $HOME/.cowork
-    const expected = path.join(os.homedir(), ".cowork");
+    // In test env (no Electron runtime), it should fall through to $HOME/.ChatAndBuild
+    const expected = path.join(os.homedir(), ".ChatAndBuild");
     expect(result).toBe(expected);
   });
 

@@ -160,7 +160,7 @@ Once activated, a twin operates in two modes.
 
 The twin wakes up on its configured interval and automatically runs enabled proactive tasks. Results appear as completed tasks in Mission Control.
 
-For venture/operator twins, lead roles can also use `.cowork/HEARTBEAT.md` as a recurring company-ops checklist when heartbeat maintenance is enabled in `Memory Hub`.
+For venture/operator twins, lead roles can also use `.ChatAndBuild/HEARTBEAT.md` as a recurring company-ops checklist when heartbeat maintenance is enabled in `Memory Hub`.
 
 When a twin is linked to a company, the product can also surface it as part of that company's operator set in:
 

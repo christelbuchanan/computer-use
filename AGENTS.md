@@ -15,7 +15,7 @@ When a user reports a failure, error, or unexpected behavior:
 
 - Log capture is controlled by **Settings -> Appearance -> Developer logging** (default off).
 - A forced capture run can be started with `npm run dev:log`.
-- Optional local toggle state may exist at `.cowork/dev-log-settings.json`.
+- Optional local toggle state may exist at `.ChatAndBuild/dev-log-settings.json`.
 
 ## Dev Startup Commands
 

@@ -134,7 +134,7 @@ export function getControlPlaneWebUIHtml(): string {
             </div>
             <div>
               <label>Device Name</label>
-              <input id="deviceName" placeholder="cowork-web" value="cowork-web" />
+              <input id="deviceName" placeholder="ChatAndBuild-web" value="ChatAndBuild-web" />
             </div>
           </div>
 
@@ -1097,7 +1097,7 @@ export function getControlPlaneWebUIHtml(): string {
             const payload = await new Promise((resolve, reject) => {
               const id = '1';
               pending.set(id, { resolve, reject, method: 'connect', at: Date.now() });
-              ws.send(JSON.stringify({ type: 'req', id, method: 'connect', params: { token, deviceName: deviceNameEl.value || 'cowork-web' } }));
+              ws.send(JSON.stringify({ type: 'req', id, method: 'connect', params: { token, deviceName: deviceNameEl.value || 'ChatAndBuild-web' } }));
               setTimeout(() => {
                 if (!pending.has(id)) return;
                 pending.delete(id);

@@ -330,7 +330,7 @@ export class GrepTools {
     // Limit recursion depth
     if (depth > 50) return;
 
-    // Enforce per-project access for `.cowork/projects/*`
+    // Enforce per-project access for `.ChatAndBuild/projects/*`
     if (await this.isDeniedByProjectAccess(currentPath, agentRoleId, projectAccessCache)) {
       return;
     }

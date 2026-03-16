@@ -12,18 +12,18 @@ describe("isGitPluginUrl", () => {
 
   it("does not misclassify manifest URLs that include github path segments", () => {
     expect(
-      isGitPluginUrl("https://raw.githubusercontent.com/org/repo/main/cowork.plugin.json"),
+      isGitPluginUrl("https://raw.githubusercontent.com/org/repo/main/ChatAndBuild.plugin.json"),
     ).toBe(false);
     expect(
-      isGitPluginUrl("https://api.github.com/repos/org/repo/contents/cowork.plugin.json"),
+      isGitPluginUrl("https://api.github.com/repos/org/repo/contents/ChatAndBuild.plugin.json"),
     ).toBe(false);
     expect(
-      isGitPluginUrl("https://example.com/api/cowork.github.com/manifest/cowork.plugin.json"),
+      isGitPluginUrl("https://example.com/api/ChatAndBuild.github.com/manifest/ChatAndBuild.plugin.json"),
     ).toBe(false);
   });
 
   it("returns false for unsupported strings", () => {
     expect(isGitPluginUrl("")).toBe(false);
-    expect(isGitPluginUrl("cowork.pack.tar.gz")).toBe(false);
+    expect(isGitPluginUrl("ChatAndBuild.pack.tar.gz")).toBe(false);
   });
 });

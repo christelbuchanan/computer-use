@@ -146,7 +146,7 @@ const INITIAL_ONBOARDING_DATA: OnboardingData = {
   detectedOllamaModel: null,
 };
 
-const ONBOARDING_RESUME_KEY = "cowork:onboarding:flow:v1";
+const ONBOARDING_RESUME_KEY = "ChatAndBuild:onboarding:flow:v1";
 const ONBOARDING_RESUME_VERSION = 1;
 const ONBOARDING_RESUME_MAX_AGE_MS = 1000 * 60 * 60 * 24 * 14;
 

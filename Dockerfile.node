@@ -52,4 +52,4 @@ USER node
 
 EXPOSE 18789
 
-CMD ["node", "bin/coworkd-node.js"]
+CMD ["node", "bin/ChatAndBuildd-node.js"]

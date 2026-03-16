@@ -535,7 +535,7 @@ export class LoomEmailClient extends EventEmitter {
   }
 
   private buildIdempotencyKey(): string {
-    return `cowork-loom-${Date.now()}-${Math.random().toString(36).slice(2)}`;
+    return `ChatAndBuild-loom-${Date.now()}-${Math.random().toString(36).slice(2)}`;
   }
 
   private async request<T = unknown>(path: string, options: LoomRequestOptions = {}): Promise<T> {

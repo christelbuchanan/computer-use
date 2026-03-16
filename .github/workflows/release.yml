@@ -39,7 +39,7 @@ jobs:
         continue-on-error: true
         run: npm run qa:eval:run -- --suite reliability-regressions --mode deterministic
         env:
-          COWORK_DB_PATH: ${{ runner.temp }}/cowork-release-eval.db
+          COWORK_DB_PATH: ${{ runner.temp }}/ChatAndBuild-release-eval.db
 
       - name: Run battery suite when hooks are configured
         id: run_battery
@@ -144,8 +144,8 @@ jobs:
           tarball="$(npm pack --silent)"
           tmp_dir="$(mktemp -d)"
 
-          if npm view "cowork-os@${CO_WORK_INSTALL_VERSION}" >/dev/null 2>&1; then
-            install_source="cowork-os@${CO_WORK_INSTALL_VERSION}"
+          if npm view "ChatAndBuild@${CO_WORK_INSTALL_VERSION}" >/dev/null 2>&1; then
+            install_source="ChatAndBuild@${CO_WORK_INSTALL_VERSION}"
           else
             install_source="${repo_root}/${tarball}"
           fi
@@ -163,12 +163,12 @@ jobs:
             cd "$test_dir"
             npm init -y >/dev/null 2>&1
             npm install --ignore-scripts --omit=optional --no-audit --no-fund "$source_path"
-            npm run --prefix node_modules/cowork-os setup 2>&1 | tee setup.log
-            if grep -q "^\\[cowork\\] setup:bootstrap" setup.log; then
+            npm run --prefix node_modules/ChatAndBuild setup 2>&1 | tee setup.log
+            if grep -q "^\\[ChatAndBuild\\] setup:bootstrap" setup.log; then
               echo "Setup unexpectedly triggered dependency bootstrap fallback; electron should resolve from parent node_modules." >&2
               exit 1
             fi
-            node -e "const { execFileSync } = require('node:child_process'); const { createRequire } = require('node:module'); const path = require('node:path'); const pkgDir = path.resolve('./node_modules/cowork-os'); const pkgRequire = createRequire(path.join(pkgDir, 'package.json')); const electron = pkgRequire('electron'); const out = execFileSync(electron, ['-e', \"const Database=require('better-sqlite3');const db=new Database(':memory:');db.close();console.log('ok')\"], { cwd: pkgDir, encoding: 'utf8', env: { ...process.env, ELECTRON_RUN_AS_NODE: '1' } }); if ((out || '').trim() !== 'ok') { console.error('Installed package check failed; better-sqlite3 not loading in Electron.'); process.exit(1); }"
+            node -e "const { execFileSync } = require('node:child_process'); const { createRequire } = require('node:module'); const path = require('node:path'); const pkgDir = path.resolve('./node_modules/ChatAndBuild'); const pkgRequire = createRequire(path.join(pkgDir, 'package.json')); const electron = pkgRequire('electron'); const out = execFileSync(electron, ['-e', \"const Database=require('better-sqlite3');const db=new Database(':memory:');db.close();console.log('ok')\"], { cwd: pkgDir, encoding: 'utf8', env: { ...process.env, ELECTRON_RUN_AS_NODE: '1' } }); if ((out || '').trim() !== 'ok') { console.error('Installed package check failed; better-sqlite3 not loading in Electron.'); process.exit(1); }"
           }
 
           smoke_test "$install_source"
@@ -358,7 +358,7 @@ jobs:
         with:
           node-version: '24'
           registry-url: 'https://npm.pkg.github.com'
-          scope: '@cowork-os'
+          scope: '@ChatAndBuild'
 
       - name: Install dependencies
         run: npm ci --no-audit --no-fund
@@ -371,7 +371,7 @@ jobs:
           # GitHub Packages requires scoped package names
           node -e "
             const pkg = require('./package.json');
-            pkg.name = '@cowork-os/cowork-os';
+            pkg.name = '@ChatAndBuild/ChatAndBuild';
             require('fs').writeFileSync('package.json', JSON.stringify(pkg, null, 2));
           "
 

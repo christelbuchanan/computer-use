@@ -607,7 +607,7 @@ export class SystemTools {
 
   /**
    * Search workspace memories (including imported ChatGPT conversations)
-   * and workspace markdown files (.cowork/ kit files).
+   * and workspace markdown files (.ChatAndBuild/ kit files).
    */
   async searchMemories(input: { query: string; limit?: number }): Promise<{
     results: Array<{
@@ -631,10 +631,10 @@ export class SystemTools {
       // Search the memory database (semantic + BM25 hybrid)
       const dbResults = MemoryService.search(this.workspace.id, input.query, limit);
 
-      // Also search workspace markdown (.cowork/ kit files)
+      // Also search workspace markdown (.ChatAndBuild/ kit files)
       let mdResults: typeof dbResults = [];
       try {
-        const kitRoot = path.join(this.workspace.path, ".cowork");
+        const kitRoot = path.join(this.workspace.path, ".ChatAndBuild");
         if (fsSync.existsSync(kitRoot) && fsSync.statSync(kitRoot).isDirectory()) {
           mdResults = MemoryService.searchWorkspaceMarkdown(
             this.workspace.id,
@@ -904,7 +904,7 @@ export class SystemTools {
       {
         name: "search_memories",
         description:
-          "Search the workspace memory database AND workspace knowledge files (.cowork/) " +
+          "Search the workspace memory database AND workspace knowledge files (.ChatAndBuild/) " +
           "for past observations, decisions, insights, and errors from previous sessions " +
           "and imported conversations (e.g. ChatGPT history). " +
           "Use this proactively when starting a task to check for relevant prior context, " +

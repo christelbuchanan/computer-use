@@ -437,7 +437,7 @@ export function App() {
   }, []);
 
   // Check for migration status and show one-time notification if needed
-  // This handles the case where the app was renamed from cowork-oss to cowork-os
+  // This handles the case where the app was renamed from ChatAndBuilds to ChatAndBuild
   // and encrypted credentials (API keys) need to be re-entered
   const migrationCheckDone = useRef(false);
   useEffect(() => {

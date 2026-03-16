@@ -608,7 +608,7 @@ describe("SecureSettingsRepository", () => {
       repository = new SecureSettingsRepositoryClass(mockDb);
 
       expect(mockFsWriteFileSync).toHaveBeenCalledWith(
-        "/mock/user/data/.cowork-machine-id",
+        "/mock/user/data/.ChatAndBuild-machine-id",
         "test-uuid-1234",
         { mode: 0o600 },
       );
@@ -622,7 +622,7 @@ describe("SecureSettingsRepository", () => {
 
       expect(mockFsWriteFileSync).not.toHaveBeenCalled();
       expect(mockFsReadFileSync).toHaveBeenCalledWith(
-        "/mock/user/data/.cowork-machine-id",
+        "/mock/user/data/.ChatAndBuild-machine-id",
         "utf-8",
       );
     });

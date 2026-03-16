@@ -1394,7 +1394,7 @@ export function registerControlPlaneMethods(
       arch: process.arch,
       node: process.version,
       electron: process.versions.electron,
-      coworkVersion: getCoworkVersionFromNearestPackageJson(),
+      ChatAndBuildVersion: getCoworkVersionFromNearestPackageJson(),
       headless: isHeadlessMode(),
       cwd: process.cwd(),
       userDataDir: getUserDataDir(),

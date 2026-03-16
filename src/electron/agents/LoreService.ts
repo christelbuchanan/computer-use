@@ -18,11 +18,11 @@ type WorkspaceState = {
   flushTimer: ReturnType<typeof setTimeout> | null;
 };
 
-const KIT_DIRNAME = ".cowork";
+const KIT_DIRNAME = ".ChatAndBuild";
 const LORE_PATH = path.join(KIT_DIRNAME, "LORE.md");
 
-const AUTO_LORE_START = "<!-- cowork:auto:lore:start -->";
-const AUTO_LORE_END = "<!-- cowork:auto:lore:end -->";
+const AUTO_LORE_START = "<!-- ChatAndBuild:auto:lore:start -->";
+const AUTO_LORE_END = "<!-- ChatAndBuild:auto:lore:end -->";
 
 const FLUSH_DEBOUNCE_MS = 12_000;
 const STARTUP_REBUILD_LIMIT = 2500;

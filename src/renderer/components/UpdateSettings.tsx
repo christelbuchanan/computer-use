@@ -259,7 +259,7 @@ export function UpdateSettings() {
         </p>
         <div className="manual-update-commands">
           {versionInfo?.isNpmGlobal ? (
-            <code>npm update -g cowork-os</code>
+            <code>npm update -g ChatAndBuild</code>
           ) : (
             <code>
               git fetch origin{"\n"}

@@ -1656,7 +1656,7 @@ export class ControlPlaneCoreService {
 
   private ensureCompanyWorkspaceStructure(workspacePath: string): void {
     fs.mkdirSync(workspacePath, { recursive: true });
-    for (const entry of [".cowork", "projects", "ops", "research", "artifacts"]) {
+    for (const entry of [".ChatAndBuild", "projects", "ops", "research", "artifacts"]) {
       fs.mkdirSync(path.join(workspacePath, entry), { recursive: true });
     }
   }

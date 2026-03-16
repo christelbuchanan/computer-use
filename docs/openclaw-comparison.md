@@ -53,4 +53,4 @@ Choose CoWork OS when you need to run agents continuously with security controls
 - [Features](./features.md) for runtime capabilities and channel scope
 - [Security Guide](./security-guide.md) for policy model and controls
 - [Architecture](./architecture.md) for runtime boundaries and gateway design
-- [Migration Guide](./migration.md#from-openclaw-to-cowork-os) for cutover steps
+- [Migration Guide](./migration.md#from-openclaw-to-ChatAndBuild) for cutover steps

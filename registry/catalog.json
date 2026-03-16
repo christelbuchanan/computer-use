@@ -724,7 +724,7 @@
     {
       "id": "memory-kit",
       "name": "Memory Kit",
-      "description": "Create a workspace-local .cowork/ memory kit (rules, identity, long-term notes, daily logs, heartbeat templates).",
+      "description": "Create a workspace-local .ChatAndBuild/ memory kit (rules, identity, long-term notes, daily logs, heartbeat templates).",
       "version": "1.0.0",
       "author": "CoWork OS",
       "tags": [
